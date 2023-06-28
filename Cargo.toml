@@ -9,3 +9,6 @@ license = "MIT OR Apache-2.0"
 version = "0.0.1"
 
 [dependencies]
+jsonrpsee = { version = "0.18.2", features = ["http-client", "async-client", "client-ws-transport-native-tls"] }
+tokio = { version = "1.29.0", features = ["rt", "macros", "rt-multi-thread"] }
+anyhow = "1.0.71"
