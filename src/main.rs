@@ -4,14 +4,14 @@ mod rpc;
 // 1. Setup node: ./target/release/node-template --dev --tmp --rpc-methods=Unsafe --rpc-cors all
 // --rpc-external --ws-external 2: ws://192.168.31.52:9944
 
-use cli::app::App;
+use clap::{Command, Parser};
+use cli::app::Commands;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
 use rustyline::{error::ReadlineError, DefaultEditor};
-use clap::Parser;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,16 +22,28 @@ async fn main() -> anyhow::Result<()> {
 	// let client = ClientBuilder::default().build_with_tokio(tx, rx);
 	// let response: String = client.request("system_version", rpc_params![]).await?;
 	// println!("bear: the result is {:?}", response);
-	let app = App::parse();
 
 	let mut rl = DefaultEditor::new()?;
+
 	loop {
-		let readline = rl.readline(">> ");
+		let readline = rl.readline("suber >> ");
 		match readline {
 			Ok(line) => {
-				rl.add_history_entry(line.as_str());
-				// handle command
-				println!("Line: {}", line);
+				println!("bear: --- line: {}", line);
+				let command = Commands::parse_from(line.split_whitespace());
+				println!("command: {:?}", command);
+
+				match command {
+					Commands::SwitchNetwork(network) => {
+						todo!();
+					},
+					Commands::Rpc(rpc_commands) => {
+						todo!()
+					},
+					_ => todo!(),
+				}
+
+				// rl.add_history_entry(line.as_str());
 			},
 			Err(ReadlineError::Interrupted) => {
 				println!("CTRL-C");
