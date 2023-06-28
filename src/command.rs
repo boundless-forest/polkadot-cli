@@ -1,15 +1,15 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[clap(no_binary_name = true)]
-pub enum Commands {
+pub enum AppCommand {
 	/// Switch network, default is local
 	#[command(subcommand)]
 	SwitchNetwork(Network),
 	/// RPC interfaces
 	#[command(subcommand)]
-	Rpc(RpcSubCommand),
+	Rpc(RpcCommand),
 	/// Transfer native token
 	Transfer,
 	/// Query the balance of an account
@@ -21,7 +21,7 @@ pub enum Commands {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-pub enum RpcSubCommand {
+pub enum RpcCommand {
 	/// Get block by hash
 	GetBlockByHash,
 	/// Get block by number
