@@ -1,0 +1,11 @@
+[package]
+name = "suber"
+author = ["boundless.forest@outlook.com"]
+readme = "README.md"
+repository = "https://github.com/boundless-forest/suber"
+description = "TODO"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+version = "0.0.1"
+
+[dependencies]
