@@ -8,6 +8,8 @@ mod rpc;
 
 use crate::command::AppCommand;
 use clap::Parser;
+use colored::Colorize;
+use figlet_rs::FIGfont;
 use rustyline::{
 	completion::Completer,
 	error::ReadlineError,
@@ -25,8 +27,9 @@ async fn main() -> anyhow::Result<()> {
 	let history_file = load_history()?;
 	editor.load_history(&history_file)?;
 
+	print_info();
 	loop {
-		let prompt = editor.readline("suber >> ");
+		let prompt = editor.readline(&"suber >> ".green().bold().to_string());
 		match prompt {
 			Ok(prompt) => {
 				let command = AppCommand::parse_from(prompt.split_whitespace());
@@ -46,9 +49,17 @@ async fn main() -> anyhow::Result<()> {
 			},
 		}
 	}
-
 	editor.save_history(&history_file)?;
+
 	Ok(())
+}
+
+pub(crate) fn print_info() {
+	let standard_font = FIGfont::standard().unwrap();
+	let figure = standard_font.convert("suber");
+	if let Some(figure) = figure {
+		println!("{}", figure);
+	}
 }
 
 pub(crate) fn load_history() -> anyhow::Result<PathBuf> {
