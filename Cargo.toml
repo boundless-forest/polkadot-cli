@@ -17,3 +17,5 @@ clap = { version = "4.3.8", features = ["derive"] }
 dirs = "5.0.1"
 colored = "2.0.0"
 figlet-rs = "0.1.5"
+clap_complete_command = "0.5.1"
+shell-words = "1.1.0"

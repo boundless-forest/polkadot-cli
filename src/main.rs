@@ -7,11 +7,11 @@ mod rpc;
 // --rpc-external --ws-external 2: ws://192.168.31.52:9944
 
 use crate::command::AppCommand;
-use clap::Parser;
+use clap::{Command, Parser, Subcommand};
 use colored::Colorize;
 use figlet_rs::FIGfont;
 use rustyline::{
-	completion::Completer,
+	completion::{extract_word, Completer, Pair},
 	error::ReadlineError,
 	highlight::Highlighter,
 	hint::{Hinter, HistoryHinter},
@@ -19,7 +19,7 @@ use rustyline::{
 	validate::Validator,
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
-use std::{fs, fs::File, path::PathBuf};
+use std::{fs, fs::File, iter, path::PathBuf};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -32,8 +32,11 @@ async fn main() -> anyhow::Result<()> {
 		let prompt = editor.readline(&"suber >> ".green().bold().to_string());
 		match prompt {
 			Ok(prompt) => {
-				let command = AppCommand::parse_from(prompt.split_whitespace());
-				handler::handle_commands(command)?;
+				if let Ok(command) = AppCommand::try_parse_from(prompt.split_whitespace()) {
+					handler::handle_commands(command)?;
+				} else {
+					println!("Invalid prompt: {}", prompt);
+				}
 			},
 			Err(ReadlineError::Interrupted) => {
 				println!("CTRL-C");
@@ -93,15 +96,48 @@ pub(crate) fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHi
 
 struct CommandHelper<H> {
 	hinter: H,
+	command: Command,
 }
 
 impl<H> CommandHelper<H> {
 	fn new(hinter: H) -> Self {
-		Self { hinter }
+		let init = Command::new("suber").subcommand_required(true).arg_required_else_help(true);
+		let command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
+		Self { hinter, command }
+	}
+
+	fn prefix_command<'s, I: Iterator<Item = &'s str>>(
+		&self,
+		command: &Command,
+		mut prefixes: iter::Peekable<I>,
+	) -> Option<Command> {
+		if let Some(prefix) = prefixes.next() {
+			for subcommand in self.command.get_subcommands() {
+				if subcommand.get_name() == prefix
+					|| subcommand.get_display_name().unwrap_or_default() == prefix
+					|| subcommand.get_all_aliases().into_iter().any(|s| s == prefix)
+				{
+					return if prefixes.peek().is_none() {
+						Some(subcommand.clone())
+					} else {
+						self.prefix_command(subcommand, prefixes)
+					};
+				}
+			}
+		}
+
+		if prefixes.peek().is_none() || !command.has_subcommands() {
+			Some(self.command.clone())
+		} else {
+			None
+		}
 	}
 }
 
 impl<H: Hinter> Helper for CommandHelper<H> {}
+impl<H: Hinter> Highlighter for CommandHelper<H> {}
+impl<H: Hinter> Validator for CommandHelper<H> {}
+
 impl<H: Hinter> Hinter for CommandHelper<H> {
 	type Hint = H::Hint;
 
@@ -109,8 +145,41 @@ impl<H: Hinter> Hinter for CommandHelper<H> {
 		self.hinter.hint(line, pos, ctx)
 	}
 }
-impl<H: Hinter> Highlighter for CommandHelper<H> {}
-impl<H: Hinter> Completer for CommandHelper<H> {
-	type Candidate = String;
+
+const fn default_break_chars(c: char) -> bool {
+	matches!(
+		c,
+		' ' | '\t'
+			| '\n' | '"' | '\\'
+			| '\'' | '`' | '@'
+			| '$' | '>' | '<'
+			| '=' | ';' | '|'
+			| '&' | '{' | '('
+			| '\0'
+	)
 }
-impl<H: Hinter> Validator for CommandHelper<H> {}
+const ESCAPE_CHAR: Option<char> = Some('\\');
+
+impl<H: Hinter> Completer for CommandHelper<H> {
+	type Candidate = Pair;
+
+	fn complete(
+		&self,
+		line: &str,
+		pos: usize,
+		ctx: &Context<'_>,
+	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
+		println!("");
+		println!("=====> Completing: line: {}, pos: {}", line, pos);
+		let (start, word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
+		println!("=====> Completing: start: {}, word: {}", start, word);
+
+		let prefixes = shell_words::split(&line[..pos]).unwrap();
+		println!("=====> Completing: prefix: {:?}", prefixes);
+
+		let command =
+			self.prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable());
+
+		Ok((pos, Vec::new()))
+	}
+}

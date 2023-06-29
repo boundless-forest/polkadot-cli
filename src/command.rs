@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None, rename_all = "snake_case")]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
 	/// Switch network, default is local
@@ -21,11 +21,10 @@ pub enum AppCommand {
 }
 
 #[derive(Subcommand, Clone, Debug)]
+#[command(name = "rpc", rename_all = "snake_case")]
 pub enum RpcCommand {
 	/// Get block by hash
 	GetBlockByHash,
-	/// Get block by number
-	GetBlockHash,
 	/// Get block header
 	GetHeader,
 	/// Get RPC methods
@@ -36,10 +35,9 @@ pub enum RpcCommand {
 	SysChainType,
 	/// Get System health
 	SysHealth,
-	/// Get System local peer id
-	SysLocalPeerId,
 	/// Get System Name
-	SysName,
+	#[command(subcommand)]
+	SysName(Network),
 	/// Get System Properties
 	SysProperties,
 	/// Get System Version
