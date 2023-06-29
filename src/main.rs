@@ -13,21 +13,24 @@ use rustyline::{
 	error::ReadlineError,
 	highlight::Highlighter,
 	hint::{Hinter, HistoryHinter},
-	history::MemHistory,
+	history::{self, FileHistory},
 	validate::Validator,
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
+use std::{fs, fs::File, path::PathBuf};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 	let mut editor = this_crate_editor();
+	let history_file = load_history()?;
+	editor.load_history(&history_file)?;
+
 	loop {
 		let prompt = editor.readline("suber >> ");
 		match prompt {
 			Ok(prompt) => {
 				let command = AppCommand::parse_from(prompt.split_whitespace());
 				handler::handle_commands(command)?;
-				// rl.add_history_entry(line.as_str());
 			},
 			Err(ReadlineError::Interrupted) => {
 				println!("CTRL-C");
@@ -44,21 +47,35 @@ async fn main() -> anyhow::Result<()> {
 		}
 	}
 
+	editor.save_history(&history_file)?;
 	Ok(())
 }
 
-pub(crate) fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, MemHistory> {
+pub(crate) fn load_history() -> anyhow::Result<PathBuf> {
+	let mut history_file_dir = dirs::home_dir().unwrap();
+	history_file_dir.push(".suber");
+	if !history_file_dir.exists() {
+		fs::create_dir(history_file_dir.clone())?;
+	}
+	let history_file = history_file_dir.join("history");
+	if !history_file.is_file() {
+		let _ = File::create(history_file.clone())?;
+	}
+	Ok(history_file)
+}
+
+pub(crate) fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHistory> {
 	let config_builder = rustyline::Config::builder();
 	let config = config_builder
 		.auto_add_history(true)
-		.color_mode(ColorMode::Enabled)
 		.history_ignore_space(true)
+		.color_mode(ColorMode::Enabled)
 		.completion_type(CompletionType::List)
 		.build();
 
 	let editor_helper = CommandHelper::new(HistoryHinter {});
 
-	let mut editor = Editor::with_history(config, MemHistory::new()).unwrap();
+	let mut editor = Editor::with_history(config, FileHistory::new()).unwrap();
 	editor.set_helper(Some(editor_helper));
 	editor
 }
