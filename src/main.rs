@@ -19,7 +19,13 @@ use rustyline::{
 	validate::Validator,
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
-use std::{fs, fs::File, iter, path::PathBuf};
+use std::{
+	borrow::Cow::{self, Owned},
+	fs,
+	fs::File,
+	iter,
+	path::PathBuf,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -101,7 +107,10 @@ struct CommandHelper<H> {
 
 impl<H> CommandHelper<H> {
 	fn new(hinter: H) -> Self {
-		let init = Command::new("suber").subcommand_required(true).arg_required_else_help(true);
+		let init = Command::new("suber")
+			.subcommand_required(true)
+			.arg_required_else_help(true)
+			.no_binary_name(true);
 		let command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
 		Self { hinter, command }
 	}
@@ -112,7 +121,7 @@ impl<H> CommandHelper<H> {
 		mut prefixes: iter::Peekable<I>,
 	) -> Option<Command> {
 		if let Some(prefix) = prefixes.next() {
-			for subcommand in self.command.get_subcommands() {
+			for subcommand in command.get_subcommands() {
 				if subcommand.get_name() == prefix
 					|| subcommand.get_display_name().unwrap_or_default() == prefix
 					|| subcommand.get_all_aliases().into_iter().any(|s| s == prefix)
@@ -127,7 +136,7 @@ impl<H> CommandHelper<H> {
 		}
 
 		if prefixes.peek().is_none() || !command.has_subcommands() {
-			Some(self.command.clone())
+			Some(command.clone())
 		} else {
 			None
 		}
@@ -135,7 +144,20 @@ impl<H> CommandHelper<H> {
 }
 
 impl<H: Hinter> Helper for CommandHelper<H> {}
-impl<H: Hinter> Highlighter for CommandHelper<H> {}
+impl<H: Hinter> Highlighter for CommandHelper<H> {
+	fn highlight_candidate<'c>(
+		&self,
+		candidate: &'c str,
+		completion: CompletionType,
+	) -> Cow<'c, str> {
+		let candidate_with_color = candidate
+			.split('\n')
+			.map(|param| param.to_string())
+			.collect::<Vec<String>>()
+			.join("\n");
+		Owned(candidate_with_color)
+	}
+}
 impl<H: Hinter> Validator for CommandHelper<H> {}
 
 impl<H: Hinter> Hinter for CommandHelper<H> {
@@ -177,9 +199,28 @@ impl<H: Hinter> Completer for CommandHelper<H> {
 		let prefixes = shell_words::split(&line[..pos]).unwrap();
 		println!("=====> Completing: prefix: {:?}", prefixes);
 
-		let command =
-			self.prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable());
+		let mut candidates = Vec::new();
+		if let Some(command) =
+			self.prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable())
+		{
+			candidates = command
+				.get_subcommands()
+				.cloned()
+				.map(|i| Pair {
+					display: i.get_name().to_owned(),
+					replacement: i.get_name().to_owned(),
+				})
+				.filter(|c| c.display.starts_with(&word))
+				.collect();
+		}
 
-		Ok((pos, Vec::new()))
+		println!(
+			"=====> Completing: command: {:?}",
+			candidates
+				.iter()
+				.map(|i| (i.clone().display, i.clone().replacement))
+				.collect::<Vec<(String, String)>>()
+		);
+		Ok((start, candidates))
 	}
 }
