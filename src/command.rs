@@ -16,15 +16,9 @@ pub enum AppCommand {
 #[command(name = "rpc")]
 pub enum RpcCommand {
 	/// Get block by hash
-	GetBlockByHash {
-		#[arg(short, long)]
-		hash: String,
-	},
+	ChainBlockByHash { hash: String, number: u8 },
 	/// Get block header
-	GetHeader {
-		#[arg(short, long)]
-		hash: String,
-	},
+	ChainHeader { hash: String },
 	/// Get RPC methods
 	RpcMethods,
 	/// Get System Name

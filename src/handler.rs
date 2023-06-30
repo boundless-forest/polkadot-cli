@@ -8,8 +8,12 @@ pub fn handle_commands(command: AppCommand) -> anyhow::Result<()> {
 		},
 		AppCommand::Rpc(rpc_commands) => {
 			match rpc_commands {
-				RpcCommand::GetBlockByHash { hash } => {},
-				RpcCommand::GetHeader { hash } => {},
+				RpcCommand::ChainBlockByHash { hash, number } => {
+					println!("ChainBlockByHash implementation, hash: {}, number: {}", hash, number);
+				},
+				RpcCommand::ChainHeader { hash } => {
+					println!("ChainHeader implementation, hash: {}", hash);
+				},
 				RpcCommand::RpcMethods => {},
 				RpcCommand::SysName => {},
 				RpcCommand::SysProperties => {},

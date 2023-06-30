@@ -7,7 +7,7 @@ mod rpc;
 // --rpc-external --ws-external 2: ws://192.168.31.52:9944
 
 use crate::command::AppCommand;
-use clap::{Command, Parser, Subcommand};
+use clap::{Arg, Command, Parser, Subcommand};
 use colored::Colorize;
 use figlet_rs::FIGfont;
 use rustyline::{
@@ -20,7 +20,7 @@ use rustyline::{
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
 use std::{
-	borrow::Cow::{self, Owned},
+	borrow::Cow::{self, Borrowed, Owned},
 	fs,
 	fs::File,
 	iter,
@@ -145,17 +145,16 @@ impl<H> CommandHelper<H> {
 
 impl<H: Hinter> Helper for CommandHelper<H> {}
 impl<H: Hinter> Highlighter for CommandHelper<H> {
+	fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
+		Owned(hint.bright_yellow().to_string())
+	}
+
 	fn highlight_candidate<'c>(
 		&self,
 		candidate: &'c str,
-		completion: CompletionType,
+		_completion: CompletionType,
 	) -> Cow<'c, str> {
-		let candidate_with_color = candidate
-			.split('\n')
-			.map(|param| param.to_string())
-			.collect::<Vec<String>>()
-			.join("\n");
-		Owned(candidate_with_color)
+		Owned(candidate.bright_yellow().to_string())
 	}
 }
 impl<H: Hinter> Validator for CommandHelper<H> {}
@@ -192,12 +191,12 @@ impl<H: Hinter> Completer for CommandHelper<H> {
 		ctx: &Context<'_>,
 	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
 		println!("");
-		println!("=====> Completing: line: {}, pos: {}", line, pos);
-		let (start, word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
-		println!("=====> Completing: start: {}, word: {}", start, word);
+		// println!("=====> Completing: line: {}, pos: {}", line, pos);
+		let (start, mut word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
+		// println!("=====> Completing: start: {}, word: {}", start, word);
 
 		let prefixes = shell_words::split(&line[..pos]).unwrap();
-		println!("=====> Completing: prefix: {:?}", prefixes);
+		// println!("=====> Completing: prefix: {:?}", prefixes);
 
 		let mut candidates = Vec::new();
 		if let Some(command) =
@@ -210,17 +209,41 @@ impl<H: Hinter> Completer for CommandHelper<H> {
 					display: i.get_name().to_owned(),
 					replacement: i.get_name().to_owned(),
 				})
-				.filter(|c| c.display.starts_with(&word))
+				.filter(|c| c.display.starts_with(&word) && word != command.get_name())
 				.collect();
-		}
 
-		println!(
-			"=====> Completing: command: {:?}",
-			candidates
-				.iter()
-				.map(|i| (i.clone().display, i.clone().replacement))
-				.collect::<Vec<(String, String)>>()
-		);
+			if candidates.is_empty() {
+				if !word.starts_with("-") || !word.starts_with("--") {
+					word = "--";
+				}
+				// println!(
+				// 	"=====> Completing: no candidates, args: {:?}",
+				// 	command
+				// 		.get_arguments()
+				// 		.cloned()
+				// 		.map(|i| i.get_id().to_string())
+				// 		.collect::<Vec<String>>()
+				// );
+				candidates = command
+					.get_arguments()
+					.cloned()
+					.map(|i| Pair {
+						display: format!("--{}", i.get_id().to_string()),
+						replacement: format!("--{}", i.get_id().to_string()),
+					})
+					.filter(|c| !prefixes.contains(&c.display))
+					.filter(|c| c.display.starts_with(&word))
+					.collect();
+			}
+		}
+		// println!(
+		// 	"=====> Completing: candidates: {:?}",
+		// 	candidates
+		// 		.iter()
+		// 		.map(|i| (i.clone().display, i.clone().replacement))
+		// 		.collect::<Vec<(String, String)>>()
+		// );
+
 		Ok((start, candidates))
 	}
 }
