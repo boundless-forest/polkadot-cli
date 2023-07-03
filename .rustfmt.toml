@@ -9,7 +9,7 @@ imports_granularity = "Crate"
 reorder_imports     = true
 
 # Format comments
-comment_width = 100
+comment_width = 120
 wrap_comments = true
 
 # Misc

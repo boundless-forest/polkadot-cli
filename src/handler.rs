@@ -1,7 +1,9 @@
+use std::any;
+
 use crate::command::{AppCommand, RpcCommand};
 use colored::Colorize;
 
-pub fn handle_commands(command: AppCommand) -> anyhow::Result<()> {
+pub fn handle_commands(command: AppCommand) ->  {
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			println!("Switch network implementation");

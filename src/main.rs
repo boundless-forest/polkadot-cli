@@ -10,18 +10,24 @@ mod rpc;
 use clap::Parser;
 use colored::Colorize;
 use helper::{load_history, print_info, this_crate_editor};
+use rpc::{RpcClient, RpcError, RpcResult};
 use rustyline::{
 	error::ReadlineError,
 	history::{self},
 };
 
 use crate::command::AppCommand;
+use crate::errors::AppError;
+
+
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), AppError> {
 	let mut editor = this_crate_editor();
 	let history_file = load_history()?;
-	editor.load_history(&history_file)?;
+	editor.load_history(&history_file).map_err(AppError::Readline)?;
+
+	let rpc_client = RpcClient::new("192.168.31.52:9944").await?;
 
 	print_info();
 	loop {
