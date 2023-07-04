@@ -16,10 +16,7 @@ use rustyline::{
 	history::{self},
 };
 
-use crate::command::AppCommand;
-use crate::errors::AppError;
-
-
+use crate::{command::AppCommand, errors::AppError};
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {

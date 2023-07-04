@@ -13,7 +13,6 @@ use jsonrpsee::{
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
 
-
 /// RPC client.
 #[derive(Clone)]
 pub struct RpcClient {

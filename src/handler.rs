@@ -1,9 +1,12 @@
 use std::any;
 
-use crate::command::{AppCommand, RpcCommand};
+use crate::{
+	command::{AppCommand, RpcCommand},
+	errors::AppError,
+};
 use colored::Colorize;
 
-pub fn handle_commands(command: AppCommand) ->  {
+pub fn handle_commands(command: AppCommand) -> Result<(), AppError> {
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			println!("Switch network implementation");
