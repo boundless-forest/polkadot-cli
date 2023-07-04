@@ -1,18 +1,17 @@
+// std
 use std::sync::Arc;
-
+// crates.io
 use async_trait::async_trait;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
-	core::{
-		client::{Client, ClientBuilder, ClientT},
-		Error,
-	},
+	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
+// this crate
+use crate::errors::RpcError;
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
-
 
 /// RPC client.
 #[derive(Clone)]
@@ -42,19 +41,17 @@ impl RpcClient {
 pub trait Api {
 	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>>;
-
 	/// Get the node name.
 	async fn system_name(&self) -> RpcResult<String>;
-
 	/// Get the node properties.
 	async fn system_properties(&self) -> RpcResult<String>;
-
 	/// Get the node version.
 	async fn system_version(&self) -> RpcResult<String>;
 }
 
 #[async_trait]
 impl Api for RpcClient {
+	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>> {
 		let res = self
 			.client
@@ -64,6 +61,7 @@ impl Api for RpcClient {
 		Ok(res)
 	}
 
+	/// Get the node name.
 	async fn system_name(&self) -> RpcResult<String> {
 		let res = self
 			.client
@@ -73,6 +71,7 @@ impl Api for RpcClient {
 		Ok(res)
 	}
 
+	/// Get the node properties.
 	async fn system_properties(&self) -> RpcResult<String> {
 		let res = self
 			.client
@@ -82,6 +81,7 @@ impl Api for RpcClient {
 		Ok(res)
 	}
 
+	/// Get the node version.
 	async fn system_version(&self) -> RpcResult<String> {
 		let res = self
 			.client

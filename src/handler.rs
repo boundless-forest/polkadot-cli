@@ -1,36 +1,50 @@
-use std::any;
-
-use crate::command::{AppCommand, RpcCommand};
+// crates.io
 use colored::Colorize;
+// this crate
+use crate::{
+	command::{AppCommand, RpcCommand},
+	errors::{AppError, HandlerError},
+	rpc::{Api, RpcClient},
+};
 
-pub fn handle_commands(command: AppCommand) ->  {
+pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<(), AppError> {
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			println!("Switch network implementation");
 		},
-		AppCommand::Rpc(rpc_commands) => {
-			match rpc_commands {
-				RpcCommand::ChainBlockByHash { hash, number } => {
-					println!("ChainBlockByHash implementation, hash: {}, number: {}", hash, number);
-				},
-				RpcCommand::ChainHeader { hash } => {
-					println!("ChainHeader implementation, hash: {}", hash);
-				},
-				RpcCommand::RpcMethods => {},
-				RpcCommand::SysName => {},
-				RpcCommand::SysProperties => {},
-				RpcCommand::SysVersion => {},
-				_ => {
-					println!(
-						"{}",
-						"Invalid RPC command, please check your command and input params".red()
-					);
-				},
-			}
-			println!("Missing RPC network implementation");
+		AppCommand::Rpc(rpc_commands) => match rpc_commands {
+			RpcCommand::ChainBlockByHash { hash, number } => {
+				println!("ChainBlockByHash implementation, hash: {}, number: {}", hash, number);
+			},
+			RpcCommand::ChainHeader { hash } => {
+				println!("ChainHeader implementation, hash: {}", hash);
+			},
+			RpcCommand::RpcMethods => {
+				let res = client.rpc_methods().await?;
+				println!("{:?}", res);
+			},
+			RpcCommand::SysName => {
+				let res = client.system_name().await?;
+				println!("{:?}", res);
+			},
+			RpcCommand::SysProperties => {
+				let res = client.system_properties().await?;
+				println!("{:?}", res);
+			},
+			RpcCommand::SysVersion => {
+				let res = client.system_version().await?;
+				println!("{:?}", res);
+			},
+			_ => {
+				println!(
+					"{}",
+					"Invalid RPC command, please check your command and input params".red()
+				);
+			},
 		},
 		_ => {
-			println!("{}", "Invalid command, please check your command and input params".red());
+			eprintln!("{}", "Invalid command, please check your command and input params".red());
+			return Err(HandlerError::UnknownAppCommand.into());
 		},
 	}
 
