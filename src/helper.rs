@@ -1,3 +1,4 @@
+// std
 use std::{
 	borrow::Cow::{self, Owned},
 	fs,
@@ -5,7 +6,7 @@ use std::{
 	iter,
 	path::PathBuf,
 };
-
+// crates.io
 use clap::Command;
 use colored::Colorize;
 use figlet_rs::FIGfont;
@@ -13,12 +14,12 @@ use rustyline::{
 	completion::{extract_word, Completer, Pair},
 	highlight::Highlighter,
 	hint::{Hinter, HistoryHinter},
-	history::{self, FileHistory},
+	history::FileHistory,
 	validate::Validator,
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
-
-use crate::command::AppCommand;
+// this crate
+use crate::{command::AppCommand, errors::AppError};
 
 const ESCAPE_CHAR: Option<char> = Some('\\');
 const fn default_break_chars(c: char) -> bool {
@@ -42,15 +43,15 @@ pub fn print_info() {
 	}
 }
 
-pub fn load_history() -> anyhow::Result<PathBuf> {
+pub fn load_history() -> Result<PathBuf, AppError> {
 	let mut history_file_dir = dirs::home_dir().unwrap();
 	history_file_dir.push(".suber");
 	if !history_file_dir.exists() {
-		fs::create_dir(history_file_dir.clone())?;
+		fs::create_dir(history_file_dir.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
 	}
 	let history_file = history_file_dir.join("history");
 	if !history_file.is_file() {
-		let _ = File::create(history_file.clone())?;
+		let _ = File::create(history_file.clone());
 	}
 	Ok(history_file)
 }
