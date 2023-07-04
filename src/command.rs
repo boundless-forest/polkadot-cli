@@ -11,6 +11,7 @@ pub enum AppCommand {
 	/// RPC interfaces
 	#[command(subcommand)]
 	Rpc(RpcCommand),
+	// TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]

@@ -34,15 +34,11 @@ async fn main() -> Result<(), AppError> {
 				if let Ok(command) = AppCommand::try_parse_from(prompt.split_whitespace()) {
 					handler::handle_commands(command, &rpc_client).await?;
 				} else {
-					println!("Invalid prompt: {}", prompt);
+					println!("Invalid input: {}", prompt.bright_red());
 				}
 			},
 			Err(ReadlineError::Interrupted) => {
 				println!("CTRL-C");
-				break;
-			},
-			Err(ReadlineError::Eof) => {
-				println!("CTRL-D");
 				break;
 			},
 			Err(err) => {

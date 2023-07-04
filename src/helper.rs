@@ -40,6 +40,13 @@ pub fn print_info() {
 	let figure = standard_font.convert("suber");
 	if let Some(figure) = figure {
 		println!("{}", figure);
+		println!(
+			"{}",
+			"This is the one-stop substrate command-line tool, the command-line version of the Polkadot Apps."
+				.green()
+				.bold()
+				.italic()
+		);
 	}
 }
 
