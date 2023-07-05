@@ -47,6 +47,14 @@ pub trait Api {
 	async fn system_properties(&self) -> RpcResult<String>;
 	/// Get the node version.
 	async fn system_version(&self) -> RpcResult<String>;
+	/// Get the chain name
+	async fn chain(&self) -> RpcResult<String>;
+	/// Get the chain type
+	async fn chain_type(&self) -> RpcResult<String>;
+	/// Get the chain health status
+	async fn health(&self) -> RpcResult<String>;
+	/// Get the chain sync status
+	async fn sync_state(&self) -> RpcResult<String>;
 }
 
 #[async_trait]
@@ -86,6 +94,46 @@ impl Api for RpcClient {
 		let res = self
 			.client
 			.request("system_version", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain name
+	async fn chain(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_chain", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain type
+	async fn chain_type(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_chainType", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain health status
+	async fn health(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_health", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain sync status
+	async fn sync_state(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_syncState", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
