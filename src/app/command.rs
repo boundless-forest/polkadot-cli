@@ -41,13 +41,22 @@ pub enum RpcCommand {
 #[command(name = "chain")]
 pub enum ChainCommand {
 	/// Get the chain block
-	GetBlock { hash: String },
+	GetBlock {
+		#[arg(long)]
+		hash: String,
+	},
 	/// Get the block hash
-	GetBlockHash { number: u32 },
+	GetBlockHash {
+		#[arg(long)]
+		number: u32,
+	},
 	/// Get the finalized head hash
 	GetFinalizedHead,
 	/// Get the header for a specific block
-	GetHeader { hash: String },
+	GetHeader {
+		#[arg(long)]
+		hash: String,
+	},
 }
 
 #[derive(Subcommand, Clone, Debug)]
