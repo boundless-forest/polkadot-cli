@@ -17,18 +17,26 @@ pub enum AppCommand {
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "rpc")]
 pub enum RpcCommand {
-	/// Get block by hash
-	ChainBlockByHash { hash: String, number: u8 },
-	/// Get block header
-	ChainHeader { hash: String },
 	/// Get RPC methods
-	RpcMethods,
-	/// Get System Name
+	// RpcMethods,
+	/// Get the node name
 	SysName,
 	/// Get System Properties
 	SysProperties,
 	/// Get System Version
 	SysVersion,
+	/// Get the chain
+	Chain,
+	/// Get the chain type
+	ChainType,
+	/// Get the health status of the node
+	Health,
+	/// Get the state of the syncing of the node
+	SyncState,
+	/// Get block by hash
+	ChainBlockByHash { hash: String, number: u8 },
+	/// Get block header
+	ChainHeader { hash: String },
 }
 
 #[derive(Subcommand, Clone, Debug)]

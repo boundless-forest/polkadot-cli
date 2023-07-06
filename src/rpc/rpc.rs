@@ -2,12 +2,18 @@
 use std::sync::Arc;
 // crates.io
 use async_trait::async_trait;
+use colored::Colorize;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
+use serde::Serialize;
 // this crate
+use super::{
+	api::SystemApi,
+	types::{ChainType, Health, Properties},
+};
 use crate::errors::RpcError;
 
 /// RPC result type.
@@ -38,24 +44,12 @@ impl RpcClient {
 }
 
 #[async_trait]
-pub trait Api {
-	/// Get the node RPC methods.
-	async fn rpc_methods(&self) -> RpcResult<Vec<String>>;
-	/// Get the node name.
-	async fn system_name(&self) -> RpcResult<String>;
-	/// Get the node properties.
-	async fn system_properties(&self) -> RpcResult<String>;
-	/// Get the node version.
-	async fn system_version(&self) -> RpcResult<String>;
-}
-
-#[async_trait]
-impl Api for RpcClient {
+impl SystemApi for RpcClient {
 	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>> {
 		let res = self
 			.client
-			.request("system_name", rpc_params![])
+			.request("rpc_methods", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
@@ -72,10 +66,10 @@ impl Api for RpcClient {
 	}
 
 	/// Get the node properties.
-	async fn system_properties(&self) -> RpcResult<String> {
+	async fn system_properties(&self) -> RpcResult<Properties> {
 		let res = self
 			.client
-			.request("system_name", rpc_params![])
+			.request("system_properties", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
@@ -89,5 +83,54 @@ impl Api for RpcClient {
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
+	}
+
+	/// Get the chain name
+	async fn chain(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_chain", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain type
+	async fn chain_type(&self) -> RpcResult<ChainType> {
+		let res = self
+			.client
+			.request("system_chainType", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain health status
+	async fn health(&self) -> RpcResult<Health> {
+		let res = self
+			.client
+			.request("system_health", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the chain sync status
+	async fn sync_state(&self) -> RpcResult<String> {
+		let res = self
+			.client
+			.request("system_syncState", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+}
+
+/// Print the result in JSON format.
+pub fn print_format_json<T: Serialize>(data: T) {
+	if let Ok(data) = serde_json::to_string_pretty(&data) {
+		println!("{}", data.italic().bright_magenta());
+	} else {
+		println!("{}", "Failed to format JSON".italic().bright_magenta());
 	}
 }
