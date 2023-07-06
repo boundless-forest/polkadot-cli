@@ -4,7 +4,7 @@ use colored::Colorize;
 use crate::{
 	command::{AppCommand, RpcCommand},
 	errors::{AppError, HandlerError},
-	rpc::{Api, RpcClient},
+	rpc::{RpcClient, SystemApi},
 };
 
 pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<(), AppError> {
@@ -13,10 +13,10 @@ pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<
 			println!("Switch network implementation");
 		},
 		AppCommand::Rpc(rpc_commands) => match rpc_commands {
-			RpcCommand::RpcMethods => {
-				let res = client.rpc_methods().await?;
-				println!("{:?}", res);
-			},
+			// RpcCommand::RpcMethods => {
+			// 	let res = client.rpc_methods().await?;
+			// 	println!("{:?}", res);
+			// },
 			RpcCommand::SysName => {
 				let res = client.system_name().await?;
 				println!("{:?}", res);

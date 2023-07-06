@@ -18,7 +18,7 @@ pub enum AppCommand {
 #[command(name = "rpc")]
 pub enum RpcCommand {
 	/// Get RPC methods
-	RpcMethods,
+	// RpcMethods,
 	/// Get the node name
 	SysName,
 	/// Get System Properties

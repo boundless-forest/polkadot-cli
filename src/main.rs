@@ -3,6 +3,7 @@ mod errors;
 mod handler;
 mod helper;
 mod rpc;
+mod types;
 
 // 1. Setup node: ./target/release/node-template --dev --tmp --rpc-methods=Unsafe --rpc-cors all
 // --rpc-external --ws-external 2: ws://192.168.31.52:9944

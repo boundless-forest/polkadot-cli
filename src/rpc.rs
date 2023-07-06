@@ -8,7 +8,10 @@ use jsonrpsee::{
 	rpc_params,
 };
 // this crate
-use crate::errors::RpcError;
+use crate::{
+	errors::RpcError,
+	types::{ChainType, Health, Properties},
+};
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
@@ -38,32 +41,32 @@ impl RpcClient {
 }
 
 #[async_trait]
-pub trait Api {
+pub trait SystemApi {
 	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>>;
 	/// Get the node name.
 	async fn system_name(&self) -> RpcResult<String>;
 	/// Get the node properties.
-	async fn system_properties(&self) -> RpcResult<String>;
+	async fn system_properties(&self) -> RpcResult<Properties>;
 	/// Get the node version.
 	async fn system_version(&self) -> RpcResult<String>;
 	/// Get the chain name
 	async fn chain(&self) -> RpcResult<String>;
 	/// Get the chain type
-	async fn chain_type(&self) -> RpcResult<String>;
+	async fn chain_type(&self) -> RpcResult<ChainType>;
 	/// Get the chain health status
-	async fn health(&self) -> RpcResult<String>;
+	async fn health(&self) -> RpcResult<Health>;
 	/// Get the chain sync status
 	async fn sync_state(&self) -> RpcResult<String>;
 }
 
 #[async_trait]
-impl Api for RpcClient {
+impl SystemApi for RpcClient {
 	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>> {
 		let res = self
 			.client
-			.request("system_name", rpc_params![])
+			.request("rpc_methods", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
@@ -80,10 +83,10 @@ impl Api for RpcClient {
 	}
 
 	/// Get the node properties.
-	async fn system_properties(&self) -> RpcResult<String> {
+	async fn system_properties(&self) -> RpcResult<Properties> {
 		let res = self
 			.client
-			.request("system_name", rpc_params![])
+			.request("system_properties", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
@@ -110,7 +113,7 @@ impl Api for RpcClient {
 	}
 
 	/// Get the chain type
-	async fn chain_type(&self) -> RpcResult<String> {
+	async fn chain_type(&self) -> RpcResult<ChainType> {
 		let res = self
 			.client
 			.request("system_chainType", rpc_params![])
@@ -120,7 +123,7 @@ impl Api for RpcClient {
 	}
 
 	/// Get the chain health status
-	async fn health(&self) -> RpcResult<String> {
+	async fn health(&self) -> RpcResult<Health> {
 		let res = self
 			.client
 			.request("system_health", rpc_params![])
