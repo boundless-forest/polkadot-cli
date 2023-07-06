@@ -11,6 +11,8 @@ pub enum AppCommand {
 	/// RPC interfaces
 	#[command(subcommand)]
 	Rpc(RpcCommand),
+	#[command(subcommand)]
+	Chain(ChainCommand),
 	// TODO: ADD HELP COMMAND
 }
 
@@ -33,10 +35,28 @@ pub enum RpcCommand {
 	Health,
 	/// Get the state of the syncing of the node
 	SyncState,
-	/// Get block by hash
-	ChainBlockByHash { hash: String, number: u8 },
-	/// Get block header
-	ChainHeader { hash: String },
+}
+
+#[derive(Subcommand, Clone, Debug)]
+#[command(name = "chain")]
+pub enum ChainCommand {
+	/// Get the chain block
+	GetBlock {
+		#[arg(long)]
+		hash: String,
+	},
+	/// Get the block hash
+	GetBlockHash {
+		#[arg(long)]
+		number: u32,
+	},
+	/// Get the finalized head hash
+	GetFinalizedHead,
+	/// Get the header for a specific block
+	GetHeader {
+		#[arg(long)]
+		hash: String,
+	},
 }
 
 #[derive(Subcommand, Clone, Debug)]
