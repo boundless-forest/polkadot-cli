@@ -1,10 +1,12 @@
 mod node_template;
 
 pub use node_template::NoteTemplate;
+
+// std
+use std::{marker::Sync, str::FromStr};
+// crates.io
 use serde::Serialize;
 use sp_runtime::DeserializeOwned;
-
-use std::{marker::Sync, str::FromStr};
 
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {

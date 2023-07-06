@@ -12,7 +12,7 @@ use serde::Serialize;
 use sp_runtime::generic::SignedBlock;
 // this crate
 use super::{
-	api::{ChainApi, SystemApi},
+	api::{BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, SystemApi},
 	types::{ChainType, Health, Properties},
 };
 use crate::{errors::RpcError, networks::ChainInfo};
@@ -135,8 +135,8 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	/// Get the chain block
 	async fn get_block(
 		&self,
-		hash: <Self::ChainInfo as ChainInfo>::Hash,
-	) -> RpcResult<SignedBlock<<Self::ChainInfo as ChainInfo>::Block>> {
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<SignedBlock<BlockForChain<Self::ChainInfo>>> {
 		let res = self
 			.client
 			.request("chain_getBlock", rpc_params![hash])
@@ -148,8 +148,8 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	/// Get the block hash for a specific block
 	async fn get_block_hash(
 		&self,
-		number: <Self::ChainInfo as ChainInfo>::BlockNumber,
-	) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>> {
+		number: BlockNumberForChain<Self::ChainInfo>,
+	) -> RpcResult<Option<HashForChain<Self::ChainInfo>>> {
 		let res = self
 			.client
 			.request("chain_getBlockHash", rpc_params![number])
@@ -159,7 +159,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	}
 
 	/// Get the hash of the last finalized block in the canon chain
-	async fn get_finalized_head(&self) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>> {
+	async fn get_finalized_head(&self) -> RpcResult<Option<HashForChain<Self::ChainInfo>>> {
 		let res = self
 			.client
 			.request("chain_getFinalizedHead", rpc_params![])
@@ -171,8 +171,8 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	/// Retrieves the header for a specific block
 	async fn get_header(
 		&self,
-		hash: <Self::ChainInfo as ChainInfo>::Hash,
-	) -> RpcResult<<Self::ChainInfo as ChainInfo>::Header> {
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<HeaderForChain<Self::ChainInfo>> {
 		let res = self
 			.client
 			.request("chain_getHeader", rpc_params![hash])

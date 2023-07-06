@@ -1,4 +1,4 @@
-// crates.io
+// std
 use std::str::FromStr;
 // this crate
 use crate::{

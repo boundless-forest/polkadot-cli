@@ -4,9 +4,6 @@ mod handler;
 mod networks;
 mod rpc;
 
-// 1. Setup node: ./target/release/node-template --dev --tmp --rpc-methods=Unsafe --rpc-cors all
-// --rpc-external --ws-external 2: ws://192.168.31.52:9944
-
 // crates.io
 use clap::Parser;
 use colored::Colorize;

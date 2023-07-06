@@ -8,6 +8,15 @@ use super::{
 };
 use crate::networks::ChainInfo;
 
+/// Hash type fot the chain
+pub type HashForChain<T> = <T as ChainInfo>::Hash;
+/// Block number type fot the chain
+pub type BlockNumberForChain<T> = <T as ChainInfo>::BlockNumber;
+/// Header type fot the chain
+pub type HeaderForChain<T> = <T as ChainInfo>::Header;
+/// Block type fot the chain
+pub type BlockForChain<T> = <T as ChainInfo>::Block;
+
 /// The System API provides access to common system functions.
 #[async_trait]
 pub trait SystemApi {
@@ -38,21 +47,21 @@ pub trait ChainApi {
 	/// Get the chain block
 	async fn get_block(
 		&self,
-		hash: <Self::ChainInfo as ChainInfo>::Hash,
+		hash: HashForChain<Self::ChainInfo>,
 	) -> RpcResult<SignedBlock<<Self::ChainInfo as ChainInfo>::Block>>;
 
 	/// Get the block hash for a specific block
 	async fn get_block_hash(
 		&self,
-		number: <Self::ChainInfo as ChainInfo>::BlockNumber,
+		number: BlockNumberForChain<Self::ChainInfo>,
 	) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>>;
 
 	/// Get the hash of the last finalized block in the canon chain
-	async fn get_finalized_head(&self) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>>;
+	async fn get_finalized_head(&self) -> RpcResult<Option<HashForChain<Self::ChainInfo>>>;
 
 	/// Retrieves the header for a specific block
 	async fn get_header(
 		&self,
-		hash: <Self::ChainInfo as ChainInfo>::Hash,
-	) -> RpcResult<<Self::ChainInfo as ChainInfo>::Header>;
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<HeaderForChain<Self::ChainInfo>>;
 }
