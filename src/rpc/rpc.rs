@@ -8,10 +8,11 @@ use jsonrpsee::{
 	rpc_params,
 };
 // this crate
-use crate::{
-	errors::RpcError,
+use super::{
+	api::SystemApi,
 	types::{ChainType, Health, Properties},
 };
+use crate::errors::RpcError;
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
@@ -38,26 +39,6 @@ impl RpcClient {
 	pub async fn with_default_url() -> RpcResult<Self> {
 		Self::new("ws://127.0.0.1:9944").await
 	}
-}
-
-#[async_trait]
-pub trait SystemApi {
-	/// Get the node RPC methods.
-	async fn rpc_methods(&self) -> RpcResult<Vec<String>>;
-	/// Get the node name.
-	async fn system_name(&self) -> RpcResult<String>;
-	/// Get the node properties.
-	async fn system_properties(&self) -> RpcResult<Properties>;
-	/// Get the node version.
-	async fn system_version(&self) -> RpcResult<String>;
-	/// Get the chain name
-	async fn chain(&self) -> RpcResult<String>;
-	/// Get the chain type
-	async fn chain_type(&self) -> RpcResult<ChainType>;
-	/// Get the chain health status
-	async fn health(&self) -> RpcResult<Health>;
-	/// Get the chain sync status
-	async fn sync_state(&self) -> RpcResult<String>;
 }
 
 #[async_trait]
