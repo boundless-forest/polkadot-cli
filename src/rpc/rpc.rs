@@ -2,6 +2,7 @@
 use std::sync::Arc;
 // crates.io
 use async_trait::async_trait;
+use colored::Colorize;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
@@ -125,6 +126,11 @@ impl SystemApi for RpcClient {
 	}
 }
 
-pub fn format_json_output<T: Serialize>(data: T) -> Result<String, RpcError> {
-	serde_json::to_string_pretty(&data).map_err(|_| RpcError::JsonFormatFailed)
+/// Print the result in JSON format.
+pub fn print_format_json<T: Serialize>(data: T) {
+	if let Ok(data) = serde_json::to_string_pretty(&data) {
+		println!("{}", data.italic().bright_magenta());
+	} else {
+		println!("{}", "Failed to format JSON".italic().bright_magenta());
+	}
 }
