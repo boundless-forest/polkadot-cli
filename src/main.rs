@@ -1,7 +1,6 @@
-mod command;
+mod app;
 mod errors;
 mod handler;
-mod helper;
 mod rpc;
 
 // 1. Setup node: ./target/release/node-template --dev --tmp --rpc-methods=Unsafe --rpc-cors all
@@ -10,11 +9,13 @@ mod rpc;
 // crates.io
 use clap::Parser;
 use colored::Colorize;
-use helper::{load_history, print_info, this_crate_editor};
 use rpc::RpcClient;
 use rustyline::error::ReadlineError;
 // this crate
-use crate::{command::AppCommand, errors::AppError};
+use crate::{
+	app::{load_history, print_info, this_crate_editor, AppCommand},
+	errors::AppError,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {

@@ -19,7 +19,8 @@ use rustyline::{
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
 // this crate
-use crate::{command::AppCommand, errors::AppError};
+use super::command::AppCommand;
+use crate::errors::AppError;
 
 const ESCAPE_CHAR: Option<char> = Some('\\');
 const fn default_break_chars(c: char) -> bool {

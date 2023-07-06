@@ -2,7 +2,7 @@
 use colored::Colorize;
 // this crate
 use crate::{
-	command::{AppCommand, RpcCommand},
+	app::{AppCommand, RpcCommand},
 	errors::{AppError, HandlerError},
 	rpc::{RpcClient, SystemApi},
 };
