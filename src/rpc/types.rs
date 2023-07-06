@@ -1,5 +1,6 @@
 // crates.io
 use serde::{Deserialize, Serialize};
+use sp_core::H256;
 
 /// Arbitrary properties defined in chain spec as a JSON object
 // https://github.com/paritytech/substrate/blob/c172d0f683fab3792b90d876fd6ca27056af9fe9/client/chain-spec/src/lib.rs#L215-L216

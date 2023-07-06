@@ -4,10 +4,14 @@ use colored::Colorize;
 use crate::{
 	app::{AppCommand, RpcCommand},
 	errors::{AppError, HandlerError},
+	networks::ChainInfo,
 	rpc::{print_format_json, RpcClient, SystemApi},
 };
 
-pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<(), AppError> {
+pub async fn handle_commands<CI: ChainInfo>(
+	command: AppCommand,
+	client: &RpcClient<CI>,
+) -> Result<(), AppError> {
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			println!("Switch network implementation");

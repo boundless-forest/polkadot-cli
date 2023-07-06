@@ -1,5 +1,5 @@
 // std
-use std::sync::Arc;
+use std::{marker::PhantomData, sync::Arc};
 // crates.io
 use async_trait::async_trait;
 use colored::Colorize;
@@ -9,23 +9,25 @@ use jsonrpsee::{
 	rpc_params,
 };
 use serde::Serialize;
+use sp_runtime::generic::SignedBlock;
 // this crate
 use super::{
-	api::SystemApi,
+	api::{ChainApi, SystemApi},
 	types::{ChainType, Health, Properties},
 };
-use crate::errors::RpcError;
+use crate::{errors::RpcError, networks::ChainInfo};
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
 
 /// RPC client.
 #[derive(Clone)]
-pub struct RpcClient {
+pub struct RpcClient<CI> {
 	pub client: Arc<Client>,
+	_chain_info: PhantomData<CI>,
 }
 
-impl RpcClient {
+impl<CI: ChainInfo> RpcClient<CI> {
 	/// Create a new RPC client with given URL.
 	pub async fn new(url: &str) -> RpcResult<Self> {
 		let uri: Uri = format!("ws://{}", url).parse().map_err(|_| RpcError::InvalidUri)?;
@@ -34,7 +36,7 @@ impl RpcClient {
 			.await
 			.map_err(|_| RpcError::WsHandshakeError)?;
 		let client = ClientBuilder::default().build_with_tokio(tx, rx);
-		Ok(Self { client: Arc::new(client) })
+		Ok(Self { client: Arc::new(client), _chain_info: PhantomData })
 	}
 
 	/// Create a new RPC client with default URL.
@@ -44,7 +46,7 @@ impl RpcClient {
 }
 
 #[async_trait]
-impl SystemApi for RpcClient {
+impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 	/// Get the node RPC methods.
 	async fn rpc_methods(&self) -> RpcResult<Vec<String>> {
 		let res = self
@@ -120,6 +122,60 @@ impl SystemApi for RpcClient {
 		let res = self
 			.client
 			.request("system_syncState", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+}
+
+#[async_trait]
+impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
+	type ChainInfo = CI;
+
+	/// Get the chain block
+	async fn get_block(
+		&self,
+		hash: <Self::ChainInfo as ChainInfo>::Hash,
+	) -> RpcResult<SignedBlock<<Self::ChainInfo as ChainInfo>::Block>> {
+		let res = self
+			.client
+			.request("chain_getBlock", rpc_params![hash])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the block hash for a specific block
+	async fn get_block_hash(
+		&self,
+		number: <Self::ChainInfo as ChainInfo>::BlockNumber,
+	) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>> {
+		let res = self
+			.client
+			.request("chain_getBlockHash", rpc_params![number])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the hash of the last finalized block in the canon chain
+	async fn get_finalized_head(&self) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>> {
+		let res = self
+			.client
+			.request("chain_getFinalizedHead", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Retrieves the header for a specific block
+	async fn get_header(
+		&self,
+		hash: <Self::ChainInfo as ChainInfo>::Hash,
+	) -> RpcResult<<Self::ChainInfo as ChainInfo>::Header> {
+		let res = self
+			.client
+			.request("chain_getHeader", rpc_params![hash])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)

@@ -1,6 +1,7 @@
 mod app;
 mod errors;
 mod handler;
+mod networks;
 mod rpc;
 
 // 1. Setup node: ./target/release/node-template --dev --tmp --rpc-methods=Unsafe --rpc-cors all
@@ -15,6 +16,7 @@ use rustyline::error::ReadlineError;
 use crate::{
 	app::{load_history, print_info, this_crate_editor, AppCommand},
 	errors::AppError,
+	networks::NoteTemplate,
 };
 
 #[tokio::main]
@@ -24,7 +26,7 @@ async fn main() -> Result<(), AppError> {
 	editor.load_history(&history_file).map_err(AppError::Readline)?;
 
 	// TODO: FIX THE URI
-	let rpc_client = RpcClient::new("192.168.31.52:9944").await?;
+	let rpc_client = RpcClient::<NoteTemplate>::new("192.168.31.52:9944").await?;
 
 	print_info();
 	loop {
