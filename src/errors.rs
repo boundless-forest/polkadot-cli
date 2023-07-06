@@ -27,8 +27,6 @@ pub enum RpcError {
 	InvalidUri,
 	WsHandshakeError,
 	JsonRpseeError(Error),
-	InvalidRpcCommand,
-	JsonFormatFailed,
 }
 
 impl From<RpcError> for AppError {
