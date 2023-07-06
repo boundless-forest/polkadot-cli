@@ -4,14 +4,14 @@ pub use node_template::NoteTemplate;
 use serde::Serialize;
 use sp_runtime::DeserializeOwned;
 
-use std::marker::Sync;
+use std::{marker::Sync, str::FromStr};
 
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {
 	/// The hash type of the chain
-	type Hash: Serialize + DeserializeOwned + Send;
+	type Hash: Serialize + DeserializeOwned + Send + FromStr;
 	/// The block number type of the chain
-	type BlockNumber: Serialize + DeserializeOwned + Send;
+	type BlockNumber: Serialize + DeserializeOwned + Send + From<u32>;
 	/// The header type of the chain
 	type Header: Serialize + DeserializeOwned;
 	/// The block type of the chain

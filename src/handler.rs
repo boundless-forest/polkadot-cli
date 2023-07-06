@@ -1,22 +1,27 @@
 // crates.io
 use colored::Colorize;
+use sp_runtime::SaturatedConversion;
+use std::str::FromStr;
 // this crate
 use crate::{
-	app::{AppCommand, RpcCommand},
-	errors::{AppError, HandlerError},
+	app::{AppCommand, ChainCommand, RpcCommand},
+	errors::{AppError, HandlerError, RpcError},
 	networks::ChainInfo,
-	rpc::{print_format_json, RpcClient, SystemApi},
+	rpc::{print_format_json, ChainApi, RpcClient, SystemApi},
 };
 
 pub async fn handle_commands<CI: ChainInfo>(
 	command: AppCommand,
 	client: &RpcClient<CI>,
 ) -> Result<(), AppError> {
+	const invalid_command: &'static str =
+		"Invalid RPC command, please check your command and params";
+
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			println!("Switch network implementation");
 		},
-		AppCommand::Rpc(rpc_commands) => match rpc_commands {
+		AppCommand::Rpc(sub_commands) => match sub_commands {
 			// RpcCommand::RpcMethods => {
 			// 	let res = client.rpc_methods().await?;
 			// 	println!("{:?}", res);
@@ -49,21 +54,32 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let res = client.sync_state().await?;
 				print_format_json(res);
 			},
-			RpcCommand::ChainBlockByHash { hash, number } => {
-				println!("ChainBlockByHash implementation, hash: {}, number: {}", hash, number);
+		},
+		AppCommand::Chain(sub_command) => match sub_command {
+			ChainCommand::GetBlock { hash } => {
+				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
+					.map_err(|_| RpcError::InvalidCommandParams)?;
+				let res = client.get_block(hash).await?;
+				print_format_json(res);
 			},
-			RpcCommand::ChainHeader { hash } => {
-				println!("ChainHeader implementation, hash: {}", hash);
+			ChainCommand::GetBlockHash { number } => {
+				let number: <CI as ChainInfo>::BlockNumber = number.into();
+				let res = client.get_block_hash(number).await?;
+				print_format_json(res);
 			},
-			_ => {
-				println!(
-					"{}",
-					"Invalid RPC command, please check your command and input params".red()
-				);
+			ChainCommand::GetFinalizedHead => {
+				let res = client.get_finalized_head().await?;
+				print_format_json(res);
+			},
+			ChainCommand::GetHeader { hash } => {
+				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
+					.map_err(|_| RpcError::InvalidCommandParams)?;
+				let res = client.get_header(hash).await?;
+				print_format_json(res);
 			},
 		},
 		_ => {
-			eprintln!("{}", "Invalid command, please check your command and input params".red());
+			print_format_json(invalid_command);
 			return Err(HandlerError::UnknownAppCommand.into());
 		},
 	}
