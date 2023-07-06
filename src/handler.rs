@@ -4,7 +4,7 @@ use colored::Colorize;
 use crate::{
 	app::{AppCommand, RpcCommand},
 	errors::{AppError, HandlerError},
-	rpc::{RpcClient, SystemApi},
+	rpc::{format_json_output, RpcClient, SystemApi},
 };
 
 pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<(), AppError> {
@@ -23,7 +23,7 @@ pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<
 			},
 			RpcCommand::SysProperties => {
 				let res = client.system_properties().await?;
-				println!("{:?}", res);
+				println!("{}", format_json_output(res)?);
 			},
 			RpcCommand::SysVersion => {
 				let res = client.system_version().await?;
@@ -35,15 +35,15 @@ pub async fn handle_commands(command: AppCommand, client: &RpcClient) -> Result<
 			},
 			RpcCommand::ChainType => {
 				let res = client.chain_type().await?;
-				println!("{:?}", res);
+				println!("{}", format_json_output(res)?);
 			},
 			RpcCommand::Health => {
 				let res = client.health().await?;
-				println!("{:?}", res);
+				println!("{}", format_json_output(res)?);
 			},
 			RpcCommand::SyncState => {
 				let res = client.sync_state().await?;
-				println!("{:?}", res);
+				println!("{}", format_json_output(res)?);
 			},
 			RpcCommand::ChainBlockByHash { hash, number } => {
 				println!("ChainBlockByHash implementation, hash: {}, number: {}", hash, number);

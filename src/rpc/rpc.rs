@@ -7,6 +7,7 @@ use jsonrpsee::{
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
+use serde::Serialize;
 // this crate
 use super::{
 	api::SystemApi,
@@ -122,4 +123,8 @@ impl SystemApi for RpcClient {
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
 	}
+}
+
+pub fn format_json_output<T: Serialize>(data: T) -> Result<String, RpcError> {
+	serde_json::to_string_pretty(&data).map_err(|_| RpcError::JsonFormatFailed)
 }
