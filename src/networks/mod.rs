@@ -1,6 +1,9 @@
 mod node_template;
+// Darwinia
+mod pangolin;
 
 pub use node_template::NoteTemplate;
+pub use pangolin::PangolinChain;
 
 // std
 use std::{marker::Sync, str::FromStr};
