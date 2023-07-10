@@ -12,7 +12,7 @@ use rustyline::error::ReadlineError;
 // this crate
 use crate::{
 	app::{load_history, print_info, this_crate_editor, AppCommand},
-	errors::AppError,
+	errors::{AppError, RpcError},
 	networks::{NoteTemplate, PangolinChain},
 };
 
@@ -22,9 +22,8 @@ async fn main() -> Result<(), AppError> {
 	let history_file = load_history()?;
 	editor.load_history(&history_file).map_err(AppError::Readline)?;
 
-	// TODO: FIX THE URI
-	// let rpc_client = RpcClient::<PangolinChain>::new("192.168.31.52:9944").await?;
-	let rpc_client = RpcClient::<PangolinChain>::new("wss://pangolin-rpc.darwinia.network").await?;
+	let uri = "wss://rpc.darwinia.network:443".parse().map_err(|_| RpcError::InvalidUri)?;
+	let rpc_client = RpcClient::<PangolinChain>::new(uri).await?;
 
 	print_info();
 	loop {

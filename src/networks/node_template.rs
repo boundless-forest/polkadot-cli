@@ -15,4 +15,6 @@ impl ChainInfo for NoteTemplate {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+
+	const WS_END_POINT: &'static str = "ws://127.0.0.1:9944";
 }

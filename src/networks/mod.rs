@@ -1,9 +1,8 @@
+mod darwinia;
 mod node_template;
-// Darwinia
-mod pangolin;
 
+pub use darwinia::{CrabChain, DarwiniaChain, PangolinChain, PangoroChain};
 pub use node_template::NoteTemplate;
-pub use pangolin::PangolinChain;
 
 // std
 use std::{marker::Sync, str::FromStr};
@@ -13,6 +12,9 @@ use sp_runtime::DeserializeOwned;
 
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {
+	// The ws endpoint of the chain
+	const WS_END_POINT: &'static str;
+
 	/// The hash type of the chain
 	type Hash: Serialize + DeserializeOwned + Send + FromStr;
 	/// The block number type of the chain

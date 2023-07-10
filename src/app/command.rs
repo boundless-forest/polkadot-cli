@@ -62,6 +62,12 @@ pub enum ChainCommand {
 #[derive(Subcommand, Clone, Debug)]
 pub enum Network {
 	Local,
+	// parity
 	Polkadot,
 	Kusama,
+	// Darwinia
+	Pangolin,
+	Pangoro,
+	Darwinia,
+	Crab,
 }
