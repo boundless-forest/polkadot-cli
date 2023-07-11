@@ -15,7 +15,7 @@ use super::{
 	api::{BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, SystemApi},
 	types::{ChainType, Health, Properties},
 };
-use crate::{errors::RpcError, networks::ChainInfo};
+use crate::{app::Config, errors::RpcError, networks::ChainInfo};
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
@@ -24,24 +24,24 @@ pub type RpcResult<T> = Result<T, RpcError>;
 #[derive(Clone)]
 pub struct RpcClient<CI> {
 	pub client: Arc<Client>,
+	pub config: Config,
 	_chain_info: PhantomData<CI>,
 }
 
 impl<CI: ChainInfo> RpcClient<CI> {
 	/// Create a new RPC client with given URL.
-	pub async fn new(uri: Uri) -> RpcResult<Self> {
+	pub async fn new(config: Config) -> RpcResult<Self> {
 		let (tx, rx) = WsTransportClientBuilder::default()
-			.build(uri)
+			.build(Uri::from_static(<CI as ChainInfo>::WS_END_POINT))
 			.await
 			.map_err(|e| RpcError::WsHandshakeError)?;
 		let client = ClientBuilder::default().build_with_tokio(tx, rx);
-		Ok(Self { client: Arc::new(client), _chain_info: PhantomData })
+		Ok(Self { client: Arc::new(client), config, _chain_info: PhantomData })
 	}
 
 	/// Create a new RPC client with default URL.
 	pub async fn with_default_url() -> RpcResult<Self> {
-		let default: Uri = "ws://127.0.0.1:9944".parse().map_err(|_| RpcError::InvalidUri)?;
-		Self::new(default).await
+		Self::new(Config { network: crate::app::Network::Local }).await
 	}
 }
 

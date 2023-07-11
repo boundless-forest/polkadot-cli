@@ -22,8 +22,9 @@ async fn main() -> Result<(), AppError> {
 	let history_file = load_history()?;
 	editor.load_history(&history_file).map_err(AppError::Readline)?;
 
-	let uri = "wss://rpc.darwinia.network:443".parse().map_err(|_| RpcError::InvalidUri)?;
-	let rpc_client = RpcClient::<PangolinChain>::new(uri).await?;
+	// TODO: fix the unwrap()
+	let config = editor.helper().unwrap().config();
+	let rpc_client = RpcClient::<PangolinChain>::new(config).await?;
 
 	print_info();
 	loop {

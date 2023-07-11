@@ -7,6 +7,7 @@ use sp_runtime::{
 };
 // this crate
 use super::ChainInfo;
+use crate::app::Network;
 
 pub struct PangolinChain;
 
@@ -16,6 +17,7 @@ impl ChainInfo for PangolinChain {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
+	const NET_WORK: Network = Network::Pangolin;
 	const WS_END_POINT: &'static str = "wss://pangolin-rpc.darwinia.network:443";
 }
 
@@ -27,6 +29,7 @@ impl ChainInfo for PangoroChain {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
+	const NET_WORK: Network = Network::Pangoro;
 	const WS_END_POINT: &'static str = "wss://pangoro-rpc.darwinia.network:443";
 }
 
@@ -38,6 +41,7 @@ impl ChainInfo for CrabChain {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
+	const NET_WORK: Network = Network::Crab;
 	const WS_END_POINT: &'static str = "wss://crab-rpc.darwinia.network:443";
 }
 
@@ -49,5 +53,6 @@ impl ChainInfo for DarwiniaChain {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
+	const NET_WORK: Network = Network::Pangolin;
 	const WS_END_POINT: &'static str = "wss://rpc.darwinia.network:443";
 }

@@ -7,6 +7,7 @@ use sp_runtime::{
 };
 // this crate
 use super::ChainInfo;
+use crate::app::Network;
 
 pub struct NoteTemplate;
 
@@ -16,5 +17,6 @@ impl ChainInfo for NoteTemplate {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
+	const NET_WORK: Network = Network::Local;
 	const WS_END_POINT: &'static str = "ws://127.0.0.1:9944";
 }

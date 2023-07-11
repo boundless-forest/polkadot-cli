@@ -1,5 +1,8 @@
+use std::default;
+
 // crates.io
 use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -59,7 +62,7 @@ pub enum ChainCommand {
 	},
 }
 
-#[derive(Subcommand, Clone, Debug)]
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize)]
 pub enum Network {
 	Local,
 	// parity
@@ -70,4 +73,10 @@ pub enum Network {
 	Pangoro,
 	Darwinia,
 	Crab,
+}
+
+impl Default for Network {
+	fn default() -> Self {
+		Network::Darwinia
+	}
 }

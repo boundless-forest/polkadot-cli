@@ -3,6 +3,7 @@ use std::{
 	borrow::Cow::{self, Owned},
 	fs,
 	fs::File,
+	io::Write,
 	iter,
 	path::PathBuf,
 };
@@ -18,9 +19,16 @@ use rustyline::{
 	validate::Validator,
 	ColorMode, CompletionType, Context, Editor, Helper,
 };
+use serde::{Deserialize, Serialize};
 // this crate
-use super::command::AppCommand;
+use super::command::{AppCommand, Network};
 use crate::errors::AppError;
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct Config {
+	#[serde(default)]
+	pub network: Network,
+}
 
 const ESCAPE_CHAR: Option<char> = Some('\\');
 const fn default_break_chars(c: char) -> bool {
@@ -73,7 +81,9 @@ pub fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHistory> 
 		.completion_type(CompletionType::List)
 		.build();
 
-	let editor_helper = CommandHelper::new(HistoryHinter {});
+	let mut editor_helper = CommandHelper::new(HistoryHinter {});
+	// TODO: fix the unwrap
+	editor_helper.load_config().unwrap();
 
 	let mut editor = Editor::with_history(config, FileHistory::new()).unwrap();
 	editor.set_helper(Some(editor_helper));
@@ -83,6 +93,7 @@ pub fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHistory> 
 pub struct CommandHelper<H> {
 	hinter: H,
 	command: Command,
+	config: Config,
 }
 
 impl<H> CommandHelper<H> {
@@ -92,7 +103,8 @@ impl<H> CommandHelper<H> {
 			.arg_required_else_help(true)
 			.no_binary_name(true);
 		let command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
-		Self { hinter, command }
+		let config = Config { network: Network::Darwinia };
+		Self { hinter, command, config }
 	}
 
 	fn prefix_command<'s, I: Iterator<Item = &'s str>>(
@@ -120,6 +132,34 @@ impl<H> CommandHelper<H> {
 		} else {
 			None
 		}
+	}
+
+	pub fn load_config(&mut self) -> Result<Config, AppError> {
+		// TODO: fix the unwrap()................
+		let mut config_dir = dirs::home_dir().unwrap();
+		config_dir.push(".suber");
+		if !config_dir.exists() {
+			fs::create_dir(config_dir.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
+		}
+		let config_file = config_dir.join("config.json");
+		if !config_file.is_file() {
+			let mut file = File::create(config_file.clone()).unwrap();
+
+			let config = Config::default();
+			let json_config = serde_json::to_string_pretty(&config).unwrap();
+			file.write_all(json_config.as_bytes()).unwrap();
+			return Ok(config);
+		}
+		let file = File::open(config_file).unwrap();
+		let config: Config = serde_json::from_reader(file).unwrap();
+
+		self.config = config.clone();
+
+		Ok(config)
+	}
+
+	pub fn config(&self) -> Config {
+		self.config.clone()
 	}
 }
 
