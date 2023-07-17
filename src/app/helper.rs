@@ -81,10 +81,7 @@ pub fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHistory> 
 		.completion_type(CompletionType::List)
 		.build();
 
-	let mut editor_helper = CommandHelper::new(HistoryHinter {});
-	// TODO: fix the unwrap
-	editor_helper.load_config().unwrap();
-
+	let editor_helper = CommandHelper::new(HistoryHinter {});
 	let mut editor = Editor::with_history(config, FileHistory::new()).unwrap();
 	editor.set_helper(Some(editor_helper));
 	editor
@@ -135,7 +132,6 @@ impl<H> CommandHelper<H> {
 	}
 
 	pub fn load_config(&mut self) -> Result<Config, AppError> {
-		// TODO: fix the unwrap()................
 		let mut config_dir = dirs::home_dir().unwrap();
 		config_dir.push(".suber");
 		if !config_dir.exists() {
@@ -156,6 +152,17 @@ impl<H> CommandHelper<H> {
 		self.config = config.clone();
 
 		Ok(config)
+	}
+
+	pub fn save_config(&mut self, config: Config) -> Result<(), AppError> {
+		let mut config_dir = dirs::home_dir().unwrap();
+		config_dir.push(".suber");
+		let config_file = config_dir.join("config.json");
+
+		let mut file = File::create(config_file).unwrap();
+		let json_config = serde_json::to_string_pretty(&config).unwrap();
+		file.write_all(json_config.as_bytes()).unwrap();
+		return Ok(());
 	}
 
 	pub fn config(&self) -> Config {

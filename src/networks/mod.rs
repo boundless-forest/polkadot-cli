@@ -1,7 +1,6 @@
 mod darwinia;
 mod node_template;
 
-use anyhow::Chain;
 pub use darwinia::{CrabChain, DarwiniaChain, PangolinChain, PangoroChain};
 pub use node_template::NoteTemplate;
 

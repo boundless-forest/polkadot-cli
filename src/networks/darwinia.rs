@@ -53,6 +53,6 @@ impl ChainInfo for DarwiniaChain {
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
-	const NET_WORK: Network = Network::Pangolin;
+	const NET_WORK: Network = Network::Darwinia;
 	const WS_END_POINT: &'static str = "wss://rpc.darwinia.network:443";
 }
