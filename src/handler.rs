@@ -2,9 +2,9 @@
 use std::str::FromStr;
 // this crate
 use crate::{
-	app::{AppCommand, ChainCommand, Network, RpcCommand},
+	app::{AppCommand, ChainCommand, RpcCommand},
 	errors::{AppError, RpcError},
-	networks::ChainInfo,
+	networks::{ChainInfo, Network},
 	rpc::{print_format_json, ChainApi, RpcClient, SystemApi},
 };
 

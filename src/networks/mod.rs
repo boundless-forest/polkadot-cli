@@ -6,10 +6,9 @@ pub use node_template::NoteTemplate;
 
 // std
 use std::{marker::Sync, str::FromStr};
-// this crate
-use crate::app::Network;
 // crates.io
-use serde::Serialize;
+use clap::Subcommand;
+use serde::{Deserialize, Serialize};
 use sp_runtime::DeserializeOwned;
 
 /// The ChainInfo API
@@ -28,4 +27,23 @@ pub trait ChainInfo: Sync + Send {
 	type Header: Serialize + DeserializeOwned;
 	/// The block type of the chain
 	type Block: Serialize + DeserializeOwned;
+}
+
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize)]
+pub enum Network {
+	Local,
+	// parity
+	Polkadot,
+	Kusama,
+	// Darwinia
+	Pangolin,
+	Pangoro,
+	Darwinia,
+	Crab,
+}
+
+impl Default for Network {
+	fn default() -> Self {
+		Network::Darwinia
+	}
 }

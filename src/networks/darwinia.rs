@@ -6,8 +6,7 @@ use sp_runtime::{
 	OpaqueExtrinsic as UncheckedExtrinsic,
 };
 // this crate
-use super::ChainInfo;
-use crate::app::Network;
+use super::{ChainInfo, Network};
 
 pub struct PangolinChain;
 

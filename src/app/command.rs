@@ -1,6 +1,6 @@
 // crates.io
+use crate::Network;
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -58,23 +58,4 @@ pub enum ChainCommand {
 		#[arg(long)]
 		hash: String,
 	},
-}
-
-#[derive(Subcommand, Clone, Debug, Serialize, Deserialize)]
-pub enum Network {
-	Local,
-	// parity
-	Polkadot,
-	Kusama,
-	// Darwinia
-	Pangolin,
-	Pangoro,
-	Darwinia,
-	Crab,
-}
-
-impl Default for Network {
-	fn default() -> Self {
-		Network::Darwinia
-	}
 }

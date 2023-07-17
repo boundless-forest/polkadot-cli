@@ -4,12 +4,11 @@ mod handler;
 mod networks;
 mod rpc;
 
-use app::Network;
 // crates.io
 use clap::Parser;
 use colored::Colorize;
 use handler::HandleResult;
-use networks::{ChainInfo, CrabChain, DarwiniaChain, PangoroChain};
+use networks::{ChainInfo, CrabChain, DarwiniaChain, Network, PangoroChain};
 use rpc::RpcClient;
 use rustyline::{error::ReadlineError, hint::HistoryHinter, history::FileHistory, Editor};
 // this crate

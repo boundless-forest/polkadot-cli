@@ -21,8 +21,8 @@ use rustyline::{
 };
 use serde::{Deserialize, Serialize};
 // this crate
-use super::command::{AppCommand, Network};
-use crate::errors::AppError;
+use super::command::AppCommand;
+use crate::{errors::AppError, networks::Network};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Config {
