@@ -201,7 +201,7 @@ impl<H: Hinter> Completer for CommandHelper<H> {
 		&self,
 		line: &str,
 		pos: usize,
-		ctx: &Context<'_>,
+		_ctx: &Context<'_>,
 	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
 		println!("");
 		// println!("=====> Completing: line: {}, pos: {}", line, pos);

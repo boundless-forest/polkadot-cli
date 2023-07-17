@@ -34,7 +34,7 @@ impl<CI: ChainInfo> RpcClient<CI> {
 		let (tx, rx) = WsTransportClientBuilder::default()
 			.build(Uri::from_static(<CI as ChainInfo>::WS_END_POINT))
 			.await
-			.map_err(|e| RpcError::WsHandshakeError)?;
+			.map_err(|_| RpcError::WsHandshakeError)?;
 		let client = ClientBuilder::default().build_with_tokio(tx, rx);
 		Ok(Self { client: Arc::new(client), config, _chain_info: PhantomData })
 	}

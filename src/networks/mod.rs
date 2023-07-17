@@ -29,22 +29,3 @@ pub trait ChainInfo: Sync + Send {
 	/// The block type of the chain
 	type Block: Serialize + DeserializeOwned;
 }
-
-pub enum Chains {
-	Local(NoteTemplate),
-	Pangolin(PangolinChain),
-	Pangoro(PangoroChain),
-	Crab(CrabChain),
-	Darwinia(DarwiniaChain),
-}
-
-pub fn chain_info(network: Network) -> Chains {
-	match network {
-		Network::Crab => Chains::Crab(CrabChain {}),
-		Network::Darwinia => Chains::Darwinia(DarwiniaChain {}),
-		Network::Pangolin => Chains::Pangolin(PangolinChain {}),
-		Network::Pangoro => Chains::Pangoro(PangoroChain {}),
-		Network::Local => Chains::Local(NoteTemplate {}),
-		_ => unreachable!(),
-	}
-}

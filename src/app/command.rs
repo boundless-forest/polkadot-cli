@@ -1,5 +1,3 @@
-use std::default;
-
 // crates.io
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
