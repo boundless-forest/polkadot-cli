@@ -29,7 +29,7 @@ async fn main() -> Result<(), AppError> {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
 		match config.network {
 			Network::Local => {
-				let rpc_client = RpcClient::<NoteTemplate>::new(config).await?;
+				let rpc_client = RpcClient::<NoteTemplate>::new().await?;
 				if let Ok(HandleResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
@@ -47,7 +47,7 @@ async fn main() -> Result<(), AppError> {
 				todo!();
 			},
 			Network::Crab => {
-				let rpc_client = RpcClient::<CrabChain>::new(config).await?;
+				let rpc_client = RpcClient::<CrabChain>::new().await?;
 				if let Ok(HandleResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
@@ -57,7 +57,7 @@ async fn main() -> Result<(), AppError> {
 				}
 			},
 			Network::Darwinia => {
-				let rpc_client = RpcClient::<DarwiniaChain>::new(config).await?;
+				let rpc_client = RpcClient::<DarwiniaChain>::new().await?;
 				if let Ok(HandleResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
@@ -67,7 +67,7 @@ async fn main() -> Result<(), AppError> {
 				}
 			},
 			Network::Pangolin => {
-				let rpc_client = RpcClient::<PangolinChain>::new(config).await?;
+				let rpc_client = RpcClient::<PangolinChain>::new().await?;
 				if let Ok(HandleResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
@@ -77,7 +77,7 @@ async fn main() -> Result<(), AppError> {
 				}
 			},
 			Network::Pangoro => {
-				let rpc_client = RpcClient::<PangoroChain>::new(config).await?;
+				let rpc_client = RpcClient::<PangoroChain>::new().await?;
 				if let Ok(HandleResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
