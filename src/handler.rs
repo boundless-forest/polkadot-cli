@@ -4,17 +4,27 @@ use std::str::FromStr;
 use crate::{
 	app::{AppCommand, ChainCommand, RpcCommand},
 	errors::{AppError, RpcError},
-	networks::ChainInfo,
+	networks::{ChainInfo, Network},
 	rpc::{print_format_json, ChainApi, RpcClient, SystemApi},
 };
+
+/// The APP's command execution result.
+pub enum ExecutionResult {
+	/// Switch to another network.
+	SwitchNetworkTo(Network),
+	/// Execute successfully.
+	Success,
+	/// Execute failed.
+	Exited,
+}
 
 pub async fn handle_commands<CI: ChainInfo>(
 	command: AppCommand,
 	client: &RpcClient<CI>,
-) -> Result<(), AppError> {
+) -> Result<ExecutionResult, AppError> {
 	match command {
-		AppCommand::SwitchNetwork(_network) => {
-			println!("Switch network implementation");
+		AppCommand::SwitchNetwork(network) => {
+			return Ok(ExecutionResult::SwitchNetworkTo(network));
 		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			// RpcCommand::RpcMethods => {
@@ -75,5 +85,5 @@ pub async fn handle_commands<CI: ChainInfo>(
 		},
 	}
 
-	Ok(())
+	Ok(ExecutionResult::Success)
 }

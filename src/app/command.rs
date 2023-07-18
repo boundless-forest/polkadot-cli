@@ -1,3 +1,5 @@
+// this crate
+use crate::Network;
 // crates.io
 use clap::{Parser, Subcommand};
 
@@ -57,11 +59,4 @@ pub enum ChainCommand {
 		#[arg(long)]
 		hash: String,
 	},
-}
-
-#[derive(Subcommand, Clone, Debug)]
-pub enum Network {
-	Local,
-	Polkadot,
-	Kusama,
 }
