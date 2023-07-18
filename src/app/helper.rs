@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 use super::command::AppCommand;
 use crate::{errors::AppError, networks::Network};
 
+/// The configuration of the App
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Config {
 	#[serde(default)]
@@ -94,14 +95,14 @@ pub struct CommandHelper<H> {
 }
 
 impl<H> CommandHelper<H> {
+	/// CommandHelper constructor
 	fn new(hinter: H) -> Self {
 		let init = Command::new("suber")
 			.subcommand_required(true)
 			.arg_required_else_help(true)
 			.no_binary_name(true);
 		let command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
-		let config = Config { network: Network::Darwinia };
-		Self { hinter, command, config }
+		Self { hinter, command, config: Config { network: Network::default() } }
 	}
 
 	fn prefix_command<'s, I: Iterator<Item = &'s str>>(
@@ -131,6 +132,7 @@ impl<H> CommandHelper<H> {
 		}
 	}
 
+	/// Load the config from file
 	pub fn load_config(&mut self) -> Result<Config, AppError> {
 		let mut config_dir = dirs::home_dir().unwrap();
 		config_dir.push(".suber");
@@ -154,6 +156,7 @@ impl<H> CommandHelper<H> {
 		Ok(config)
 	}
 
+	/// Save the config to file
 	pub fn save_config(&mut self, config: Config) -> Result<(), AppError> {
 		let mut config_dir = dirs::home_dir().unwrap();
 		config_dir.push(".suber");
@@ -165,6 +168,7 @@ impl<H> CommandHelper<H> {
 		return Ok(());
 	}
 
+	/// Get the config
 	pub fn config(&self) -> Config {
 		self.config.clone()
 	}

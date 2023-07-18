@@ -31,16 +31,11 @@ impl<CI: ChainInfo> RpcClient<CI> {
 	/// Create a new RPC client with given URL.
 	pub async fn new() -> RpcResult<Self> {
 		let (tx, rx) = WsTransportClientBuilder::default()
-			.build(Uri::from_static(<CI as ChainInfo>::WS_END_POINT))
+			.build(Uri::from_static(<CI as ChainInfo>::WS_PORT))
 			.await
 			.map_err(|_| RpcError::WsHandshakeError)?;
 		let client = ClientBuilder::default().build_with_tokio(tx, rx);
 		Ok(Self { client: Arc::new(client), _chain_info: PhantomData })
-	}
-
-	/// Create a new RPC client with default URL.
-	pub async fn with_default_url() -> RpcResult<Self> {
-		Self::new().await
 	}
 }
 

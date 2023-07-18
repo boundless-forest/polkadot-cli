@@ -14,9 +14,8 @@ use sp_runtime::DeserializeOwned;
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {
 	/// The ws endpoint of the chain
-	const WS_END_POINT: &'static str;
+	const WS_PORT: &'static str;
 	/// The network name of this chain
-	// TODO: FIX ME
 	const NET_WORK: Network;
 
 	/// The hash type of the chain

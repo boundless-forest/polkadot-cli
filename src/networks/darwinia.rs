@@ -17,7 +17,7 @@ impl ChainInfo for PangolinChain {
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
 	const NET_WORK: Network = Network::Pangolin;
-	const WS_END_POINT: &'static str = "wss://pangolin-rpc.darwinia.network:443";
+	const WS_PORT: &'static str = "wss://pangolin-rpc.darwinia.network:443";
 }
 
 pub struct PangoroChain;
@@ -29,7 +29,7 @@ impl ChainInfo for PangoroChain {
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
 	const NET_WORK: Network = Network::Pangoro;
-	const WS_END_POINT: &'static str = "wss://pangoro-rpc.darwinia.network:443";
+	const WS_PORT: &'static str = "wss://pangoro-rpc.darwinia.network:443";
 }
 
 pub struct CrabChain;
@@ -41,7 +41,7 @@ impl ChainInfo for CrabChain {
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
 	const NET_WORK: Network = Network::Crab;
-	const WS_END_POINT: &'static str = "wss://crab-rpc.darwinia.network:443";
+	const WS_PORT: &'static str = "wss://crab-rpc.darwinia.network:443";
 }
 
 pub struct DarwiniaChain;
@@ -53,5 +53,5 @@ impl ChainInfo for DarwiniaChain {
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
 
 	const NET_WORK: Network = Network::Darwinia;
-	const WS_END_POINT: &'static str = "wss://rpc.darwinia.network:443";
+	const WS_PORT: &'static str = "wss://rpc.darwinia.network:443";
 }
