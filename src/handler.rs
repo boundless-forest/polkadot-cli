@@ -8,18 +8,21 @@ use crate::{
 	rpc::{print_format_json, ChainApi, RpcClient, SystemApi},
 };
 
-pub enum HandleResult {
+/// The APP's command execution result.
+pub enum ExecutionResult {
+	/// Switch to another network.
 	SwitchNetworkTo(Network),
+	/// Execute successfully.
 	Success,
 }
 
 pub async fn handle_commands<CI: ChainInfo>(
 	command: AppCommand,
 	client: &RpcClient<CI>,
-) -> Result<HandleResult, AppError> {
+) -> Result<ExecutionResult, AppError> {
 	match command {
 		AppCommand::SwitchNetwork(network) => {
-			return Ok(HandleResult::SwitchNetworkTo(network));
+			return Ok(ExecutionResult::SwitchNetworkTo(network));
 		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			// RpcCommand::RpcMethods => {
@@ -80,5 +83,5 @@ pub async fn handle_commands<CI: ChainInfo>(
 		},
 	}
 
-	Ok(HandleResult::Success)
+	Ok(ExecutionResult::Success)
 }

@@ -45,7 +45,34 @@ const fn default_break_chars(c: char) -> bool {
 	)
 }
 
-pub fn print_info() {
+/// Create a line editor.
+pub fn create_editor() -> Editor<EditorHelper<HistoryHinter>, FileHistory> {
+	let config_builder = rustyline::Config::builder();
+	let config = config_builder
+		.auto_add_history(true)
+		.history_ignore_space(true)
+		.color_mode(ColorMode::Enabled)
+		.completion_type(CompletionType::List)
+		.build();
+
+	let editor_helper = EditorHelper::new(HistoryHinter {});
+	let mut editor = Editor::with_history(config, FileHistory::new()).unwrap();
+	editor.set_helper(Some(editor_helper));
+	editor
+}
+
+/// Return the APP command history file path.
+pub fn history_path() -> Result<PathBuf, AppError> {
+	let app_path = app_root_path()?;
+	let history_file = app_path.join("history");
+	if !history_file.is_file() {
+		let _ = File::create(history_file.clone());
+	}
+	Ok(history_file)
+}
+
+/// Print the app welcome message.
+pub fn print_welcome_message() {
 	let standard_font = FIGfont::standard().unwrap();
 	let figure = standard_font.convert("suber");
 	if let Some(figure) = figure {
@@ -60,42 +87,15 @@ pub fn print_info() {
 	}
 }
 
-pub fn load_history() -> Result<PathBuf, AppError> {
-	let mut history_file_dir = dirs::home_dir().unwrap();
-	history_file_dir.push(".suber");
-	if !history_file_dir.exists() {
-		fs::create_dir(history_file_dir.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
-	}
-	let history_file = history_file_dir.join("history");
-	if !history_file.is_file() {
-		let _ = File::create(history_file.clone());
-	}
-	Ok(history_file)
-}
-
-pub fn this_crate_editor() -> Editor<CommandHelper<HistoryHinter>, FileHistory> {
-	let config_builder = rustyline::Config::builder();
-	let config = config_builder
-		.auto_add_history(true)
-		.history_ignore_space(true)
-		.color_mode(ColorMode::Enabled)
-		.completion_type(CompletionType::List)
-		.build();
-
-	let editor_helper = CommandHelper::new(HistoryHinter {});
-	let mut editor = Editor::with_history(config, FileHistory::new()).unwrap();
-	editor.set_helper(Some(editor_helper));
-	editor
-}
-
-pub struct CommandHelper<H> {
+/// App Editor helper
+pub struct EditorHelper<H> {
 	hinter: H,
 	command: Command,
 	config: Config,
 }
 
-impl<H> CommandHelper<H> {
-	/// CommandHelper constructor
+impl<H> EditorHelper<H> {
+	/// EditorHelper constructor
 	fn new(hinter: H) -> Self {
 		let init = Command::new("suber")
 			.subcommand_required(true)
@@ -174,8 +174,8 @@ impl<H> CommandHelper<H> {
 	}
 }
 
-impl<H: Hinter> Helper for CommandHelper<H> {}
-impl<H: Hinter> Highlighter for CommandHelper<H> {
+impl<H: Hinter> Helper for EditorHelper<H> {}
+impl<H: Hinter> Highlighter for EditorHelper<H> {
 	fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
 		Owned(hint.bright_yellow().to_string())
 	}
@@ -188,9 +188,9 @@ impl<H: Hinter> Highlighter for CommandHelper<H> {
 		Owned(candidate.bright_yellow().to_string())
 	}
 }
-impl<H: Hinter> Validator for CommandHelper<H> {}
+impl<H: Hinter> Validator for EditorHelper<H> {}
 
-impl<H: Hinter> Hinter for CommandHelper<H> {
+impl<H: Hinter> Hinter for EditorHelper<H> {
 	type Hint = H::Hint;
 
 	fn hint(&self, line: &str, pos: usize, ctx: &Context) -> Option<H::Hint> {
@@ -198,7 +198,7 @@ impl<H: Hinter> Hinter for CommandHelper<H> {
 	}
 }
 
-impl<H: Hinter> Completer for CommandHelper<H> {
+impl<H: Hinter> Completer for EditorHelper<H> {
 	type Candidate = Pair;
 
 	fn complete(
@@ -263,4 +263,14 @@ impl<H: Hinter> Completer for CommandHelper<H> {
 
 		Ok((start, candidates))
 	}
+}
+
+fn app_root_path() -> Result<PathBuf, AppError> {
+	let mut root = dirs::home_dir().unwrap();
+	root.push(".suber");
+
+	if !root.exists() {
+		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
+	}
+	return Ok(root);
 }

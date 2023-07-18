@@ -8,6 +8,7 @@ use sp_runtime::{
 // this crate
 use super::{ChainInfo, Network};
 
+/// Pangolin Chain information
 pub struct PangolinChain;
 
 impl ChainInfo for PangolinChain {
@@ -20,6 +21,7 @@ impl ChainInfo for PangolinChain {
 	const WS_PORT: &'static str = "wss://pangolin-rpc.darwinia.network:443";
 }
 
+/// Pangoro Chain information
 pub struct PangoroChain;
 
 impl ChainInfo for PangoroChain {
@@ -32,6 +34,7 @@ impl ChainInfo for PangoroChain {
 	const WS_PORT: &'static str = "wss://pangoro-rpc.darwinia.network:443";
 }
 
+/// Crab Chain information
 pub struct CrabChain;
 
 impl ChainInfo for CrabChain {
@@ -44,6 +47,7 @@ impl ChainInfo for CrabChain {
 	const WS_PORT: &'static str = "wss://crab-rpc.darwinia.network:443";
 }
 
+/// Darwinia Chain information
 pub struct DarwiniaChain;
 
 impl ChainInfo for DarwiniaChain {

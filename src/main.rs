@@ -7,29 +7,30 @@ mod rpc;
 // crates.io
 use clap::Parser;
 use colored::Colorize;
-use handler::HandleResult;
+use handler::ExecutionResult;
 use networks::{ChainInfo, CrabChain, DarwiniaChain, Network, PangoroChain};
 use rpc::RpcClient;
 use rustyline::{error::ReadlineError, hint::HistoryHinter, history::FileHistory, Editor};
 // this crate
 use crate::{
-	app::{load_history, print_info, this_crate_editor, AppCommand, CommandHelper, Config},
+	app::{create_editor, history_path, print_welcome_message, AppCommand, Config, EditorHelper},
 	errors::AppError,
 	networks::{NoteTemplate, PangolinChain},
 };
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-	let mut editor = this_crate_editor();
-	let history_file = load_history()?;
+	let mut editor = create_editor();
+	let history_file = history_path()?;
 	editor.load_history(&history_file).map_err(AppError::Readline)?;
 
+	print_welcome_message();
 	loop {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
 		match config.network {
 			Network::Local => {
 				let rpc_client = RpcClient::<NoteTemplate>::new().await?;
-				if let Ok(HandleResult::SwitchNetworkTo(network)) =
+				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
 					editor.helper_mut().unwrap().save_config(Config { network })?;
@@ -47,7 +48,7 @@ async fn main() -> Result<(), AppError> {
 			},
 			Network::Crab => {
 				let rpc_client = RpcClient::<CrabChain>::new().await?;
-				if let Ok(HandleResult::SwitchNetworkTo(network)) =
+				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
 					editor.helper_mut().unwrap().save_config(Config { network })?;
@@ -57,7 +58,7 @@ async fn main() -> Result<(), AppError> {
 			},
 			Network::Darwinia => {
 				let rpc_client = RpcClient::<DarwiniaChain>::new().await?;
-				if let Ok(HandleResult::SwitchNetworkTo(network)) =
+				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
 					editor.helper_mut().unwrap().save_config(Config { network })?;
@@ -67,7 +68,7 @@ async fn main() -> Result<(), AppError> {
 			},
 			Network::Pangolin => {
 				let rpc_client = RpcClient::<PangolinChain>::new().await?;
-				if let Ok(HandleResult::SwitchNetworkTo(network)) =
+				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
 					editor.helper_mut().unwrap().save_config(Config { network })?;
@@ -77,7 +78,7 @@ async fn main() -> Result<(), AppError> {
 			},
 			Network::Pangoro => {
 				let rpc_client = RpcClient::<PangoroChain>::new().await?;
-				if let Ok(HandleResult::SwitchNetworkTo(network)) =
+				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 					run(&mut editor, &rpc_client).await
 				{
 					editor.helper_mut().unwrap().save_config(Config { network })?;
@@ -90,20 +91,19 @@ async fn main() -> Result<(), AppError> {
 }
 
 pub async fn run<CI: ChainInfo>(
-	editor: &mut Editor<CommandHelper<HistoryHinter>, FileHistory>,
+	editor: &mut Editor<EditorHelper<HistoryHinter>, FileHistory>,
 	rpc_client: &RpcClient<CI>,
-) -> Result<HandleResult, AppError> {
-	print_info();
+) -> Result<ExecutionResult, AppError> {
 	loop {
 		let command_tip = format!("suber ({:?}) >> ", <CI as ChainInfo>::NET_WORK);
 		let prompt = editor.readline(&command_tip.bright_yellow().italic().bold().to_string());
 		match prompt {
 			Ok(prompt) => {
 				if let Ok(command) = AppCommand::try_parse_from(prompt.split_whitespace()) {
-					if let Ok(HandleResult::SwitchNetworkTo(network)) =
+					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 						handler::handle_commands(command, &rpc_client).await
 					{
-						return Ok(HandleResult::SwitchNetworkTo(network));
+						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
 				} else {
 					continue;
@@ -119,5 +119,5 @@ pub async fn run<CI: ChainInfo>(
 			},
 		}
 	}
-	Ok(HandleResult::Success)
+	Ok(ExecutionResult::Success)
 }
