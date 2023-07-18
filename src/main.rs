@@ -77,6 +77,7 @@ async fn main() -> Result<(), AppError> {
 	Ok(())
 }
 
+// Command execution loop
 pub async fn run<CI: ChainInfo>(
 	editor: &mut Editor<EditorHelper<HistoryHinter>, FileHistory>,
 	rpc_client: &RpcClient<CI>,
