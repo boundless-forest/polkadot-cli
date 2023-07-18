@@ -105,6 +105,41 @@ impl<H> EditorHelper<H> {
 		Self { hinter, command, config: Config { network: Network::default() } }
 	}
 
+	/// Load the config from file
+	pub fn load_config(&mut self) -> Result<Config, AppError> {
+		let app_path = app_root_path()?;
+		let config_file = app_path.join("config.json");
+
+		if !config_file.is_file() {
+			let mut file = File::create(config_file.clone()).unwrap();
+			let config = Config::default();
+			let json_config = serde_json::to_string_pretty(&config).unwrap();
+			file.write_all(json_config.as_bytes()).unwrap();
+			return Ok(config);
+		}
+		let file = File::open(config_file).unwrap();
+		let config: Config = serde_json::from_reader(file).unwrap();
+		self.config = config.clone();
+		Ok(config)
+	}
+
+	/// Save the config to file
+	pub fn save_config(&mut self, config: Config) -> Result<(), AppError> {
+		let app_path = app_root_path()?;
+		let config_file = app_path.join("config.json");
+
+		let mut file = File::create(config_file).unwrap();
+		let json_config = serde_json::to_string_pretty(&config).unwrap();
+		file.write_all(json_config.as_bytes()).unwrap();
+		self.config = config;
+		return Ok(());
+	}
+
+	/// Get the config
+	pub fn config(&self) -> Config {
+		self.config.clone()
+	}
+
 	fn prefix_command<'s, I: Iterator<Item = &'s str>>(
 		&self,
 		command: &Command,
@@ -130,47 +165,6 @@ impl<H> EditorHelper<H> {
 		} else {
 			None
 		}
-	}
-
-	/// Load the config from file
-	pub fn load_config(&mut self) -> Result<Config, AppError> {
-		let mut config_dir = dirs::home_dir().unwrap();
-		config_dir.push(".suber");
-		if !config_dir.exists() {
-			fs::create_dir(config_dir.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
-		}
-		let config_file = config_dir.join("config.json");
-		if !config_file.is_file() {
-			let mut file = File::create(config_file.clone()).unwrap();
-
-			let config = Config::default();
-			let json_config = serde_json::to_string_pretty(&config).unwrap();
-			file.write_all(json_config.as_bytes()).unwrap();
-			return Ok(config);
-		}
-		let file = File::open(config_file).unwrap();
-		let config: Config = serde_json::from_reader(file).unwrap();
-
-		self.config = config.clone();
-
-		Ok(config)
-	}
-
-	/// Save the config to file
-	pub fn save_config(&mut self, config: Config) -> Result<(), AppError> {
-		let mut config_dir = dirs::home_dir().unwrap();
-		config_dir.push(".suber");
-		let config_file = config_dir.join("config.json");
-
-		let mut file = File::create(config_file).unwrap();
-		let json_config = serde_json::to_string_pretty(&config).unwrap();
-		file.write_all(json_config.as_bytes()).unwrap();
-		return Ok(());
-	}
-
-	/// Get the config
-	pub fn config(&self) -> Config {
-		self.config.clone()
 	}
 }
 

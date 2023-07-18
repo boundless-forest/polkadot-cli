@@ -10,13 +10,27 @@ use colored::Colorize;
 use handler::ExecutionResult;
 use networks::{ChainInfo, CrabChain, DarwiniaChain, Network, PangoroChain};
 use rpc::RpcClient;
-use rustyline::{error::ReadlineError, hint::HistoryHinter, history::FileHistory, Editor};
+use rustyline::{hint::HistoryHinter, history::FileHistory, Editor};
 // this crate
 use crate::{
 	app::{create_editor, history_path, print_welcome_message, AppCommand, Config, EditorHelper},
 	errors::AppError,
 	networks::{NoteTemplate, PangolinChain},
 };
+
+macro_rules! switch_network_or_break {
+	($editor: expr, $rpc_client: expr) => {
+		match run(&mut $editor, &$rpc_client).await {
+			Ok(ExecutionResult::SwitchNetworkTo(network)) => {
+				$editor.helper_mut().unwrap().save_config(Config { network })?;
+				continue;
+			},
+			_ => {
+				break;
+			},
+		}
+	};
+}
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -27,16 +41,12 @@ async fn main() -> Result<(), AppError> {
 	print_welcome_message();
 	loop {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
+		editor.save_history(&history_file)?;
+
 		match config.network {
 			Network::Local => {
 				let rpc_client = RpcClient::<NoteTemplate>::new().await?;
-				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-					run(&mut editor, &rpc_client).await
-				{
-					editor.helper_mut().unwrap().save_config(Config { network })?;
-					editor.save_history(&history_file)?;
-					continue;
-				}
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Polkadot => {
 				// let rpc_client = RpcClient::<>::new(config).await?;
@@ -48,46 +58,23 @@ async fn main() -> Result<(), AppError> {
 			},
 			Network::Crab => {
 				let rpc_client = RpcClient::<CrabChain>::new().await?;
-				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-					run(&mut editor, &rpc_client).await
-				{
-					editor.helper_mut().unwrap().save_config(Config { network })?;
-					editor.save_history(&history_file)?;
-					continue;
-				}
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Darwinia => {
 				let rpc_client = RpcClient::<DarwiniaChain>::new().await?;
-				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-					run(&mut editor, &rpc_client).await
-				{
-					editor.helper_mut().unwrap().save_config(Config { network })?;
-					editor.save_history(&history_file)?;
-					continue;
-				}
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Pangolin => {
 				let rpc_client = RpcClient::<PangolinChain>::new().await?;
-				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-					run(&mut editor, &rpc_client).await
-				{
-					editor.helper_mut().unwrap().save_config(Config { network })?;
-					editor.save_history(&history_file)?;
-					continue;
-				}
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Pangoro => {
 				let rpc_client = RpcClient::<PangoroChain>::new().await?;
-				if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-					run(&mut editor, &rpc_client).await
-				{
-					editor.helper_mut().unwrap().save_config(Config { network })?;
-					editor.save_history(&history_file)?;
-					continue;
-				}
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 		}
 	}
+	Ok(())
 }
 
 pub async fn run<CI: ChainInfo>(
@@ -109,15 +96,7 @@ pub async fn run<CI: ChainInfo>(
 					continue;
 				}
 			},
-			Err(ReadlineError::Interrupted) => {
-				println!("CTRL-C");
-				break;
-			},
-			Err(err) => {
-				println!("Error: {:?}", err);
-				break;
-			},
+			_ => return Ok(ExecutionResult::Exited),
 		}
 	}
-	Ok(ExecutionResult::Success)
 }

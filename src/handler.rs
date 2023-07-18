@@ -14,6 +14,8 @@ pub enum ExecutionResult {
 	SwitchNetworkTo(Network),
 	/// Execute successfully.
 	Success,
+	/// Execute failed.
+	Exited,
 }
 
 pub async fn handle_commands<CI: ChainInfo>(
