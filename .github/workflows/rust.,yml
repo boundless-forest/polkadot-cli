@@ -16,8 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run Fmt
-       run: cargo fmt --all -- --check
+      run: cargo fmt --all -- --check
     - name: Run Build
-       run: cargo check --release --verbose
+      run: cargo check --release --verbose
     - name: run Clippy
-       run: cargo clippy
+      run: cargo clippy
