@@ -28,7 +28,7 @@ pub trait ChainInfo: Sync + Send {
 	type Block: Serialize + DeserializeOwned;
 }
 
-#[derive(Subcommand, Clone, Debug, Serialize, Deserialize)]
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default)]
 pub enum Network {
 	Local,
 	// parity
@@ -37,12 +37,7 @@ pub enum Network {
 	// Darwinia
 	Pangolin,
 	Pangoro,
+	#[default]
 	Darwinia,
 	Crab,
-}
-
-impl Default for Network {
-	fn default() -> Self {
-		Network::Darwinia
-	}
 }

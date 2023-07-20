@@ -41,6 +41,7 @@ pub enum RpcCommand {
 
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "chain")]
+#[allow(clippy::enum_variant_names)]
 pub enum ChainCommand {
 	/// Get the chain block
 	GetBlock {

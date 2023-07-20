@@ -18,6 +18,6 @@ jobs:
     - name: Run Fmt
       run: cargo fmt --all -- --check
     - name: Run Build
-      run: cargo check --release --verbose
+      run: cargo check --release
     - name: run Clippy
       run: cargo clippy

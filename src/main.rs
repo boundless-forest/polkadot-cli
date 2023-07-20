@@ -84,12 +84,12 @@ pub async fn run<CI: ChainInfo>(
 ) -> Result<ExecutionResult, AppError> {
 	loop {
 		let command_tip = format!("suber ({:?}) >> ", <CI as ChainInfo>::NET_WORK);
-		let prompt = editor.readline(&command_tip.bright_yellow().italic().bold().to_string());
+		let prompt = editor.readline(&command_tip.bright_yellow().italic().bold());
 		match prompt {
 			Ok(prompt) => {
 				if let Ok(command) = AppCommand::try_parse_from(prompt.split_whitespace()) {
 					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-						handler::handle_commands(command, &rpc_client).await
+						handler::handle_commands(command, rpc_client).await
 					{
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
