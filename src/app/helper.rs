@@ -71,22 +71,6 @@ pub fn history_path() -> Result<PathBuf, AppError> {
 	Ok(history_file)
 }
 
-/// Print the app welcome message.
-pub fn print_welcome_message() {
-	let standard_font = FIGfont::standard().unwrap();
-	let figure = standard_font.convert("suber");
-	if let Some(figure) = figure {
-		println!("{}", figure);
-		println!(
-			"{}",
-			"This is the one-stop substrate command-line tool, the command-line version of the Polkadot Apps."
-				.green()
-				.bold()
-				.italic()
-		);
-	}
-}
-
 /// App Editor helper
 pub struct EditorHelper<H> {
 	hinter: H,
@@ -266,4 +250,35 @@ fn app_root_path() -> Result<PathBuf, AppError> {
 		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
 	}
 	Ok(root)
+}
+
+/// Print the app welcome message.
+pub fn print_welcome_message() {
+	const INTRODUCTION: &str =
+		"This is the all-in-one substrate command assistant, the Polkadot Apps CLI edition.";
+	const USAGE: &str = "
+Usage: suber <command> <args>
+
+command:
+	- switch-network [local, polkadot, kusama, pangolin, pangoro, darwinia(default), crab]
+	- rpc <subcommand>
+		- chain
+		- sync-state
+		- sys-version
+		......
+	- chain <subcommand>
+		- get-finalized-head
+		- get-block
+		- get-header
+		......
+Tips: `Ctrl + c` to quit, `Double Tab` to complete
+	";
+
+	let standard_font = FIGfont::standard().unwrap();
+	let figure = standard_font.convert("suber");
+	if let Some(figure) = figure {
+		println!("{}", figure);
+		println!("{}", INTRODUCTION.bright_purple().bold().italic());
+		println!("{}", USAGE.bright_green().italic());
+	}
 }
