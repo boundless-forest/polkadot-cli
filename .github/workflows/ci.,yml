@@ -1,0 +1,21 @@
+name: Workflows CI
+
+on:
+  push:
+  pull_request:
+
+env: 
+  CARGO_TERM_COLOR: always
+   RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run Fmt
+       run: cargo fmt --all -- --check
+    - name: Run Build
+       run: cargo check --release
+    - name: run Clippy
+       run: cargo clippy
