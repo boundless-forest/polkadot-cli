@@ -111,7 +111,7 @@ impl<H> EditorHelper<H> {
 		let config_file = app_path.join("config.json");
 
 		if !config_file.is_file() {
-			let mut file = File::create(config_file.clone()).unwrap();
+			let mut file = File::create(config_file).unwrap();
 			let config = Config::default();
 			let json_config = serde_json::to_string_pretty(&config).unwrap();
 			file.write_all(json_config.as_bytes()).unwrap();
@@ -132,39 +132,12 @@ impl<H> EditorHelper<H> {
 		let json_config = serde_json::to_string_pretty(&config).unwrap();
 		file.write_all(json_config.as_bytes()).unwrap();
 		self.config = config;
-		return Ok(());
+		Ok(())
 	}
 
 	/// Get the config
 	pub fn config(&self) -> Config {
 		self.config.clone()
-	}
-
-	fn prefix_command<'s, I: Iterator<Item = &'s str>>(
-		&self,
-		command: &Command,
-		mut prefixes: iter::Peekable<I>,
-	) -> Option<Command> {
-		if let Some(prefix) = prefixes.next() {
-			for subcommand in command.get_subcommands() {
-				if subcommand.get_name() == prefix
-					|| subcommand.get_display_name().unwrap_or_default() == prefix
-					|| subcommand.get_all_aliases().into_iter().any(|s| s == prefix)
-				{
-					return if prefixes.peek().is_none() {
-						Some(subcommand.clone())
-					} else {
-						self.prefix_command(subcommand, prefixes)
-					};
-				}
-			}
-		}
-
-		if prefixes.peek().is_none() || !command.has_subcommands() {
-			Some(command.clone())
-		} else {
-			None
-		}
 	}
 }
 
@@ -201,7 +174,7 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 		pos: usize,
 		_ctx: &Context<'_>,
 	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-		println!("");
+		println!();
 		// println!("=====> Completing: line: {}, pos: {}", line, pos);
 		let (start, mut word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
 		// println!("=====> Completing: start: {}, word: {}", start, word);
@@ -211,7 +184,7 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 
 		let mut candidates = Vec::new();
 		if let Some(command) =
-			self.prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable())
+			prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable())
 		{
 			candidates = command
 				.get_subcommands()
@@ -220,11 +193,11 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 					display: i.get_name().to_owned(),
 					replacement: i.get_name().to_owned(),
 				})
-				.filter(|c| c.display.starts_with(&word) && word != command.get_name())
+				.filter(|c| c.display.starts_with(word) && word != command.get_name())
 				.collect();
 
 			if candidates.is_empty() {
-				if !word.starts_with("-") || !word.starts_with("--") {
+				if !word.starts_with('-') || !word.starts_with("--") {
 					word = "--";
 				}
 				// println!(
@@ -243,7 +216,7 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 						replacement: format!("--{}", i.get_id().to_string()),
 					})
 					.filter(|c| !prefixes.contains(&c.display))
-					.filter(|c| c.display.starts_with(&word))
+					.filter(|c| c.display.starts_with(word))
 					.collect();
 			}
 		}
@@ -259,6 +232,32 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 	}
 }
 
+fn prefix_command<'s, I: Iterator<Item = &'s str>>(
+	command: &Command,
+	mut prefixes: iter::Peekable<I>,
+) -> Option<Command> {
+	if let Some(prefix) = prefixes.next() {
+		for subcommand in command.get_subcommands() {
+			if subcommand.get_name() == prefix
+				|| subcommand.get_display_name().unwrap_or_default() == prefix
+				|| subcommand.get_all_aliases().any(|s| s == prefix)
+			{
+				return if prefixes.peek().is_none() {
+					Some(subcommand.clone())
+				} else {
+					prefix_command(subcommand, prefixes)
+				};
+			}
+		}
+	}
+
+	if prefixes.peek().is_none() || !command.has_subcommands() {
+		Some(command.clone())
+	} else {
+		None
+	}
+}
+
 fn app_root_path() -> Result<PathBuf, AppError> {
 	let mut root = dirs::home_dir().unwrap();
 	root.push(".suber");
@@ -266,5 +265,5 @@ fn app_root_path() -> Result<PathBuf, AppError> {
 	if !root.exists() {
 		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
 	}
-	return Ok(root);
+	Ok(root)
 }
