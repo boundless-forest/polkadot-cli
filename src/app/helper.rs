@@ -274,8 +274,8 @@ command:
 Tips: `Ctrl + c` to quit, `Double Tab` to complete
 	";
 
-	let standard_font = FIGfont::standard().unwrap();
-	let figure = standard_font.convert("suber");
+	let font = FIGfont::from_file("src/resources/univers.flf").unwrap();
+	let figure = font.convert("suber");
 	if let Some(figure) = figure {
 		println!("{}", figure);
 		println!("{}", INTRODUCTION.bright_purple().bold().italic());
