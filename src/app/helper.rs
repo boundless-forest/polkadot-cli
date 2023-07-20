@@ -279,6 +279,6 @@ Tips: `Ctrl + c` to quit, `Double Tab` to complete
 	if let Some(figure) = figure {
 		println!("{}", figure);
 		println!("{}", INTRODUCTION.bright_purple().bold().italic());
-		println!("{}", USAGE.bright_green().italic());
+		println!("{}", USAGE.bright_purple().italic());
 	}
 }
