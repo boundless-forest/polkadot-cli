@@ -83,8 +83,9 @@ pub async fn run<CI: ChainInfo>(
 	rpc_client: &RpcClient<CI>,
 ) -> Result<ExecutionResult, AppError> {
 	loop {
-		let command_tip =
-			format!("suber ({:?}) >> ", <CI as ChainInfo>::NET_WORK).bright_green().italic();
+		let command_tip = format!("substrate-cli ({:?}) >> ", <CI as ChainInfo>::NET_WORK)
+			.bright_green()
+			.italic();
 		let prompt = editor.readline(command_tip.to_string().as_str());
 		match prompt {
 			Ok(prompt) => {
