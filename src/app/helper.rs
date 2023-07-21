@@ -81,7 +81,7 @@ pub struct EditorHelper<H> {
 impl<H> EditorHelper<H> {
 	/// EditorHelper constructor
 	fn new(hinter: H) -> Self {
-		let init = Command::new("suber")
+		let init = Command::new("substrate-cli")
 			.subcommand_required(true)
 			.arg_required_else_help(true)
 			.no_binary_name(true);
@@ -244,7 +244,7 @@ fn prefix_command<'s, I: Iterator<Item = &'s str>>(
 
 fn app_root_path() -> Result<PathBuf, AppError> {
 	let mut root = dirs::home_dir().unwrap();
-	root.push(".suber");
+	root.push(".substrate-cli");
 
 	if !root.exists() {
 		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
@@ -257,7 +257,7 @@ pub fn print_welcome_message() {
 	const INTRODUCTION: &str =
 		"This is the all-in-one substrate command assistant, the Polkadot Apps CLI edition.";
 	const USAGE: &str = "
-Usage: suber <command> <args>
+Usage: substrate-cli <command> <args>
 
 command:
 	- switch-network [local, polkadot, kusama, pangolin, pangoro, darwinia(default), crab]
@@ -275,7 +275,7 @@ Tips: `Ctrl + c` to quit, `Double Tab` to complete
 	";
 
 	let font = FIGfont::from_file("src/resources/univers.flf").unwrap();
-	let figure = font.convert("suber");
+	let figure = font.convert("substrate-cli");
 	if let Some(figure) = figure {
 		println!("{}", figure);
 		println!("{}", INTRODUCTION.bright_purple().bold().italic());
