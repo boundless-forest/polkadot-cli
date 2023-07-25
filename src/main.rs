@@ -98,6 +98,7 @@ pub async fn run<CI: ChainInfo>(
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
 				} else {
+					println!("{}", "Invalid command, double-tap to complete.".italic().red());
 					continue;
 				}
 			},
