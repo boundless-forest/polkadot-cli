@@ -1,8 +1,10 @@
 mod darwinia;
 mod node_template;
+mod polkadot;
 
 pub use darwinia::{CrabChain, DarwiniaChain, PangolinChain, PangoroChain};
 pub use node_template::NoteTemplate;
+pub use polkadot::{KusamaChain, PolkadotChain};
 
 // std
 use std::{marker::Sync, str::FromStr};

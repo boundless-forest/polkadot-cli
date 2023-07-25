@@ -8,7 +8,9 @@ mod rpc;
 use clap::Parser;
 use colored::Colorize;
 use handler::ExecutionResult;
-use networks::{ChainInfo, CrabChain, DarwiniaChain, Network, PangoroChain};
+use networks::{
+	ChainInfo, CrabChain, DarwiniaChain, KusamaChain, Network, PangoroChain, PolkadotChain,
+};
 use rpc::RpcClient;
 use rustyline::{hint::HistoryHinter, history::FileHistory, Editor};
 // this crate
@@ -49,12 +51,12 @@ async fn main() -> Result<(), AppError> {
 				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Polkadot => {
-				// let rpc_client = RpcClient::<>::new(config).await?;
-				todo!();
+				let rpc_client = RpcClient::<PolkadotChain>::new().await?;
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Kusama => {
-				// let rpc_client = RpcClient::<NoteTemplate>::new(config).await?;
-				todo!();
+				let rpc_client = RpcClient::<KusamaChain>::new().await?;
+				switch_network_or_break!(&mut editor, &rpc_client);
 			},
 			Network::Crab => {
 				let rpc_client = RpcClient::<CrabChain>::new().await?;
@@ -96,6 +98,7 @@ pub async fn run<CI: ChainInfo>(
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
 				} else {
+					println!("{}", "Invalid command, double-tap to complete.".italic().red());
 					continue;
 				}
 			},
