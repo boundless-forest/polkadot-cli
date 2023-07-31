@@ -28,6 +28,7 @@ pub enum RpcError {
 	WsHandshakeError,
 	JsonRpseeError(Error),
 	InvalidCommandParams,
+	DecodeError,
 }
 
 impl From<RpcError> for AppError {

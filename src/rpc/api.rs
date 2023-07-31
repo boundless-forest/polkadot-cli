@@ -1,6 +1,6 @@
 // crates.io
 use async_trait::async_trait;
-use frame_metadata::OpaqueMetadata;
+use frame_metadata::RuntimeMetadataPrefixed;
 use sp_runtime::generic::SignedBlock;
 use sp_version::RuntimeVersion;
 // this crate
@@ -80,5 +80,5 @@ pub trait StateApi {
 	) -> RpcResult<RuntimeVersion>;
 
 	/// Get the runtime metadata
-	async fn runtime_metadata(&self) -> RpcResult<OpaqueMetadata>;
+	async fn runtime_metadata(&self) -> RpcResult<RuntimeMetadataPrefixed>;
 }

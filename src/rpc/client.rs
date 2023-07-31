@@ -3,13 +3,14 @@ use std::{marker::PhantomData, sync::Arc};
 // crates.io
 use async_trait::async_trait;
 use colored::Colorize;
-use frame_metadata::OpaqueMetadata;
+use frame_metadata::RuntimeMetadataPrefixed;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
 use serde::Serialize;
+use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
 use sp_version::RuntimeVersion;
 // this crate
@@ -199,14 +200,15 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 	}
 
 	/// Get the runtime metadata
-	async fn runtime_metadata(&self) -> RpcResult<OpaqueMetadata> {
-		// TODO: change the return type to concrete type
-		let res = self
+	async fn runtime_metadata(&self) -> RpcResult<RuntimeMetadataPrefixed> {
+		let metadata_bytes: Bytes = self
 			.client
 			.request("state_getMetadata", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
-		Ok(res)
+		let metadata = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
+			.map_err(|_| RpcError::DecodeError)?;
+		Ok(metadata)
 	}
 }
 
