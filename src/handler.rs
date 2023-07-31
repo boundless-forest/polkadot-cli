@@ -2,10 +2,10 @@
 use std::str::FromStr;
 // this crate
 use crate::{
-	app::{AppCommand, ChainCommand, RpcCommand},
+	app::{AppCommand, ChainCommand, RpcCommand, StateCommand},
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
-	rpc::{print_format_json, ChainApi, RpcClient, SystemApi},
+	rpc::{print_format_json, ChainApi, RpcClient, StateApi, SystemApi},
 };
 
 /// The APP's command execution result.
@@ -80,6 +80,19 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidCommandParams)?;
 				let res = client.get_header(hash).await?;
+				print_format_json(res);
+			},
+		},
+		AppCommand::State(sub_command) => match sub_command {
+			StateCommand::RuntimeVersion { hash } => {
+				let hash = if let Some(hash) = hash {
+					<CI as ChainInfo>::Hash::from_str(hash.as_str())
+						.map_err(|_| RpcError::InvalidCommandParams)?
+				} else {
+					client.get_finalized_head().await?.expect("Failed to get finalized head")
+				};
+
+				let res = client.runtime_version(hash).await?;
 				print_format_json(res);
 			},
 		},

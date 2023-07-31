@@ -3,6 +3,7 @@ use std::{marker::PhantomData, sync::Arc};
 // crates.io
 use async_trait::async_trait;
 use colored::Colorize;
+use frame_metadata::OpaqueMetadata;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
@@ -10,9 +11,13 @@ use jsonrpsee::{
 };
 use serde::Serialize;
 use sp_runtime::generic::SignedBlock;
+use sp_version::RuntimeVersion;
 // this crate
 use super::{
-	api::{BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, SystemApi},
+	api::{
+		BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi,
+		SystemApi,
+	},
 	types::{ChainType, Health, Properties},
 };
 use crate::{errors::RpcError, networks::ChainInfo};
@@ -170,6 +175,35 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 		let res = self
 			.client
 			.request("chain_getHeader", rpc_params![hash])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+}
+
+#[async_trait]
+impl<CI: ChainInfo> StateApi for RpcClient<CI> {
+	type ChainInfo = CI;
+
+	/// Get the runtime version
+	async fn runtime_version(
+		&self,
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<RuntimeVersion> {
+		let res = self
+			.client
+			.request("state_getRuntimeVersion", rpc_params![hash])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the runtime metadata
+	async fn runtime_metadata(&self) -> RpcResult<OpaqueMetadata> {
+		// TODO: change the return type to concrete type
+		let res = self
+			.client
+			.request("state_getMetadata", rpc_params![])
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)

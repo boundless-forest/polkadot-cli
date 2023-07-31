@@ -15,7 +15,8 @@ pub enum AppCommand {
 	Rpc(RpcCommand),
 	#[command(subcommand)]
 	Chain(ChainCommand),
-	// TODO: ADD HELP COMMAND
+	#[command(subcommand)]
+	State(StateCommand), // TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -59,5 +60,14 @@ pub enum ChainCommand {
 	GetHeader {
 		#[arg(long)]
 		hash: String,
+	},
+}
+
+#[derive(Subcommand, Clone, Debug)]
+#[command(name = "state")]
+pub enum StateCommand {
+	RuntimeVersion {
+		#[arg(long)]
+		hash: Option<String>,
 	},
 }

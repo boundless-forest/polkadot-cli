@@ -73,7 +73,7 @@ pub trait StateApi {
 	/// The chain info type
 	type ChainInfo: ChainInfo;
 
-	/// Get the runtime version	
+	/// Get the runtime version
 	async fn runtime_version(
 		&self,
 		hash: HashForChain<Self::ChainInfo>,
