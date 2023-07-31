@@ -1,6 +1,8 @@
 // crates.io
 use async_trait::async_trait;
+use frame_metadata::OpaqueMetadata;
 use sp_runtime::generic::SignedBlock;
+use sp_version::RuntimeVersion;
 // this crate
 use super::{
 	client::RpcResult,
@@ -64,4 +66,19 @@ pub trait ChainApi {
 		&self,
 		hash: HashForChain<Self::ChainInfo>,
 	) -> RpcResult<HeaderForChain<Self::ChainInfo>>;
+}
+
+#[async_trait]
+pub trait StateApi {
+	/// The chain info type
+	type ChainInfo: ChainInfo;
+
+	/// Get the runtime version	
+	async fn runtime_version(
+		&self,
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<RuntimeVersion>;
+
+	/// Get the runtime metadata
+	async fn runtime_metadata(&self) -> RpcResult<OpaqueMetadata>;
 }
