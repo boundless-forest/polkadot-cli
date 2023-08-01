@@ -16,7 +16,10 @@ pub enum AppCommand {
 	#[command(subcommand)]
 	Chain(ChainCommand),
 	#[command(subcommand)]
-	State(StateCommand), // TODO: ADD HELP COMMAND
+	State(StateCommand),
+	#[command(subcommand)]
+	Account(AccountCommand),
+	// TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -69,5 +72,14 @@ pub enum StateCommand {
 	RuntimeVersion {
 		#[arg(long)]
 		hash: Option<String>,
+	},
+}
+
+#[derive(Subcommand, Clone, Debug)]
+#[command(name = "account")]
+pub enum AccountCommand {
+	Balances {
+		#[arg(long)]
+		account: String,
 	},
 }

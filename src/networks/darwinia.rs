@@ -12,6 +12,7 @@ use super::{ChainInfo, Network};
 pub struct PangolinChain;
 
 impl ChainInfo for PangolinChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;
@@ -25,6 +26,7 @@ impl ChainInfo for PangolinChain {
 pub struct PangoroChain;
 
 impl ChainInfo for PangoroChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;
@@ -38,6 +40,7 @@ impl ChainInfo for PangoroChain {
 pub struct CrabChain;
 
 impl ChainInfo for CrabChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;
@@ -51,6 +54,7 @@ impl ChainInfo for CrabChain {
 pub struct DarwiniaChain;
 
 impl ChainInfo for DarwiniaChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;

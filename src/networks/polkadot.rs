@@ -12,6 +12,7 @@ use super::{ChainInfo, Network};
 pub struct PolkadotChain;
 
 impl ChainInfo for PolkadotChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;
@@ -25,6 +26,7 @@ impl ChainInfo for PolkadotChain {
 pub struct KusamaChain;
 
 impl ChainInfo for KusamaChain {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;

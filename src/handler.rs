@@ -2,7 +2,7 @@
 use std::str::FromStr;
 // this crate
 use crate::{
-	app::{AppCommand, ChainCommand, RpcCommand, StateCommand},
+	app::{AccountCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
 	rpc::{print_format_json, ChainApi, RpcClient, StateApi, SystemApi},
@@ -94,6 +94,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 
 				let res = client.runtime_version(hash).await?;
 				print_format_json(res);
+			},
+		},
+		AppCommand::Account(sub_command) => match sub_command {
+			AccountCommand::Balances { account } => {
+				todo!();
 			},
 		},
 	}

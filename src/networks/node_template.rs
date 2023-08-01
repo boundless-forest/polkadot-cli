@@ -11,6 +11,7 @@ use super::{ChainInfo, Network};
 pub struct NoteTemplate;
 
 impl ChainInfo for NoteTemplate {
+	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = H256;
