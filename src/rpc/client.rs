@@ -12,6 +12,7 @@ use jsonrpsee::{
 use serde::Serialize;
 use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
+use sp_storage::{StorageData, StorageKey};
 use sp_version::RuntimeVersion;
 // this crate
 use super::{
@@ -209,6 +210,24 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 		let metadata = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
 			.map_err(|_| RpcError::DecodeError)?;
 		Ok(metadata)
+	}
+
+	/// Retrieves the storage for a key
+	async fn get_storage<R: Decode>(
+		&self,
+		storage_key: StorageKey,
+		at_block: Option<HashForChain<Self::ChainInfo>>,
+	) -> RpcResult<Option<R>> {
+		let storage_data: Option<StorageData> = self
+			.client
+			.request("state_getStorage", rpc_params![storage_key, at_block])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+
+		if let Some(data) = storage_data {
+			return Ok(Some(R::decode(&mut data.0.as_slice()).map_err(|_| RpcError::DecodeError)?));
+		}
+		Ok(None)
 	}
 }
 

@@ -1,7 +1,9 @@
 // crates.io
 use async_trait::async_trait;
 use frame_metadata::RuntimeMetadataPrefixed;
+use sp_core::Decode;
 use sp_runtime::generic::SignedBlock;
+use sp_storage::StorageKey;
 use sp_version::RuntimeVersion;
 // this crate
 use super::{
@@ -81,4 +83,11 @@ pub trait StateApi {
 
 	/// Get the runtime metadata
 	async fn runtime_metadata(&self) -> RpcResult<RuntimeMetadataPrefixed>;
+
+	/// Retrieves the storage for a key
+	async fn get_storage<R: Decode>(
+		&self,
+		storage_key: StorageKey,
+		at_block: Option<HashForChain<Self::ChainInfo>>,
+	) -> RpcResult<Option<R>>;
 }
