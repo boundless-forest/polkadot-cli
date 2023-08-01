@@ -11,6 +11,7 @@ use std::{marker::Sync, str::FromStr};
 // crates.io
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
+use sp_core::Encode;
 use sp_runtime::DeserializeOwned;
 
 /// The ChainInfo API
@@ -21,7 +22,7 @@ pub trait ChainInfo: Sync + Send {
 	const NET_WORK: Network;
 
 	// The account id type of the chain
-	type AccountId: Serialize + DeserializeOwned;
+	type AccountId: Serialize + DeserializeOwned + Encode + FromStr + AsRef<[u8]>;
 	/// The balance type of the chain
 	type Balance: Serialize + DeserializeOwned;
 	/// The block type of the chain

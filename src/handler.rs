@@ -107,7 +107,8 @@ pub async fn handle_commands<CI: ChainInfo>(
 				const pallet_name: &'static str = "System";
 				const storage_name: &'static str = "Account";
 				// TODO: FIX ME
-				let encoded_key = account_id.encode();
+				let encoded_key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
+					.map_err(|_| RpcError::InvalidCommandParams)?;
 
 				let module_prefix = pallet_name.as_bytes().to_vec();
 				let storage_prefix = storage_name.as_bytes().to_vec();
@@ -138,7 +139,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 										let hasher = hashers.get(0).expect("Failed to get hasher");
 										match hasher {
 											StorageHasher::Blake2_128Concat => {
-												let x: &[u8] = encoded_key.as_slice();
+												let x: &[u8] = encoded_key;
 												let key = sp_core::blake2_128(x)
 													.iter()
 													.chain(x.iter())
