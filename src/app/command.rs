@@ -80,6 +80,8 @@ pub enum StateCommand {
 pub enum AccountCommand {
 	Balances {
 		#[arg(long)]
-		account: String,
+		account_id: String,
+		#[arg(long)]
+		at_block: Option<String>,
 	},
 }

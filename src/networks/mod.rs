@@ -20,6 +20,8 @@ pub trait ChainInfo: Sync + Send {
 	/// The network name of this chain
 	const NET_WORK: Network;
 
+	// The account id type of the chain
+	type AccountId: Serialize + DeserializeOwned;
 	/// The balance type of the chain
 	type Balance: Serialize + DeserializeOwned;
 	/// The block type of the chain

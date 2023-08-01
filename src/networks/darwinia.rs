@@ -8,10 +8,14 @@ use sp_runtime::{
 // this crate
 use super::{ChainInfo, Network};
 
+pub type Signature = fp_account::EthereumSignature;
+pub type AccountId = <<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
+
 /// Pangolin Chain information
 pub struct PangolinChain;
 
 impl ChainInfo for PangolinChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
@@ -26,6 +30,7 @@ impl ChainInfo for PangolinChain {
 pub struct PangoroChain;
 
 impl ChainInfo for PangoroChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
@@ -40,6 +45,7 @@ impl ChainInfo for PangoroChain {
 pub struct CrabChain;
 
 impl ChainInfo for CrabChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
@@ -54,6 +60,7 @@ impl ChainInfo for CrabChain {
 pub struct DarwiniaChain;
 
 impl ChainInfo for DarwiniaChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;

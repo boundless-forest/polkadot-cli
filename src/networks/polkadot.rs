@@ -2,16 +2,21 @@
 use sp_core::H256;
 use sp_runtime::{
 	generic::{Block, Header},
-	traits::BlakeTwo256,
-	OpaqueExtrinsic as UncheckedExtrinsic,
+	traits::{BlakeTwo256, IdentifyAccount, Verify},
+	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
 };
 // this crate
 use super::{ChainInfo, Network};
+
+pub type Signature = MultiSignature;
+pub type AccountPublic = <Signature as Verify>::Signer;
+pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 
 /// Polkadot Chain information
 pub struct PolkadotChain;
 
 impl ChainInfo for PolkadotChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
@@ -26,6 +31,7 @@ impl ChainInfo for PolkadotChain {
 pub struct KusamaChain;
 
 impl ChainInfo for KusamaChain {
+	type AccountId = AccountId;
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
