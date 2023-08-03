@@ -1,10 +1,6 @@
 // std
 use std::str::FromStr;
 // crates.io
-use frame_metadata::{
-	v14::{StorageEntryType, StorageHasher},
-	RuntimeMetadata,
-};
 use pallet_balances::AccountData;
 // this crate
 use crate::{

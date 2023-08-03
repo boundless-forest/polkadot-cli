@@ -12,16 +12,19 @@ pub fn map_storage_key<K: Encode>(
 	key: K,
 ) -> Result<StorageKey, String> {
 	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
-	storage_key.extend(&sp_core::twox_128(&storage_name.as_bytes()));
+	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
 
 	match &runtime_metadata.1 {
 		RuntimeMetadata::V14(metadata) => {
 			if let Some(p) = metadata.pallets.iter().find(|p| p.name == pallet_name) {
-				if let Some(entry) = p.storage.clone().map(|s| s.entries).and_then(|entries| {
-					entries.clone().into_iter().find(|e| e.name == storage_name)
-				}) {
+				if let Some(entry) = p
+					.storage
+					.clone()
+					.map(|s| s.entries)
+					.and_then(|entries| entries.into_iter().find(|e| e.name == storage_name))
+				{
 					match entry.ty {
-						StorageEntryType::Map { hashers, key, value } => {
+						StorageEntryType::Map { hashers, key: _, value: _ } => {
 							let hasher = hashers.get(0).expect("Failed to get hasher");
 							let key = key_hash(&key, hasher);
 							storage_key.extend(key);
