@@ -8,8 +8,9 @@ use sp_runtime::{
 // this crate
 use super::{ChainInfo, Network};
 
-pub type Signature = fp_account::EthereumSignature;
-pub type AccountId = <<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
+type Signature = fp_account::EthereumSignature;
+type AccountPublic = <Signature as sp_runtime::traits::Verify>::Signer;
+pub type AccountId = <AccountPublic as sp_runtime::traits::IdentifyAccount>::AccountId;
 
 /// Pangolin Chain information
 pub struct PangolinChain;

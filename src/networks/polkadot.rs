@@ -8,8 +8,8 @@ use sp_runtime::{
 // this crate
 use super::{ChainInfo, Network};
 
-pub type Signature = MultiSignature;
-pub type AccountPublic = <Signature as Verify>::Signer;
+type Signature = MultiSignature;
+type AccountPublic = <Signature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 
 /// Polkadot Chain information

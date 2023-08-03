@@ -29,6 +29,7 @@ pub enum RpcError {
 	JsonRpseeError(Error),
 	InvalidCommandParams,
 	DecodeError,
+	StorageKeyFailed,
 }
 
 impl From<RpcError> for AppError {

@@ -11,7 +11,7 @@ use crate::{
 	app::{AccountCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
-	rpc::{print_format_json, ChainApi, RpcClient, StateApi, SystemApi},
+	rpc::{map_storage_key, print_format_json, ChainApi, RpcClient, StateApi, SystemApi},
 };
 
 /// The APP's command execution result.
@@ -104,16 +104,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 		},
 		AppCommand::Account(sub_command) => match sub_command {
 			AccountCommand::Balances { account_id, at_block } => {
-				const pallet_name: &'static str = "System";
-				const storage_name: &'static str = "Account";
-				// TODO: FIX ME
-				let encoded_key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
+				let metadata = client.runtime_metadata().await?;
+				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
 					.map_err(|_| RpcError::InvalidCommandParams)?;
-
-				let module_prefix = pallet_name.as_bytes().to_vec();
-				let storage_prefix = storage_name.as_bytes().to_vec();
-				let mut storage_key = sp_core::twox_128(&module_prefix).to_vec();
-				storage_key.extend(&sp_core::twox_128(&storage_prefix)[..]);
+				let storage_key = map_storage_key(&metadata, "System", "Account", key)
+					.map_err(|_| RpcError::StorageKeyFailed)?;
 
 				let hash = if let Some(hash) = at_block {
 					Some(
@@ -124,49 +119,24 @@ pub async fn handle_commands<CI: ChainInfo>(
 					None
 				};
 
-				let metadata = client.runtime_metadata().await?;
-				match metadata.1 {
-					RuntimeMetadata::V14(metadata) => {
-						if let Some(p) =
-							metadata.pallets.into_iter().find(|p| p.name == pallet_name)
-						{
-							if let Some(entry_metadata) =
-								p.storage.map(|s| s.entries).and_then(|entries| {
-									entries.clone().into_iter().find(|e| e.name == storage_name)
-								}) {
-								match entry_metadata.ty {
-									StorageEntryType::Map { hashers, key, value } => {
-										let hasher = hashers.get(0).expect("Failed to get hasher");
-										match hasher {
-											StorageHasher::Blake2_128Concat => {
-												let x: &[u8] = encoded_key;
-												let key = sp_core::blake2_128(x)
-													.iter()
-													.chain(x.iter())
-													.cloned()
-													.collect::<Vec<_>>();
-												storage_key.extend(key);
-											},
-											_ => {
-												todo!();
-											},
-										}
-
-										todo!()
-									},
-									_ => todo!(),
-								}
-							}
-						}
-					},
-					_ => {
-						todo!();
-					},
-				}
-
 				let res: Option<AccountData<CI::Balance>> =
-					client.get_storage(sp_storage::StorageKey(storage_key), hash).await?;
-				print_format_json(res);
+					client.get_storage(storage_key, hash).await?;
+				if let Some(account) = res {
+					use serde::{Deserialize, Serialize};
+					#[derive(Serialize, Deserialize)]
+					pub struct AccountData<Balance> {
+						pub free: Balance,
+						pub reserved: Balance,
+						pub frozen: Balance,
+					}
+					let res = AccountData {
+						free: account.free,
+						reserved: account.reserved,
+						frozen: account.frozen,
+					};
+
+					print_format_json(res);
+				}
 			},
 		},
 	}
