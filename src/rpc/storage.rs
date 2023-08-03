@@ -14,35 +14,21 @@ pub fn map_storage_key<K: Encode>(
 	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
 	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
 
-	match &runtime_metadata.1 {
-		RuntimeMetadata::V14(metadata) => {
-			if let Some(p) = metadata.pallets.iter().find(|p| p.name == pallet_name) {
-				if let Some(entry) = p
-					.storage
-					.clone()
-					.map(|s| s.entries)
-					.and_then(|entries| entries.into_iter().find(|e| e.name == storage_name))
-				{
-					match entry.ty {
-						StorageEntryType::Map { hashers, key: _, value: _ } => {
-							let hasher = hashers.get(0).expect("Failed to get hasher");
-							let key = key_hash(&key, hasher);
-							storage_key.extend(key);
-						},
-						_ =>
-							return Err("Only support single map entry in this function".to_string()),
-					}
-				} else {
-					return Err("Did not find the storage item.".to_string());
-				}
-			} else {
-				return Err("Did not find the pallet.".to_string());
-			}
-		},
-		_ => {
-			return Err("Only support the runtime metadata V14 now.".to_string());
-		},
-	}
+	let RuntimeMetadata::V14(metadata) = &runtime_metadata.1  else {
+		return Err("Only support the runtime metadata V14 now.".to_string());
+	};
+	let Some(p) = metadata.pallets.iter().find(|p| p.name == pallet_name) else {
+		return Err("Did not find the pallet.".to_string());
+	};
+	let Some(entry) = p.storage.clone().map(|s| s.entries).and_then(|entries| entries.into_iter().find(|e| e.name == storage_name)) else {
+		return Err("Did not find the storage item.".to_string());
+	};
+	let StorageEntryType::Map { hashers, key: _, value : _} = entry.ty else {
+		return Err("Only support single map entry in this function".to_string());
+	};
+
+	let hasher = hashers.get(0).expect("Failed to get hasher");
+	storage_key.extend(key_hash(&key, hasher));
 
 	Ok(StorageKey(storage_key))
 }

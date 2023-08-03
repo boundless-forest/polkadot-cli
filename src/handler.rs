@@ -101,23 +101,16 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::Account(sub_command) => match sub_command {
 			AccountCommand::Balances { account_id, at_block } => {
 				let metadata = client.runtime_metadata().await?;
+				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
+
 				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
 					.map_err(|_| RpcError::InvalidCommandParams)?;
 				let storage_key = map_storage_key(&metadata, "System", "Account", key)
 					.map_err(|_| RpcError::StorageKeyFailed)?;
 
-				let hash = if let Some(hash) = at_block {
-					Some(
-						<CI as ChainInfo>::Hash::from_str(hash.as_str())
-							.map_err(|_| RpcError::InvalidCommandParams)?,
-					)
-				} else {
-					None
-				};
-
-				let res: Option<AccountData<CI::Balance>> =
+				let account: Option<AccountData<CI::Balance>> =
 					client.get_storage(storage_key, hash).await?;
-				if let Some(account) = res {
+				if let Some(a) = account {
 					use serde::{Deserialize, Serialize};
 					#[derive(Serialize, Deserialize)]
 					pub struct AccountData<Balance> {
@@ -125,11 +118,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 						pub reserved: Balance,
 						pub frozen: Balance,
 					}
-					let res = AccountData {
-						free: account.free,
-						reserved: account.reserved,
-						frozen: account.frozen,
-					};
+					let res = AccountData { free: a.free, reserved: a.reserved, frozen: a.frozen };
 
 					print_format_json(res);
 				}
