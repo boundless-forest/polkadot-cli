@@ -22,9 +22,9 @@ pub enum AppCommand {
 	/// Account interfaces
 	#[command(subcommand)]
 	AccountInfo(AccountInfoCommand),
-	/// List all the pallets information
-	ListPallets,
-	// TODO: ADD HELP COMMAND
+	/// Pallets interfaces
+	#[command(subcommand)]
+	Pallets(PalletsCommand), // TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -93,4 +93,10 @@ pub enum AccountInfoCommand {
 		#[arg(name = "at-block", long)]
 		at_block: Option<String>,
 	},
+}
+
+#[derive(Subcommand, Clone, Debug)]
+#[command(name = "pallets")]
+pub enum PalletsCommand {
+	ListAll,
 }

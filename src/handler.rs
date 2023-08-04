@@ -7,7 +7,7 @@ use pallet_balances::AccountData;
 use prettytable::{row, Table};
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
+	app::{AccountInfoCommand, AppCommand, ChainCommand, PalletsCommand, RpcCommand, StateCommand},
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
 	rpc::{
@@ -140,21 +140,23 @@ pub async fn handle_commands<CI: ChainInfo>(
 				}
 			},
 		},
-		AppCommand::ListPallets => {
-			let metadata = client.runtime_metadata().await?;
-			let RuntimeMetadata::V14(metadata) = &metadata.1  else {
-				return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-			};
+		AppCommand::Pallets(sub_command) => match sub_command {
+			PalletsCommand::ListAll => {
+				let metadata = client.runtime_metadata().await?;
+				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
+					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+				};
 
-			let mut pallets = metadata.pallets.iter().cloned().collect::<Vec<_>>();
-			pallets.sort_by_key(|p| p.index);
+				let mut pallets = metadata.pallets.iter().cloned().collect::<Vec<_>>();
+				pallets.sort_by_key(|p| p.index);
 
-			let mut table = Table::new();
-			table.add_row(row!["Pallet", "Index"]);
-			pallets.iter().for_each(|p| {
-				table.add_row(row![p.name, p.index]);
-			});
-			table.printstd();
+				let mut table = Table::new();
+				table.add_row(row!["Pallet", "Index"]);
+				pallets.iter().for_each(|p| {
+					table.add_row(row![p.name, p.index]);
+				});
+				table.printstd();
+			},
 		},
 	}
 
