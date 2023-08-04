@@ -79,9 +79,9 @@ pub enum StateCommand {
 #[command(name = "account")]
 pub enum AccountCommand {
 	Balances {
-		#[arg(long)]
+		#[arg(name = "account-id", long)]
 		account_id: String,
-		#[arg(long)]
+		#[arg(name = "at-block", long)]
 		at_block: Option<String>,
 	},
 }

@@ -21,6 +21,7 @@ impl ChainInfo for NoteTemplate {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Local;
 	const WS_PORT: &'static str = "ws://127.0.0.1:9944";

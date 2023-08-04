@@ -7,7 +7,7 @@ pub use node_template::NoteTemplate;
 pub use polkadot::{KusamaChain, PolkadotChain};
 
 // std
-use std::{marker::Sync, str::FromStr};
+use std::{fmt::Debug, marker::Sync, str::FromStr};
 // crates.io
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
@@ -21,10 +21,12 @@ pub trait ChainInfo: Sync + Send {
 	/// The network name of this chain
 	const NET_WORK: Network;
 
-	// The account id type of the chain
+	/// The account id type of the chain
 	type AccountId: Serialize + DeserializeOwned + Encode + FromStr + AsRef<[u8]>;
 	/// The balance type of the chain
-	type Balance: Serialize + DeserializeOwned + Decode;
+	type Balance: Serialize + DeserializeOwned + Decode + Debug;
+	///  The nonce type of the chain
+	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 	/// The block type of the chain
 	type Block: Serialize + DeserializeOwned;
 	/// The block number type of the chain

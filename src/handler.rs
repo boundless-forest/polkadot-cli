@@ -1,6 +1,7 @@
 // std
 use std::str::FromStr;
 // crates.io
+use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 // this crate
 use crate::{
@@ -108,7 +109,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let storage_key = map_storage_key(&metadata, "System", "Account", key)
 					.map_err(|_| RpcError::StorageKeyFailed)?;
 
-				let account: Option<AccountData<CI::Balance>> =
+				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
 					use serde::{Deserialize, Serialize};
@@ -118,7 +119,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 						pub reserved: Balance,
 						pub frozen: Balance,
 					}
-					let res = AccountData { free: a.free, reserved: a.reserved, frozen: a.frozen };
+					let res = AccountData {
+						free: a.data.free,
+						reserved: a.data.reserved,
+						frozen: a.data.frozen,
+					};
 
 					print_format_json(res);
 				}

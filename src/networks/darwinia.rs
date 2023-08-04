@@ -22,6 +22,7 @@ impl ChainInfo for PangolinChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Pangolin;
 	const WS_PORT: &'static str = "wss://pangolin-rpc.darwinia.network:443";
@@ -37,6 +38,7 @@ impl ChainInfo for PangoroChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Pangoro;
 	const WS_PORT: &'static str = "wss://pangoro-rpc.darwinia.network:443";
@@ -52,6 +54,7 @@ impl ChainInfo for CrabChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Crab;
 	const WS_PORT: &'static str = "wss://crab-rpc.darwinia.network:443";
@@ -67,6 +70,7 @@ impl ChainInfo for DarwiniaChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Darwinia;
 	const WS_PORT: &'static str = "wss://rpc.darwinia.network:443";

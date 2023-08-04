@@ -22,6 +22,7 @@ impl ChainInfo for PolkadotChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Polkadot;
 	const WS_PORT: &'static str = "wss://rpc.polkadot.io:443";
@@ -37,6 +38,7 @@ impl ChainInfo for KusamaChain {
 	type BlockNumber = u32;
 	type Hash = H256;
 	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Kusama;
 	const WS_PORT: &'static str = "wss://kusama-rpc.polkadot.io:443";
