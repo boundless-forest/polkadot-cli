@@ -1,8 +1,10 @@
 // std
 use std::str::FromStr;
 // crates.io
+use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
+use prettytable::{row, Table};
 // this crate
 use crate::{
 	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
@@ -137,6 +139,22 @@ pub async fn handle_commands<CI: ChainInfo>(
 					print_format_json(AccountNonce { nonce: a.nonce });
 				}
 			},
+		},
+		AppCommand::ListPallets => {
+			let metadata = client.runtime_metadata().await?;
+			let RuntimeMetadata::V14(metadata) = &metadata.1  else {
+				return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+			};
+
+			let mut pallets = metadata.pallets.iter().cloned().collect::<Vec<_>>();
+			pallets.sort_by_key(|p| p.index);
+
+			let mut table = Table::new();
+			table.add_row(row!["Pallet", "Index"]);
+			pallets.iter().for_each(|p| {
+				table.add_row(row![p.name, p.index]);
+			});
+			table.printstd();
 		},
 	}
 

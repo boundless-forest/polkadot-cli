@@ -22,6 +22,8 @@ pub enum AppCommand {
 	/// Account interfaces
 	#[command(subcommand)]
 	AccountInfo(AccountInfoCommand),
+	/// List all the pallets information
+	ListPallets,
 	// TODO: ADD HELP COMMAND
 }
 
