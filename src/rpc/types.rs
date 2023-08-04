@@ -47,4 +47,10 @@ pub mod this_crate_types {
 		pub reserved: Balance,
 		pub frozen: Balance,
 	}
+
+	/// Account nonce output format
+	#[derive(Serialize, Deserialize)]
+	pub struct AccountNonce<Nonce> {
+		pub nonce: Nonce,
+	}
 }
