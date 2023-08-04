@@ -7,10 +7,11 @@ pub use node_template::NoteTemplate;
 pub use polkadot::{KusamaChain, PolkadotChain};
 
 // std
-use std::{marker::Sync, str::FromStr};
+use std::{fmt::Debug, marker::Sync, str::FromStr};
 // crates.io
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
+use sp_core::{Decode, Encode};
 use sp_runtime::DeserializeOwned;
 
 /// The ChainInfo API
@@ -20,14 +21,20 @@ pub trait ChainInfo: Sync + Send {
 	/// The network name of this chain
 	const NET_WORK: Network;
 
-	/// The hash type of the chain
-	type Hash: Serialize + DeserializeOwned + Send + FromStr;
-	/// The block number type of the chain
-	type BlockNumber: Serialize + DeserializeOwned + Send + From<u32>;
-	/// The header type of the chain
-	type Header: Serialize + DeserializeOwned;
+	/// The account id type of the chain
+	type AccountId: Serialize + DeserializeOwned + Encode + FromStr + AsRef<[u8]>;
+	/// The balance type of the chain
+	type Balance: Serialize + DeserializeOwned + Decode + Debug;
 	/// The block type of the chain
 	type Block: Serialize + DeserializeOwned;
+	/// The block number type of the chain
+	type BlockNumber: Serialize + DeserializeOwned + Send + From<u32>;
+	/// The hash type of the chain
+	type Hash: Serialize + DeserializeOwned + Send + FromStr;
+	/// The header type of the chain
+	type Header: Serialize + DeserializeOwned;
+	///  The nonce type of the chain
+	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 }
 
 #[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default)]

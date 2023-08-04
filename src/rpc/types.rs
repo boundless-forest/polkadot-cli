@@ -36,3 +36,15 @@ pub struct Health {
 	/// Might be false for local chains or when running without discovery.
 	pub should_have_peers: bool,
 }
+
+pub mod this_crate_types {
+	use super::*;
+
+	/// Account balances output format
+	#[derive(Serialize, Deserialize)]
+	pub struct AccountBalances<Balance> {
+		pub free: Balance,
+		pub reserved: Balance,
+		pub frozen: Balance,
+	}
+}

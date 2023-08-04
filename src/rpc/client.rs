@@ -3,16 +3,23 @@ use std::{marker::PhantomData, sync::Arc};
 // crates.io
 use async_trait::async_trait;
 use colored::Colorize;
+use frame_metadata::RuntimeMetadataPrefixed;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
 use serde::Serialize;
+use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
+use sp_storage::{StorageData, StorageKey};
+use sp_version::RuntimeVersion;
 // this crate
 use super::{
-	api::{BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, SystemApi},
+	api::{
+		BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi,
+		SystemApi,
+	},
 	types::{ChainType, Health, Properties},
 };
 use crate::{errors::RpcError, networks::ChainInfo};
@@ -173,6 +180,54 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 			.await
 			.map_err(RpcError::JsonRpseeError)?;
 		Ok(res)
+	}
+}
+
+#[async_trait]
+impl<CI: ChainInfo> StateApi for RpcClient<CI> {
+	type ChainInfo = CI;
+
+	/// Get the runtime version
+	async fn runtime_version(
+		&self,
+		hash: HashForChain<Self::ChainInfo>,
+	) -> RpcResult<RuntimeVersion> {
+		let res = self
+			.client
+			.request("state_getRuntimeVersion", rpc_params![hash])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		Ok(res)
+	}
+
+	/// Get the runtime metadata
+	async fn runtime_metadata(&self) -> RpcResult<RuntimeMetadataPrefixed> {
+		let metadata_bytes: Bytes = self
+			.client
+			.request("state_getMetadata", rpc_params![])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+		let metadata = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
+			.map_err(|_| RpcError::DecodeError)?;
+		Ok(metadata)
+	}
+
+	/// Retrieves the storage for a key
+	async fn get_storage<R: Decode>(
+		&self,
+		storage_key: StorageKey,
+		at_block: Option<HashForChain<Self::ChainInfo>>,
+	) -> RpcResult<Option<R>> {
+		let storage_data: Option<StorageData> = self
+			.client
+			.request("state_getStorage", rpc_params![storage_key, at_block])
+			.await
+			.map_err(RpcError::JsonRpseeError)?;
+
+		if let Some(data) = storage_data {
+			return Ok(Some(R::decode(&mut data.0.as_slice()).map_err(|_| RpcError::DecodeError)?));
+		}
+		Ok(None)
 	}
 }
 
