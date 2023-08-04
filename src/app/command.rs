@@ -85,4 +85,10 @@ pub enum AccountInfoCommand {
 		#[arg(name = "at-block", long)]
 		at_block: Option<String>,
 	},
+	Nonce {
+		#[arg(name = "account-id", long)]
+		account_id: String,
+		#[arg(name = "at-block", long)]
+		at_block: Option<String>,
+	},
 }

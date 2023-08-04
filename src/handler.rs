@@ -9,8 +9,8 @@ use crate::{
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
 	rpc::{
-		print_format_json, single_map_storage_key, AccountBalances, ChainApi, RpcClient, StateApi,
-		SystemApi,
+		print_format_json, single_map_storage_key, AccountBalances, AccountNonce, ChainApi,
+		RpcClient, StateApi, SystemApi,
 	},
 };
 
@@ -120,6 +120,21 @@ pub async fn handle_commands<CI: ChainInfo>(
 						reserved: a.data.reserved,
 						frozen: a.data.frozen,
 					});
+				}
+			},
+			AccountInfoCommand::Nonce { account_id, at_block } => {
+				let metadata = client.runtime_metadata().await?;
+				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
+
+				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
+					.map_err(|_| RpcError::InvalidCommandParams)?;
+				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
+					.map_err(|_| RpcError::StorageKeyFailed)?;
+
+				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
+					client.get_storage(storage_key, hash).await?;
+				if let Some(a) = account {
+					print_format_json(AccountNonce { nonce: a.nonce });
 				}
 			},
 		},
