@@ -70,6 +70,7 @@ pub trait ChainApi {
 	) -> RpcResult<HeaderForChain<Self::ChainInfo>>;
 }
 
+/// The State API provides access to chain state and storage.
 #[async_trait]
 pub trait StateApi {
 	/// The chain info type

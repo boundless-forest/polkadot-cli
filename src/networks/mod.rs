@@ -25,8 +25,6 @@ pub trait ChainInfo: Sync + Send {
 	type AccountId: Serialize + DeserializeOwned + Encode + FromStr + AsRef<[u8]>;
 	/// The balance type of the chain
 	type Balance: Serialize + DeserializeOwned + Decode + Debug;
-	///  The nonce type of the chain
-	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 	/// The block type of the chain
 	type Block: Serialize + DeserializeOwned;
 	/// The block number type of the chain
@@ -35,6 +33,8 @@ pub trait ChainInfo: Sync + Send {
 	type Hash: Serialize + DeserializeOwned + Send + FromStr;
 	/// The header type of the chain
 	type Header: Serialize + DeserializeOwned;
+	///  The nonce type of the chain
+	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 }
 
 #[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default)]

@@ -13,20 +13,21 @@ pub enum AppCommand {
 	/// RPC interfaces
 	#[command(subcommand)]
 	Rpc(RpcCommand),
+	/// Chain interfaces
 	#[command(subcommand)]
 	Chain(ChainCommand),
+	/// Chain state interfaces
 	#[command(subcommand)]
 	State(StateCommand),
+	/// Account interfaces
 	#[command(subcommand)]
-	Account(AccountCommand),
+	AccountInfo(AccountInfoCommand),
 	// TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "rpc")]
 pub enum RpcCommand {
-	/// Get RPC methods
-	// RpcMethods,
 	/// Get the node name
 	SysName,
 	/// Get System Properties
@@ -76,8 +77,8 @@ pub enum StateCommand {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-#[command(name = "account")]
-pub enum AccountCommand {
+#[command(name = "account-info")]
+pub enum AccountInfoCommand {
 	Balances {
 		#[arg(name = "account-id", long)]
 		account_id: String,

@@ -1,3 +1,4 @@
+// crates.io
 use frame_metadata::{
 	v14::{StorageEntryType, StorageHasher},
 	RuntimeMetadata, RuntimeMetadataPrefixed,
@@ -5,7 +6,8 @@ use frame_metadata::{
 use sp_core::Encode;
 use sp_storage::StorageKey;
 
-pub fn map_storage_key<K: Encode>(
+/// Get the storage key with the provided pallet information and runtime metadata.
+pub fn single_map_storage_key<K: Encode>(
 	runtime_metadata: &RuntimeMetadataPrefixed,
 	pallet_name: &str,
 	storage_name: &str,

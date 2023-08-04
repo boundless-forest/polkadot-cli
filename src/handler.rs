@@ -5,10 +5,13 @@ use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 // this crate
 use crate::{
-	app::{AccountCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
+	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, StateCommand},
 	errors::{AppError, RpcError},
 	networks::{ChainInfo, Network},
-	rpc::{map_storage_key, print_format_json, ChainApi, RpcClient, StateApi, SystemApi},
+	rpc::{
+		print_format_json, single_map_storage_key, AccountBalances, ChainApi, RpcClient, StateApi,
+		SystemApi,
+	},
 };
 
 /// The APP's command execution result.
@@ -99,33 +102,24 @@ pub async fn handle_commands<CI: ChainInfo>(
 				print_format_json(res);
 			},
 		},
-		AppCommand::Account(sub_command) => match sub_command {
-			AccountCommand::Balances { account_id, at_block } => {
+		AppCommand::AccountInfo(sub_command) => match sub_command {
+			AccountInfoCommand::Balances { account_id, at_block } => {
 				let metadata = client.runtime_metadata().await?;
 				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
 				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
 					.map_err(|_| RpcError::InvalidCommandParams)?;
-				let storage_key = map_storage_key(&metadata, "System", "Account", key)
+				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
 					.map_err(|_| RpcError::StorageKeyFailed)?;
 
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
-					use serde::{Deserialize, Serialize};
-					#[derive(Serialize, Deserialize)]
-					pub struct AccountData<Balance> {
-						pub free: Balance,
-						pub reserved: Balance,
-						pub frozen: Balance,
-					}
-					let res = AccountData {
+					print_format_json(AccountBalances {
 						free: a.data.free,
 						reserved: a.data.reserved,
 						frozen: a.data.frozen,
-					};
-
-					print_format_json(res);
+					});
 				}
 			},
 		},
