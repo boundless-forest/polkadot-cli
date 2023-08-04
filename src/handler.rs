@@ -147,7 +147,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
 				};
 
-				let mut pallets = metadata.pallets.iter().cloned().collect::<Vec<_>>();
+				let mut pallets = metadata.pallets.to_vec();
 				pallets.sort_by_key(|p| p.index);
 
 				let mut table = Table::new();
