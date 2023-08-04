@@ -23,6 +23,7 @@ serde_json            = { version = "1.0.100" }
 serde                 = { version = "1.0.166" }
 clap_complete_command = { version = "0.5.1" }
 frame-metadata        = { version = "16.0.0", features = ["decode"] }
+prettytable           = { version = "0.10.0" }
 # substrate
 sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
