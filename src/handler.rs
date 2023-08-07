@@ -5,6 +5,7 @@ use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
+use sp_runtime::traits::Header;
 // this crate
 use crate::{
 	app::{AccountInfoCommand, AppCommand, ChainCommand, PalletsCommand, RpcCommand, StateCommand},
@@ -84,6 +85,16 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let res = client.get_finalized_head().await?;
 				print_format_json(res);
 			},
+			ChainCommand::GetFinalizedBlockNumber => {
+				let finalized_hash = client.get_finalized_head().await?;
+				if let Some(hash) = finalized_hash {
+					let res = client.get_header(hash).await?;
+					print_format_json(res.number());
+				} else {
+					print_format_json(None::<String>);
+				}
+			},
+
 			ChainCommand::GetHeader { hash } => {
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidCommandParams)?;

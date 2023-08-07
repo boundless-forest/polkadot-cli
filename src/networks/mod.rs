@@ -12,7 +12,7 @@ use std::{fmt::Debug, marker::Sync, str::FromStr};
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode};
-use sp_runtime::DeserializeOwned;
+use sp_runtime::{traits::Header as HeaderT, DeserializeOwned};
 
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {
@@ -32,7 +32,7 @@ pub trait ChainInfo: Sync + Send {
 	/// The hash type of the chain
 	type Hash: Serialize + DeserializeOwned + Send + FromStr;
 	/// The header type of the chain
-	type Header: Serialize + DeserializeOwned;
+	type Header: Serialize + DeserializeOwned + HeaderT;
 	///  The nonce type of the chain
 	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 }
