@@ -15,6 +15,10 @@ pub enum RpcError {
 	DecodeError,
 	#[error("failed to generate storage key")]
 	GenerateStorageKeyFailed,
+	#[error("no result found")]
+	EmptyResult,
+	#[error("failed to parse the data to json")]
+	InvalidJsonObject,
 }
 
 impl From<jsonrpsee::core::Error> for RpcError {

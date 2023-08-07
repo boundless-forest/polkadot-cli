@@ -19,16 +19,6 @@ use crate::{
 	},
 };
 
-/// The APP's command execution result.
-pub enum ExecutionResult {
-	/// Switch to another network.
-	SwitchNetworkTo(Network),
-	/// Execute successfully.
-	Success,
-	/// Execute failed.
-	Exited,
-}
-
 pub async fn handle_commands<CI: ChainInfo>(
 	command: AppCommand,
 	client: &RpcClient<CI>,
@@ -40,31 +30,31 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			RpcCommand::SysName => {
 				let res = client.system_name().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::SysProperties => {
 				let res = client.system_properties().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::SysVersion => {
 				let res = client.system_version().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::Chain => {
 				let res = client.chain().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::ChainType => {
 				let res = client.chain_type().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::Health => {
 				let res = client.health().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			RpcCommand::SyncState => {
 				let res = client.sync_state().await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 		},
 		AppCommand::Chain(sub_command) => match sub_command {
@@ -72,7 +62,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_block(hash).await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 			ChainCommand::GetBlockHash { number } => {
 				let number: <CI as ChainInfo>::BlockNumber = number.into();
@@ -85,11 +75,10 @@ pub async fn handle_commands<CI: ChainInfo>(
 			},
 			ChainCommand::GetFinalizedNumber => {
 				let finalized_hash = client.get_finalized_head().await?;
+
 				if let Some(hash) = finalized_hash {
 					let res = client.get_header(hash).await?;
-					print_format_json(res.number());
-				} else {
-					print_format_json(None::<String>);
+					print_format_json(Some(res.number()));
 				}
 			},
 
@@ -97,7 +86,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_header(hash).await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 		},
 		AppCommand::State(sub_command) => match sub_command {
@@ -110,7 +99,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				};
 
 				let res = client.runtime_version(hash).await?;
-				print_format_json(res);
+				print_format_json(Some(res));
 			},
 		},
 		AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -126,11 +115,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
-					print_format_json(AccountBalances {
+					print_format_json(Some(AccountBalances {
 						free: a.data.free,
 						reserved: a.data.reserved,
 						frozen: a.data.frozen,
-					});
+					}));
 				}
 			},
 			AccountInfoCommand::Nonce { account_id, at_block } => {
@@ -145,7 +134,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
-					print_format_json(AccountNonce { nonce: a.nonce });
+					print_format_json(Some(AccountNonce { nonce: a.nonce }));
 				}
 			},
 		},
@@ -172,11 +161,26 @@ pub async fn handle_commands<CI: ChainInfo>(
 	Ok(ExecutionResult::Success)
 }
 
+/// The APP's command execution result.
+pub enum ExecutionResult {
+	/// Switch to another network.
+	SwitchNetworkTo(Network),
+	/// Execute successfully.
+	Success,
+	/// Execute failed.
+	Exited,
+}
+
 /// Print the result in JSON format.
-pub fn print_format_json<T: Serialize>(data: T) {
+pub fn print_format_json<T: Serialize>(data: Option<T>) {
+	let Some(data) = data else {
+		println!("{}", RpcError::EmptyResult.to_string().italic().bright_magenta());
+		return;
+	};
+
 	if let Ok(data) = serde_json::to_string_pretty(&data) {
 		println!("{}", data.italic().bright_magenta());
 	} else {
-		println!("{}", "Failed to format JSON".italic().bright_magenta());
+		println!("{}", RpcError::InvalidJsonObject.to_string().italic().bright_magenta());
 	}
 }
