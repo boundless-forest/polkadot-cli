@@ -85,7 +85,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let res = client.get_finalized_head().await?;
 				print_format_json(res);
 			},
-			ChainCommand::GetFinalizedBlockNumber => {
+			ChainCommand::GetFinalizedNumber => {
 				let finalized_hash = client.get_finalized_head().await?;
 				if let Some(hash) = finalized_hash {
 					let res = client.get_header(hash).await?;
