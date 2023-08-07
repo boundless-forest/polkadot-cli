@@ -53,7 +53,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("rpc_methods", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -63,7 +63,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_name", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -73,7 +73,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_properties", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -83,7 +83,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_version", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -93,7 +93,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_chain", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -103,7 +103,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_chainType", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -113,7 +113,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_health", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -123,7 +123,7 @@ impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
 			.client
 			.request("system_syncState", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 }
@@ -141,7 +141,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 			.client
 			.request("chain_getBlock", rpc_params![hash])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -154,7 +154,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 			.client
 			.request("chain_getBlockHash", rpc_params![number])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -164,7 +164,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 			.client
 			.request("chain_getFinalizedHead", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -177,7 +177,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 			.client
 			.request("chain_getHeader", rpc_params![hash])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 }
@@ -195,7 +195,7 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			.client
 			.request("state_getRuntimeVersion", rpc_params![hash])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		Ok(res)
 	}
 
@@ -205,7 +205,7 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			.client
 			.request("state_getMetadata", rpc_params![])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 		let metadata = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
 			.map_err(|_| RpcError::DecodeError)?;
 		Ok(metadata)
@@ -221,7 +221,7 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			.client
 			.request("state_getStorage", rpc_params![storage_key, at_block])
 			.await
-			.map_err(RpcError::JsonRpseeError)?;
+			.map_err(RpcError::from)?;
 
 		if let Some(data) = storage_data {
 			return Ok(Some(R::decode(&mut data.0.as_slice()).map_err(|_| RpcError::DecodeError)?));

@@ -19,15 +19,6 @@ use crate::{
 	},
 };
 
-/// Print the result in JSON format.
-pub fn print_format_json<T: Serialize>(data: T) {
-	if let Ok(data) = serde_json::to_string_pretty(&data) {
-		println!("{}", data.italic().bright_magenta());
-	} else {
-		println!("{}", "Failed to format JSON".italic().bright_magenta());
-	}
-}
-
 /// The APP's command execution result.
 pub enum ExecutionResult {
 	/// Switch to another network.
@@ -79,7 +70,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::Chain(sub_command) => match sub_command {
 			ChainCommand::GetBlock { hash } => {
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-					.map_err(|_| RpcError::InvalidCommandParams)?;
+					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_block(hash).await?;
 				print_format_json(res);
 			},
@@ -104,7 +95,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 
 			ChainCommand::GetHeader { hash } => {
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-					.map_err(|_| RpcError::InvalidCommandParams)?;
+					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_header(hash).await?;
 				print_format_json(res);
 			},
@@ -113,7 +104,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 			StateCommand::RuntimeVersion { hash } => {
 				let hash = if let Some(hash) = hash {
 					<CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidCommandParams)?
+						.map_err(|_| RpcError::InvalidParams)?
 				} else {
 					client.get_finalized_head().await?.expect("Failed to get finalized head")
 				};
@@ -128,9 +119,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
 				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-					.map_err(|_| RpcError::InvalidCommandParams)?;
+					.map_err(|_| RpcError::InvalidParams)?;
 				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
-					.map_err(|_| RpcError::StorageKeyFailed)?;
+					.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
 
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
@@ -147,9 +138,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
 				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-					.map_err(|_| RpcError::InvalidCommandParams)?;
+					.map_err(|_| RpcError::InvalidParams)?;
 				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
-					.map_err(|_| RpcError::StorageKeyFailed)?;
+					.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
 
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
@@ -179,4 +170,13 @@ pub async fn handle_commands<CI: ChainInfo>(
 	}
 
 	Ok(ExecutionResult::Success)
+}
+
+/// Print the result in JSON format.
+pub fn print_format_json<T: Serialize>(data: T) {
+	if let Ok(data) = serde_json::to_string_pretty(&data) {
+		println!("{}", data.italic().bright_magenta());
+	} else {
+		println!("{}", "Failed to format JSON".italic().bright_magenta());
+	}
 }

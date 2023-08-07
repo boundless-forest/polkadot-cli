@@ -1,12 +1,24 @@
-use jsonrpsee::core::Error;
+// crates.io
+use serde::Serialize;
+use thiserror::Error;
 
 /// RPC error type.
-#[derive(Debug)]
+#[derive(Debug, Error, Serialize)]
 pub enum RpcError {
-	InvalidUri,
+	#[error("failed to create an RPC client")]
 	WsHandshakeError,
-	JsonRpseeError(Error),
-	InvalidCommandParams,
+	#[error("not able to retrieve the rpc responds, err: {0}")]
+	JsonRpseeError(String),
+	#[error("invalid params, please check your parameters")]
+	InvalidParams,
+	#[error("decode error happens")]
 	DecodeError,
-	StorageKeyFailed,
+	#[error("failed to generate storage key")]
+	GenerateStorageKeyFailed,
+}
+
+impl From<jsonrpsee::core::Error> for RpcError {
+	fn from(err: jsonrpsee::core::Error) -> Self {
+		RpcError::JsonRpseeError(err.to_string())
+	}
 }

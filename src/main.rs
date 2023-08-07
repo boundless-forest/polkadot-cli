@@ -38,7 +38,7 @@ macro_rules! switch_network_or_break {
 async fn main() -> Result<(), AppError> {
 	let mut editor = create_editor();
 	let history_file = history_path()?;
-	editor.load_history(&history_file).map_err(AppError::Readline)?;
+	editor.load_history(&history_file).map_err(AppError::from)?;
 
 	print_welcome_message();
 	loop {
