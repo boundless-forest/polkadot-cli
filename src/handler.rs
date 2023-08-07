@@ -36,10 +36,6 @@ pub async fn handle_commands<CI: ChainInfo>(
 			return Ok(ExecutionResult::SwitchNetworkTo(network));
 		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
-			// RpcCommand::RpcMethods => {
-			// 	let res = client.rpc_methods().await?;
-			// 	println!("{:?}", res);
-			// },
 			RpcCommand::SysName => {
 				let res = client.system_name().await?;
 				print_format_json(res);
