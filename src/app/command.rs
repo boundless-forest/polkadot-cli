@@ -62,6 +62,8 @@ pub enum ChainCommand {
 	},
 	/// Get the finalized head hash
 	GetFinalizedHead,
+	/// Get the finalized head number
+	GetFinalizedNumber,
 	/// Get the header for a specific block
 	GetHeader {
 		#[arg(long)]
