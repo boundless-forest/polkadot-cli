@@ -1,21 +1,32 @@
 // std
 use std::str::FromStr;
 // crates.io
+use colored::Colorize;
 use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
+use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
 	app::{AccountInfoCommand, AppCommand, ChainCommand, PalletsCommand, RpcCommand, StateCommand},
-	errors::{AppError, RpcError},
+	errors::AppError,
 	networks::{ChainInfo, Network},
 	rpc::{
-		print_format_json, single_map_storage_key, AccountBalances, AccountNonce, ChainApi,
-		RpcClient, StateApi, SystemApi,
+		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
+		StateApi, SystemApi,
 	},
 };
+
+/// Print the result in JSON format.
+pub fn print_format_json<T: Serialize>(data: T) {
+	if let Ok(data) = serde_json::to_string_pretty(&data) {
+		println!("{}", data.italic().bright_magenta());
+	} else {
+		println!("{}", "Failed to format JSON".italic().bright_magenta());
+	}
+}
 
 /// The APP's command execution result.
 pub enum ExecutionResult {

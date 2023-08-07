@@ -2,14 +2,12 @@
 use std::{marker::PhantomData, sync::Arc};
 // crates.io
 use async_trait::async_trait;
-use colored::Colorize;
 use frame_metadata::RuntimeMetadataPrefixed;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
 	core::client::{Client, ClientBuilder, ClientT},
 	rpc_params,
 };
-use serde::Serialize;
 use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
 use sp_storage::{StorageData, StorageKey};
@@ -20,9 +18,10 @@ use super::{
 		BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi,
 		SystemApi,
 	},
+	errors::RpcError,
 	types::{ChainType, Health, Properties},
 };
-use crate::{errors::RpcError, networks::ChainInfo};
+use crate::networks::ChainInfo;
 
 /// RPC result type.
 pub type RpcResult<T> = Result<T, RpcError>;
@@ -228,14 +227,5 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			return Ok(Some(R::decode(&mut data.0.as_slice()).map_err(|_| RpcError::DecodeError)?));
 		}
 		Ok(None)
-	}
-}
-
-/// Print the result in JSON format.
-pub fn print_format_json<T: Serialize>(data: T) {
-	if let Ok(data) = serde_json::to_string_pretty(&data) {
-		println!("{}", data.italic().bright_magenta());
-	} else {
-		println!("{}", "Failed to format JSON".italic().bright_magenta());
 	}
 }

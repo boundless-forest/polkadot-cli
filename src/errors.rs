@@ -1,6 +1,7 @@
 // crates.io
-use jsonrpsee::core::Error;
 use rustyline::error::ReadlineError;
+
+use crate::rpc::RpcError;
 
 /// Application error type.
 #[derive(Debug)]
@@ -19,17 +20,6 @@ impl From<ReadlineError> for AppError {
 	fn from(err: ReadlineError) -> Self {
 		AppError::Readline(err)
 	}
-}
-
-/// RPC error type.
-#[derive(Debug)]
-pub enum RpcError {
-	InvalidUri,
-	WsHandshakeError,
-	JsonRpseeError(Error),
-	InvalidCommandParams,
-	DecodeError,
-	StorageKeyFailed,
 }
 
 impl From<RpcError> for AppError {
