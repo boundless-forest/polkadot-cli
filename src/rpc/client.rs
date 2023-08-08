@@ -47,16 +47,6 @@ impl<CI: ChainInfo> RpcClient<CI> {
 
 #[async_trait]
 impl<CI: ChainInfo> SystemApi for RpcClient<CI> {
-	/// Get the node RPC methods.
-	async fn rpc_methods(&self) -> RpcResult<Vec<String>> {
-		let res = self
-			.client
-			.request("rpc_methods", rpc_params![])
-			.await
-			.map_err(RpcError::from)?;
-		Ok(res)
-	}
-
 	/// Get the node name.
 	async fn system_name(&self) -> RpcResult<String> {
 		let res = self

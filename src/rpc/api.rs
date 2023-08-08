@@ -24,8 +24,6 @@ pub type BlockForChain<T> = <T as ChainInfo>::Block;
 /// The System API provides access to common system functions.
 #[async_trait]
 pub trait SystemApi {
-	/// Get the node RPC methods.
-	async fn rpc_methods(&self) -> RpcResult<Vec<String>>;
 	/// Get the node name.
 	async fn system_name(&self) -> RpcResult<String>;
 	/// Get the node properties.
