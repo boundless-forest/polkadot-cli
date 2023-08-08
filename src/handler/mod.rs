@@ -30,31 +30,31 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			RpcCommand::SysName => {
 				let res = client.system_name().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::SysProperties => {
 				let res = client.system_properties().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::SysVersion => {
 				let res = client.system_version().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::Chain => {
 				let res = client.chain().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::ChainType => {
 				let res = client.chain_type().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::Health => {
 				let res = client.health().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			RpcCommand::SyncState => {
 				let res = client.sync_state().await;
-				print_format_json(res);
+				print_result(res);
 			},
 		},
 		AppCommand::Chain(sub_command) => match sub_command {
@@ -62,23 +62,23 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_block(hash).await;
-				print_format_json(res);
+				print_result(res);
 			},
 			ChainCommand::GetBlockHash { number } => {
 				let number: <CI as ChainInfo>::BlockNumber = number.into();
 				let res = client.get_block_hash(number).await;
-				print_format_json(res);
+				print_result(res);
 			},
 			ChainCommand::GetFinalizedHead => {
 				let res = client.get_finalized_head().await;
-				print_format_json(res);
+				print_result(res);
 			},
 			ChainCommand::GetFinalizedNumber => {
 				let finalized_hash = client.get_finalized_head().await?;
 
 				if let Some(hash) = finalized_hash {
 					let res = client.get_header(hash).await?;
-					print_format_json(Ok(res.number()));
+					print_result(Ok(res.number()));
 				}
 			},
 
@@ -86,7 +86,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_header(hash).await;
-				print_format_json(res);
+				print_result(res);
 			},
 		},
 		AppCommand::State(sub_command) => match sub_command {
@@ -99,7 +99,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				};
 
 				let res = client.runtime_version(hash).await;
-				print_format_json(res);
+				print_result(res);
 			},
 		},
 		AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -115,7 +115,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
-					print_format_json(Ok(AccountBalances {
+					print_result(Ok(AccountBalances {
 						free: a.data.free,
 						reserved: a.data.reserved,
 						frozen: a.data.frozen,
@@ -134,7 +134,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 					client.get_storage(storage_key, hash).await?;
 				if let Some(a) = account {
-					print_format_json(Ok(AccountNonce { nonce: a.nonce }));
+					print_result(Ok(AccountNonce { nonce: a.nonce }));
 				}
 			},
 		},
@@ -172,7 +172,7 @@ pub enum ExecutionResult {
 }
 
 /// Print the result in JSON format.
-pub fn print_format_json<T: Serialize>(data: RpcResult<T>) {
+pub fn print_result<T: Serialize>(data: RpcResult<T>) {
 	let Ok(data) = data else {
 		println!("{}", RpcError::EmptyResult.to_string().italic().bright_magenta());
 		return;
