@@ -37,13 +37,15 @@ macro_rules! switch_network_or_break {
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
 	let mut editor = create_editor();
-	let history_file = history_path()?;
-	editor.load_history(&history_file).map_err(AppError::Readline)?;
+	let path = history_path().map_err(|e| AppError::Custom(format!("path err: {:?}", e)))?;
+	editor
+		.load_history(&path)
+		.map_err(|_| AppError::Custom("Failed to load history".to_string()))?;
 
 	print_welcome_message();
 	loop {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
-		editor.save_history(&history_file)?;
+		editor.save_history(&path)?;
 
 		match config.network {
 			Network::Local => {
