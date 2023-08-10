@@ -105,4 +105,8 @@ pub enum RuntimeCommand {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
+	ListPalletConstants {
+		#[arg(name = "pallet-name", long)]
+		pallet_name: String,
+	},
 }
