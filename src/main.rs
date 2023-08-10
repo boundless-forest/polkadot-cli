@@ -36,6 +36,7 @@ macro_rules! switch_network_or_break {
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
+	env_logger::init();
 	let mut editor = create_editor();
 	let path = history_path().map_err(|e| AppError::Custom(format!("path err: {:?}", e)))?;
 	editor
@@ -47,6 +48,7 @@ async fn main() -> Result<(), AppError> {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
 		editor.save_history(&path)?;
 
+		log::debug!(target: "cli", "Starting up, network: {:?}", config.network);
 		match config.network {
 			Network::Local => {
 				let rpc_client = RpcClient::<NoteTemplate>::new().await?;
@@ -92,30 +94,19 @@ pub async fn run<CI: ChainInfo>(
 			.italic();
 		let prompt = editor.readline(command_tip.to_string().as_str());
 		match prompt {
-			Ok(prompt) => {
-				if let Ok(command) = AppCommand::try_parse_from(prompt.split_whitespace()) {
+			Ok(prompt) => match AppCommand::try_parse_from(prompt.split_whitespace()) {
+				Ok(command) => {
+					log::debug!(target: "cli", "command: {:?}", command);
 					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 						handler::handle_commands(command, rpc_client).await
 					{
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
-				} else {
-					println!("{}", "Invalid command, double-tap to complete.".italic().red());
+				},
+				Err(e) => {
+					log::debug!(target: "cli", "failed to parse the command, err: {:?}", e);
 					continue;
-				}
-				// match AppCommand::try_parse_from(prompt.split_whitespace()) {
-				// 	Ok(command) => {
-				// 		if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-				// 			handler::handle_commands(command, rpc_client).await
-				// 		{
-				// 			return Ok(ExecutionResult::SwitchNetworkTo(network));
-				// 		}
-				// 	},
-				// 	Err(e) => {
-				// 		println!("err: {:?}", e);
-				// 		continue;
-				// 	},
-				// }
+				},
 			},
 			_ => return Ok(ExecutionResult::Exited),
 		}

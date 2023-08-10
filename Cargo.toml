@@ -25,6 +25,8 @@ clap_complete_command = { version = "0.5.1" }
 frame-metadata        = { version = "16.0.0", features = ["decode"] }
 prettytable           = { version = "0.10.0" }
 thiserror             = { version = "1.0.44" }
+env_logger            = { version = "0.10.0" }
+log                   = { version = "0.4.19"  }
 # substrate
 sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
