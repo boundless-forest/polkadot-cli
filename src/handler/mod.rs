@@ -179,6 +179,29 @@ pub async fn handle_commands<CI: ChainInfo>(
 					},
 				};
 			},
+			RuntimeCommand::ListPalletConstants { pallet_name } => {
+				let metadata = client.runtime_metadata().await?;
+				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
+					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+				};
+
+				match metadata.pallets.iter().find(|p| p.name == pallet_name) {
+					Some(p) => {
+						let mut table = Table::new();
+						table.add_row(row!["Constant Name", "Doc"]);
+						p.constants.iter().for_each(|c| {
+							table.add_row(row![
+								c.name.bold(),
+								c.docs.get(0).unwrap_or(&"".to_owned())
+							]);
+						});
+						table.printstd();
+					},
+					None => {
+						println!("Did not find the pallet.");
+					},
+				};
+			},
 		},
 	}
 

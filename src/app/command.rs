@@ -99,9 +99,14 @@ pub enum AccountInfoCommand {
 
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "pallets")]
+#[allow(clippy::enum_variant_names)]
 pub enum RuntimeCommand {
 	ListPallets,
 	ListPalletStorages {
+		#[arg(name = "pallet-name", long)]
+		pallet_name: String,
+	},
+	ListPalletConstants {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
