@@ -249,12 +249,10 @@ pub fn print_result<T: Serialize>(data: RpcResult<T>) {
 }
 
 pub fn print_usage<T: clap::Subcommand>(command_name: &'static str) {
-	let init = Command::new(command_name)
-		.subcommand_required(true)
+	let mock = Command::new(command_name)
 		.disable_help_flag(true)
 		.disable_help_subcommand(true)
-		.arg_required_else_help(true)
 		.no_binary_name(true);
-	let mut command = <T as clap::Subcommand>::augment_subcommands(init);
+	let mut command = <T as clap::Subcommand>::augment_subcommands(mock);
 	println!("{}", command.render_long_help());
 }

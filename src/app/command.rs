@@ -7,10 +7,10 @@ use clap::{Parser, Subcommand};
 #[command(author, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
-	/// Switch to another network
+	/// Switch to another network. [Polkadot / Kusama/ Darwinia /Crab | Pangolin / Pangoro]
 	#[command(subcommand)]
 	SwitchNetwork(Network),
-	/// RPC interfaces
+	/// RPC interfaces.
 	#[command(subcommand)]
 	Rpc(RpcCommand),
 	/// Chain interfaces
@@ -25,7 +25,7 @@ pub enum AppCommand {
 	/// Runtime interfaces
 	#[command(subcommand)]
 	Runtime(RuntimeCommand),
-	/// Help command to print usage
+	/// Print usage
 	Usage,
 }
 
@@ -46,7 +46,7 @@ pub enum RpcCommand {
 	Health,
 	/// Get the state of the syncing of the node
 	SyncState,
-	/// Help command to print usage
+	/// Print usage
 	Usage,
 }
 
@@ -56,7 +56,7 @@ pub enum RpcCommand {
 pub enum ChainCommand {
 	/// Get the chain block
 	GetBlock {
-		#[arg(long)]
+		#[arg(value_name = "HASH", long)]
 		hash: String,
 	},
 	/// Get the block hash
@@ -70,10 +70,10 @@ pub enum ChainCommand {
 	GetFinalizedNumber,
 	/// Get the header for a specific block
 	GetHeader {
-		#[arg(long)]
+		#[arg(value_name = "HASH", long)]
 		hash: String,
 	},
-	/// Help command to print usage
+	/// Print usage
 	Usage,
 }
 
@@ -81,7 +81,7 @@ pub enum ChainCommand {
 #[command(name = "state")]
 pub enum StateCommand {
 	RuntimeVersion {
-		#[arg(long)]
+		#[arg(value_name = "HASH", long)]
 		hash: Option<String>,
 	},
 }
@@ -89,19 +89,21 @@ pub enum StateCommand {
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "account-info")]
 pub enum AccountInfoCommand {
+	/// Get the account balance
 	Balances {
-		#[arg(name = "account-id", long)]
+		#[arg(name = "account-id", value_name = "ACCOUNT_ID", long)]
 		account_id: String,
-		#[arg(name = "at-block", long)]
+		#[arg(name = "at-block", help = "which block", long)]
 		at_block: Option<String>,
 	},
+	/// Get the account nonce
 	Nonce {
-		#[arg(name = "account-id", long)]
+		#[arg(name = "account-id", value_name = "ACCOUNT_ID", long)]
 		account_id: String,
 		#[arg(name = "at-block", long)]
 		at_block: Option<String>,
 	},
-	/// Help command to print usage
+	/// Print usage
 	Usage,
 }
 
@@ -109,15 +111,18 @@ pub enum AccountInfoCommand {
 #[command(name = "pallets")]
 #[allow(clippy::enum_variant_names)]
 pub enum RuntimeCommand {
+	/// List all pallets in this chain
 	ListPallets,
+	/// List storages in certain pallet
 	ListPalletStorages {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
+	/// List constants in certain pallet
 	ListPalletConstants {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
-	/// Help command to print usage
+	/// Print usage
 	Usage,
 }
