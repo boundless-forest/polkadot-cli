@@ -3,16 +3,8 @@ use crate::Network;
 // crates.io
 use clap::{Parser, Subcommand};
 
-// #[derive(Parser, Debug)]
-// #[command(author, version, about, long_about = None)]
-// #[clap(no_binary_name = true)]
-// struct Cli {
-// 	#[command(subcommand)]
-// 	command: AppCommand,
-// }
-
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
 	/// Switch to another network

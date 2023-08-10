@@ -31,10 +31,12 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::Usage => {
 			let init = Command::new("substrate-cli")
 				.subcommand_required(true)
+				.disable_help_flag(true)
+				.disable_help_subcommand(true)
 				.arg_required_else_help(true)
 				.no_binary_name(true);
 			let mut command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
-			let _ = command.print_help();
+			println!("{}", command.render_long_help());
 		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			RpcCommand::SysName => {

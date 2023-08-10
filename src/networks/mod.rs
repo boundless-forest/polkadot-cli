@@ -9,7 +9,7 @@ pub use polkadot::{KusamaChain, PolkadotChain};
 // std
 use std::{fmt::Debug, marker::Sync, str::FromStr};
 // crates.io
-use clap::Subcommand;
+use clap::{Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode};
 use sp_runtime::{traits::Header as HeaderT, DeserializeOwned};
@@ -37,7 +37,7 @@ pub trait ChainInfo: Sync + Send {
 	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
 }
 
-#[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default, ValueEnum)]
 pub enum Network {
 	Local,
 	// parity
