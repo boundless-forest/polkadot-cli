@@ -7,22 +7,19 @@ use clap::{Parser, Subcommand};
 #[command(author, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
-	/// Switch to another network. [Polkadot / Kusama/ Darwinia /Crab | Pangolin / Pangoro]
+	/// Switch to another network. [Polkadot | Kusama | Darwinia | Crab | Pangolin | Pangoro]
 	#[command(subcommand)]
 	SwitchNetwork(Network),
-	/// RPC interfaces.
+	/// RPC commands, e.g sys-name, sys-version, chain-type, health.
 	#[command(subcommand)]
 	Rpc(RpcCommand),
-	/// Chain interfaces
+	/// Chain commands, e.g get-block, get-block-hash, get-finalized-head, get-finalized-number.
 	#[command(subcommand)]
 	Chain(ChainCommand),
-	/// Chain state interfaces
-	#[command(subcommand)]
-	State(StateCommand),
-	/// Account interfaces
+	/// Account commands, e.g balance, nonce.
 	#[command(subcommand)]
 	AccountInfo(AccountInfoCommand),
-	/// Runtime interfaces
+	/// Runtime commands, e.g list-pallets, list-pallet-storages, list-runtime-storages.
 	#[command(subcommand)]
 	Runtime(RuntimeCommand),
 	/// Print usage
@@ -54,12 +51,12 @@ pub enum RpcCommand {
 #[command(name = "chain")]
 #[allow(clippy::enum_variant_names)]
 pub enum ChainCommand {
-	/// Get the chain block
+	/// Get the chain block by hash
 	GetBlock {
 		#[arg(value_name = "HASH", long)]
 		hash: String,
 	},
-	/// Get the block hash
+	/// Get the block hash by number
 	GetBlockHash {
 		#[arg(long)]
 		number: u32,
@@ -68,22 +65,13 @@ pub enum ChainCommand {
 	GetFinalizedHead,
 	/// Get the finalized head number
 	GetFinalizedNumber,
-	/// Get the header for a specific block
+	/// Get the header for a specific block by hash
 	GetHeader {
 		#[arg(value_name = "HASH", long)]
 		hash: String,
 	},
 	/// Print usage
 	Usage,
-}
-
-#[derive(Subcommand, Clone, Debug)]
-#[command(name = "state")]
-pub enum StateCommand {
-	RuntimeVersion {
-		#[arg(value_name = "HASH", long)]
-		hash: Option<String>,
-	},
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -113,15 +101,20 @@ pub enum AccountInfoCommand {
 pub enum RuntimeCommand {
 	/// List all pallets in this chain
 	ListPallets,
-	/// List storages in certain pallet
+	/// List storages of the certain pallet
 	ListPalletStorages {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
-	/// List constants in certain pallet
+	/// List constants of the certain pallet
 	ListPalletConstants {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
+	},
+	/// Get the runtime version
+	RuntimeVersion {
+		#[arg(value_name = "HASH", long)]
+		hash: Option<String>,
 	},
 	/// Print usage
 	Usage,

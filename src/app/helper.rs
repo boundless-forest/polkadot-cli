@@ -257,22 +257,11 @@ pub fn print_welcome_message() {
 	const INTRODUCTION: &str =
 		"This is the all-in-one substrate command assistant, the Polkadot Apps CLI edition.";
 	const USAGE: &str = "
-Usage: substrate-cli <command> <args>
-
-command:
-	- switch-network [local, polkadot, kusama, pangolin, pangoro, darwinia(default), crab]
-	- rpc <subcommand>
-		- chain
-		- sync-state
-		- sys-version
-		......
-	- chain <subcommand>
-		- get-finalized-head
-		- get-block
-		- get-header
-		......
-Tips: `Ctrl + c` to quit, `Double Tab` to complete
-	";
+Tips:
+- `usage` to ask help.
+- `Double Tab` to complete.
+- `Ctrl + c` to quit.
+";
 
 	let font = FIGfont::from_file("src/resources/univers.flf").unwrap();
 	let figure = font.convert("substrate-cli");

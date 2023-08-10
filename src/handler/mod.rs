@@ -11,7 +11,7 @@ use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand, StateCommand},
+	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
 	errors::AppError,
 	networks::{ChainInfo, Network},
 	rpc::{
@@ -94,19 +94,6 @@ pub async fn handle_commands<CI: ChainInfo>(
 			},
 			ChainCommand::Usage => {
 				print_usage::<ChainCommand>("substrate-cli chain");
-			},
-		},
-		AppCommand::State(sub_command) => match sub_command {
-			StateCommand::RuntimeVersion { hash } => {
-				let hash = if let Some(hash) = hash {
-					<CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidParams)?
-				} else {
-					client.get_finalized_head().await?.expect("Failed to get finalized head")
-				};
-
-				let res = client.runtime_version(hash).await;
-				print_result(res);
 			},
 		},
 		AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -211,6 +198,17 @@ pub async fn handle_commands<CI: ChainInfo>(
 						println!("Did not find the pallet.");
 					},
 				};
+			},
+			RuntimeCommand::RuntimeVersion { hash } => {
+				let hash = if let Some(hash) = hash {
+					<CI as ChainInfo>::Hash::from_str(hash.as_str())
+						.map_err(|_| RpcError::InvalidParams)?
+				} else {
+					client.get_finalized_head().await?.expect("Failed to get finalized head")
+				};
+
+				let res = client.runtime_version(hash).await;
+				print_result(res);
 			},
 			RuntimeCommand::Usage => {
 				print_usage::<RuntimeCommand>("substrate-cli runtime");
