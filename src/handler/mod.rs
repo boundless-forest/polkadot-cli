@@ -155,6 +155,28 @@ pub async fn handle_commands<CI: ChainInfo>(
 				});
 				table.printstd();
 			},
+			PalletsCommand::ListStorages { pallet_name } => {
+				let metadata = client.runtime_metadata().await?;
+				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
+					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+				};
+
+				match metadata.pallets.iter().find(|p| p.name == pallet_name) {
+					Some(p) =>
+						if let Some(storage) = &p.storage {
+							storage.entries.iter().for_each(|e| {
+								println!(
+									"{}: {}",
+									e.name.bold(),
+									e.docs.get(0).unwrap_or(&"".to_owned())
+								);
+							});
+						},
+					None => {
+						println!("Did not find the pallet.");
+					},
+				};
+			},
 		},
 	}
 

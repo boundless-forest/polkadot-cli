@@ -101,4 +101,8 @@ pub enum AccountInfoCommand {
 #[command(name = "pallets")]
 pub enum PalletsCommand {
 	ListAll,
+	ListStorages {
+		#[arg(name = "pallet-name", long)]
+		pallet_name: String,
+	},
 }
