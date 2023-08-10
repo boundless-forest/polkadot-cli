@@ -46,6 +46,8 @@ pub enum RpcCommand {
 	Health,
 	/// Get the state of the syncing of the node
 	SyncState,
+	/// Help command to print usage
+	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -71,6 +73,8 @@ pub enum ChainCommand {
 		#[arg(long)]
 		hash: String,
 	},
+	/// Help command to print usage
+	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -97,6 +101,8 @@ pub enum AccountInfoCommand {
 		#[arg(name = "at-block", long)]
 		at_block: Option<String>,
 	},
+	/// Help command to print usage
+	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -112,4 +118,6 @@ pub enum RuntimeCommand {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
+	/// Help command to print usage
+	Usage,
 }

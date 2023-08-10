@@ -28,16 +28,6 @@ pub async fn handle_commands<CI: ChainInfo>(
 		AppCommand::SwitchNetwork(network) => {
 			return Ok(ExecutionResult::SwitchNetworkTo(network));
 		},
-		AppCommand::Usage => {
-			let init = Command::new("substrate-cli")
-				.subcommand_required(true)
-				.disable_help_flag(true)
-				.disable_help_subcommand(true)
-				.arg_required_else_help(true)
-				.no_binary_name(true);
-			let mut command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
-			println!("{}", command.render_long_help());
-		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			RpcCommand::SysName => {
 				let res = client.system_name().await;
@@ -66,6 +56,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 			RpcCommand::SyncState => {
 				let res = client.sync_state().await;
 				print_result(res);
+			},
+			RpcCommand::Usage => {
+				print_usage::<RpcCommand>("substrate-cli rpc");
 			},
 		},
 		AppCommand::Chain(sub_command) => match sub_command {
@@ -98,6 +91,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 					.map_err(|_| RpcError::InvalidParams)?;
 				let res = client.get_header(hash).await;
 				print_result(res);
+			},
+			ChainCommand::Usage => {
+				print_usage::<ChainCommand>("substrate-cli chain");
 			},
 		},
 		AppCommand::State(sub_command) => match sub_command {
@@ -147,6 +143,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 				if let Some(a) = account {
 					print_result(Ok(AccountNonce { nonce: a.nonce }));
 				}
+			},
+			AccountInfoCommand::Usage => {
+				print_usage::<AccountInfoCommand>("substrate-cli account-info");
 			},
 		},
 		AppCommand::Runtime(sub_command) => match sub_command {
@@ -213,6 +212,12 @@ pub async fn handle_commands<CI: ChainInfo>(
 					},
 				};
 			},
+			RuntimeCommand::Usage => {
+				print_usage::<RuntimeCommand>("substrate-cli runtime");
+			},
+		},
+		AppCommand::Usage => {
+			print_usage::<AppCommand>("substrate-cli");
 		},
 	}
 
@@ -241,4 +246,15 @@ pub fn print_result<T: Serialize>(data: RpcResult<T>) {
 	} else {
 		println!("{}", RpcError::InvalidJsonObject.to_string().italic().bright_magenta());
 	}
+}
+
+pub fn print_usage<T: clap::Subcommand>(command_name: &'static str) {
+	let init = Command::new(command_name)
+		.subcommand_required(true)
+		.disable_help_flag(true)
+		.disable_help_subcommand(true)
+		.arg_required_else_help(true)
+		.no_binary_name(true);
+	let mut command = <T as clap::Subcommand>::augment_subcommands(init);
+	println!("{}", command.render_long_help());
 }
