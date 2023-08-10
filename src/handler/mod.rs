@@ -10,7 +10,7 @@ use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, PalletsCommand, RpcCommand, StateCommand},
+	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand, StateCommand},
 	errors::AppError,
 	networks::{ChainInfo, Network},
 	rpc::{
@@ -138,8 +138,8 @@ pub async fn handle_commands<CI: ChainInfo>(
 				}
 			},
 		},
-		AppCommand::Pallets(sub_command) => match sub_command {
-			PalletsCommand::ListAll => {
+		AppCommand::Runtime(sub_command) => match sub_command {
+			RuntimeCommand::ListPallets => {
 				let metadata = client.runtime_metadata().await?;
 				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
 					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
@@ -155,7 +155,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				});
 				table.printstd();
 			},
-			PalletsCommand::ListStorages { pallet_name } => {
+			RuntimeCommand::ListPalletStorages { pallet_name } => {
 				let metadata = client.runtime_metadata().await?;
 				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
 					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
@@ -164,13 +164,15 @@ pub async fn handle_commands<CI: ChainInfo>(
 				match metadata.pallets.iter().find(|p| p.name == pallet_name) {
 					Some(p) =>
 						if let Some(storage) = &p.storage {
+							let mut table = Table::new();
+							table.add_row(row!["Storage Name", "Doc"]);
 							storage.entries.iter().for_each(|e| {
-								println!(
-									"{}: {}",
+								table.add_row(row![
 									e.name.bold(),
 									e.docs.get(0).unwrap_or(&"".to_owned())
-								);
+								]);
 							});
+							table.printstd();
 						},
 					None => {
 						println!("Did not find the pallet.");

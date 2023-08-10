@@ -22,9 +22,9 @@ pub enum AppCommand {
 	/// Account interfaces
 	#[command(subcommand)]
 	AccountInfo(AccountInfoCommand),
-	/// Pallets interfaces
+	/// Runtime interfaces
 	#[command(subcommand)]
-	Pallets(PalletsCommand), // TODO: ADD HELP COMMAND
+	Runtime(RuntimeCommand), // TODO: ADD HELP COMMAND
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -99,9 +99,9 @@ pub enum AccountInfoCommand {
 
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "pallets")]
-pub enum PalletsCommand {
-	ListAll,
-	ListStorages {
+pub enum RuntimeCommand {
+	ListPallets,
+	ListPalletStorages {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: String,
 	},
