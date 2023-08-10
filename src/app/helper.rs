@@ -52,7 +52,7 @@ pub fn create_editor() -> Editor<EditorHelper<HistoryHinter>, FileHistory> {
 		.auto_add_history(true)
 		.history_ignore_space(true)
 		.color_mode(ColorMode::Enabled)
-		.completion_type(CompletionType::List)
+		.completion_type(CompletionType::Fuzzy)
 		.build();
 
 	let editor_helper = EditorHelper::new(HistoryHinter {});

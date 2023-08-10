@@ -12,7 +12,7 @@ version = "0.0.1"
 # crate.io
 jsonrpsee             = { version = "0.18.2", features = ["http-client", "async-client", "client-ws-transport-native-tls"] }
 tokio                 = { version = "1.29.0", features = ["rt", "macros", "rt-multi-thread"] }
-rustyline             = { version = "12.0.0" }
+rustyline             = { version = "12.0.0", features = ["with-fuzzy"] }
 clap                  = { version = "4.3.8", features = ["derive"] }
 dirs                  = { version = "5.0.1" }
 colored               = { version = "2.0.0" }
