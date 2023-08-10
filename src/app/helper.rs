@@ -240,7 +240,7 @@ pub fn print_welcome_message() {
 	const USAGE: &str = "
 Tips:
 - `usage` to ask help.
-- `Double Tab` to complete.
+- `Tab` to complete.
 - `Ctrl + c` to quit.
 ";
 
