@@ -1,6 +1,7 @@
 // std
 use std::str::FromStr;
 // crates.io
+use clap::Command;
 use colored::Colorize;
 use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
@@ -26,6 +27,14 @@ pub async fn handle_commands<CI: ChainInfo>(
 	match command {
 		AppCommand::SwitchNetwork(network) => {
 			return Ok(ExecutionResult::SwitchNetworkTo(network));
+		},
+		AppCommand::Usage => {
+			let init = Command::new("substrate-cli")
+				.subcommand_required(true)
+				.arg_required_else_help(true)
+				.no_binary_name(true);
+			let mut command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
+			let _ = command.print_help();
 		},
 		AppCommand::Rpc(sub_commands) => match sub_commands {
 			RpcCommand::SysName => {

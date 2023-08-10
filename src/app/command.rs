@@ -3,11 +3,19 @@ use crate::Network;
 // crates.io
 use clap::{Parser, Subcommand};
 
+// #[derive(Parser, Debug)]
+// #[command(author, version, about, long_about = None)]
+// #[clap(no_binary_name = true)]
+// struct Cli {
+// 	#[command(subcommand)]
+// 	command: AppCommand,
+// }
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
-	/// Switch network, default is local
+	/// Switch to another network
 	#[command(subcommand)]
 	SwitchNetwork(Network),
 	/// RPC interfaces
@@ -24,7 +32,9 @@ pub enum AppCommand {
 	AccountInfo(AccountInfoCommand),
 	/// Runtime interfaces
 	#[command(subcommand)]
-	Runtime(RuntimeCommand), // TODO: ADD HELP COMMAND
+	Runtime(RuntimeCommand),
+	/// Help command to print usage
+	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]

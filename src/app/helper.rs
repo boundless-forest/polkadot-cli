@@ -82,8 +82,8 @@ impl<H> EditorHelper<H> {
 	/// EditorHelper constructor
 	fn new(hinter: H) -> Self {
 		let init = Command::new("substrate-cli")
-			.subcommand_required(true)
-			.arg_required_else_help(true)
+			// .subcommand_required(true)
+			// .arg_required_else_help(true)
 			.no_binary_name(true);
 		let command = <AppCommand as clap::Subcommand>::augment_subcommands(init);
 		Self { hinter, command, config: Config { network: Network::default() } }
