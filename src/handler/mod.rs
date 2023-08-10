@@ -1,6 +1,7 @@
 // std
 use std::str::FromStr;
 // crates.io
+use clap::Command;
 use colored::Colorize;
 use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
@@ -10,7 +11,7 @@ use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand, StateCommand},
+	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
 	errors::AppError,
 	networks::{ChainInfo, Network},
 	rpc::{
@@ -56,6 +57,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let res = client.sync_state().await;
 				print_result(res);
 			},
+			RpcCommand::Usage => {
+				print_usage::<RpcCommand>("substrate-cli rpc");
+			},
 		},
 		AppCommand::Chain(sub_command) => match sub_command {
 			ChainCommand::GetBlock { hash } => {
@@ -88,18 +92,8 @@ pub async fn handle_commands<CI: ChainInfo>(
 				let res = client.get_header(hash).await;
 				print_result(res);
 			},
-		},
-		AppCommand::State(sub_command) => match sub_command {
-			StateCommand::RuntimeVersion { hash } => {
-				let hash = if let Some(hash) = hash {
-					<CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidParams)?
-				} else {
-					client.get_finalized_head().await?.expect("Failed to get finalized head")
-				};
-
-				let res = client.runtime_version(hash).await;
-				print_result(res);
+			ChainCommand::Usage => {
+				print_usage::<ChainCommand>("substrate-cli chain");
 			},
 		},
 		AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -136,6 +130,9 @@ pub async fn handle_commands<CI: ChainInfo>(
 				if let Some(a) = account {
 					print_result(Ok(AccountNonce { nonce: a.nonce }));
 				}
+			},
+			AccountInfoCommand::Usage => {
+				print_usage::<AccountInfoCommand>("substrate-cli account-info");
 			},
 		},
 		AppCommand::Runtime(sub_command) => match sub_command {
@@ -202,6 +199,23 @@ pub async fn handle_commands<CI: ChainInfo>(
 					},
 				};
 			},
+			RuntimeCommand::RuntimeVersion { hash } => {
+				let hash = if let Some(hash) = hash {
+					<CI as ChainInfo>::Hash::from_str(hash.as_str())
+						.map_err(|_| RpcError::InvalidParams)?
+				} else {
+					client.get_finalized_head().await?.expect("Failed to get finalized head")
+				};
+
+				let res = client.runtime_version(hash).await;
+				print_result(res);
+			},
+			RuntimeCommand::Usage => {
+				print_usage::<RuntimeCommand>("substrate-cli runtime");
+			},
+		},
+		AppCommand::Usage => {
+			print_usage::<AppCommand>("substrate-cli");
 		},
 	}
 
@@ -230,4 +244,13 @@ pub fn print_result<T: Serialize>(data: RpcResult<T>) {
 	} else {
 		println!("{}", RpcError::InvalidJsonObject.to_string().italic().bright_magenta());
 	}
+}
+
+pub fn print_usage<T: clap::Subcommand>(command_name: &'static str) {
+	let mock = Command::new(command_name)
+		.disable_help_flag(true)
+		.disable_help_subcommand(true)
+		.no_binary_name(true);
+	let mut command = <T as clap::Subcommand>::augment_subcommands(mock);
+	println!("{}", command.render_long_help());
 }

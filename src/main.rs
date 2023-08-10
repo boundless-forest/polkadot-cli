@@ -103,6 +103,19 @@ pub async fn run<CI: ChainInfo>(
 					println!("{}", "Invalid command, double-tap to complete.".italic().red());
 					continue;
 				}
+				// match AppCommand::try_parse_from(prompt.split_whitespace()) {
+				// 	Ok(command) => {
+				// 		if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
+				// 			handler::handle_commands(command, rpc_client).await
+				// 		{
+				// 			return Ok(ExecutionResult::SwitchNetworkTo(network));
+				// 		}
+				// 	},
+				// 	Err(e) => {
+				// 		println!("err: {:?}", e);
+				// 		continue;
+				// 	},
+				// }
 			},
 			_ => return Ok(ExecutionResult::Exited),
 		}
