@@ -52,7 +52,7 @@ pub fn create_editor() -> Editor<EditorHelper<HistoryHinter>, FileHistory> {
 		.auto_add_history(true)
 		.history_ignore_space(true)
 		.color_mode(ColorMode::Enabled)
-		.completion_type(CompletionType::List)
+		.completion_type(CompletionType::Fuzzy)
 		.build();
 
 	let editor_helper = EditorHelper::new(HistoryHinter {});
@@ -128,7 +128,7 @@ impl<H> EditorHelper<H> {
 impl<H: Hinter> Helper for EditorHelper<H> {}
 impl<H: Hinter> Highlighter for EditorHelper<H> {
 	fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-		Owned(hint.bright_yellow().to_string())
+		Owned(format!("\x1b[1m{hint}\x1b[m"))
 	}
 
 	fn highlight_candidate<'c>(
@@ -136,7 +136,7 @@ impl<H: Hinter> Highlighter for EditorHelper<H> {
 		candidate: &'c str,
 		_completion: CompletionType,
 	) -> Cow<'c, str> {
-		Owned(candidate.bright_yellow().to_string())
+		Owned(candidate.to_string())
 	}
 }
 impl<H: Hinter> Validator for EditorHelper<H> {}
@@ -159,12 +159,8 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 		_ctx: &Context<'_>,
 	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
 		println!();
-		// println!("=====> Completing: line: {}, pos: {}", line, pos);
 		let (start, mut word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
-		// println!("=====> Completing: start: {}, word: {}", start, word);
-
 		let prefixes = shell_words::split(&line[..pos]).unwrap();
-		// println!("=====> Completing: prefix: {:?}", prefixes);
 
 		let mut candidates = Vec::new();
 		if let Some(command) =
@@ -184,14 +180,6 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 				if !word.starts_with('-') || !word.starts_with("--") {
 					word = "--";
 				}
-				// println!(
-				// 	"=====> Completing: no candidates, args: {:?}",
-				// 	command
-				// 		.get_arguments()
-				// 		.cloned()
-				// 		.map(|i| i.get_id().to_string())
-				// 		.collect::<Vec<String>>()
-				// );
 				candidates = command
 					.get_arguments()
 					.cloned()
@@ -204,13 +192,6 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 					.collect();
 			}
 		}
-		// println!(
-		// 	"=====> Completing: candidates: {:?}",
-		// 	candidates
-		// 		.iter()
-		// 		.map(|i| (i.clone().display, i.clone().replacement))
-		// 		.collect::<Vec<(String, String)>>()
-		// );
 
 		Ok((start, candidates))
 	}
@@ -259,7 +240,7 @@ pub fn print_welcome_message() {
 	const USAGE: &str = "
 Tips:
 - `usage` to ask help.
-- `Double Tab` to complete.
+- `Tab` to complete.
 - `Ctrl + c` to quit.
 ";
 
