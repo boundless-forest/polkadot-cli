@@ -20,10 +20,10 @@ pub fn print_storage_type(
 							format!("{:?}", t)
 						},
 						TypeDef::Array(t) => {
-							format!("[{}; {}]", type_name(&t.type_param, &metadata), t.len)
+							format!("[{}; {}]", type_name(&t.type_param, metadata), t.len)
 						},
 						TypeDef::Sequence(t) => {
-							format!("Vec<{}>", type_name(&t.type_param, &metadata))
+							format!("Vec<{}>", type_name(&t.type_param, metadata))
 						},
 						TypeDef::Tuple(t) => {
 							format!(
@@ -42,7 +42,7 @@ pub fn print_storage_type(
 							)
 						},
 						TypeDef::Compact(t) => {
-							format!("{:?}", type_name(&t.type_param, &metadata))
+							format!("{:?}", type_name(&t.type_param, metadata))
 						},
 						TypeDef::BitSequence(_) => "Not support BitSequence now".to_string(),
 						_ => "Unexpected def type".to_string(),
@@ -55,7 +55,7 @@ pub fn print_storage_type(
 
 	match entry_type {
 		StorageEntryType::Plain(t) => type_name(t, metadata),
-		StorageEntryType::Map { hashers, key, value } =>
+		StorageEntryType::Map { hashers: _, key, value } =>
 			format!("{} -> {}", type_name(key, metadata), type_name(value, metadata)),
 	}
 }

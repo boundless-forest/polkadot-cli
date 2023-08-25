@@ -169,7 +169,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 							storage.entries.iter().for_each(|e| {
 								table.add_row(row![
 									e.name.bold(),
-									print_storage_type(&e.ty, &metadata),
+									print_storage_type(&e.ty, metadata),
 									e.docs.get(0).unwrap_or(&"".to_owned())
 								]);
 							});
