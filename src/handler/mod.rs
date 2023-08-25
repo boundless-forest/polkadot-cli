@@ -3,7 +3,10 @@ use std::str::FromStr;
 // crates.io
 use clap::Command;
 use colored::Colorize;
-use frame_metadata::RuntimeMetadata;
+use frame_metadata::{
+	v14::{RuntimeMetadataV14, StorageEntryType},
+	RuntimeMetadata,
+};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
@@ -162,10 +165,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 					Some(p) =>
 						if let Some(storage) = &p.storage {
 							let mut table = Table::new();
-							table.add_row(row!["Storage Name", "Doc"]);
+							table.add_row(row!["Storage Name", "Type", "Doc"]);
 							storage.entries.iter().for_each(|e| {
 								table.add_row(row![
 									e.name.bold(),
+									print_storage_type(&e.ty, &metadata),
 									e.docs.get(0).unwrap_or(&"".to_owned())
 								]);
 							});
@@ -220,6 +224,34 @@ pub async fn handle_commands<CI: ChainInfo>(
 	}
 
 	Ok(ExecutionResult::Success)
+}
+
+use scale_info::form::PortableForm;
+fn print_storage_type(
+	entry_type: &StorageEntryType<PortableForm>,
+	metadata: &RuntimeMetadataV14,
+) -> String {
+	match entry_type {
+		StorageEntryType::Plain(t) =>
+			if let Some(ty) = metadata.types.resolve(t.id) {
+				format!("Plain({:?})", &ty.path.ident().unwrap_or(format!("NULL, id: {:?}", t.id)))
+			} else {
+				"NULL".to_string()
+			},
+		StorageEntryType::Map { hashers, key, value } => {
+			if let (Some(kt), Some(vt)) =
+				(metadata.types.resolve(key.id), metadata.types.resolve(value.id))
+			{
+				format!(
+					"Map[{:?} -> {:?}]",
+					&kt.path.ident().unwrap_or("NULL".to_string()),
+					&vt.path.ident().unwrap_or("NULL".to_string())
+				)
+			} else {
+				"NULL".to_string()
+			}
+		},
+	}
 }
 
 /// The APP's command execution result.
