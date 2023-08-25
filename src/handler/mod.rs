@@ -1,12 +1,11 @@
+mod printer;
+
 // std
 use std::str::FromStr;
 // crates.io
 use clap::Command;
 use colored::Colorize;
-use frame_metadata::{
-	v14::{RuntimeMetadataV14, StorageEntryType},
-	RuntimeMetadata,
-};
+use frame_metadata::RuntimeMetadata;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
@@ -16,6 +15,7 @@ use sp_runtime::traits::Header;
 use crate::{
 	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
 	errors::AppError,
+	handler::printer::print_storage_type,
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
@@ -224,34 +224,6 @@ pub async fn handle_commands<CI: ChainInfo>(
 	}
 
 	Ok(ExecutionResult::Success)
-}
-
-use scale_info::form::PortableForm;
-fn print_storage_type(
-	entry_type: &StorageEntryType<PortableForm>,
-	metadata: &RuntimeMetadataV14,
-) -> String {
-	match entry_type {
-		StorageEntryType::Plain(t) =>
-			if let Some(ty) = metadata.types.resolve(t.id) {
-				format!("Plain({:?})", &ty.path.ident().unwrap_or(format!("NULL, id: {:?}", t.id)))
-			} else {
-				"NULL".to_string()
-			},
-		StorageEntryType::Map { hashers, key, value } => {
-			if let (Some(kt), Some(vt)) =
-				(metadata.types.resolve(key.id), metadata.types.resolve(value.id))
-			{
-				format!(
-					"Map[{:?} -> {:?}]",
-					&kt.path.ident().unwrap_or("NULL".to_string()),
-					&vt.path.ident().unwrap_or("NULL".to_string())
-				)
-			} else {
-				"NULL".to_string()
-			}
-		},
-	}
 }
 
 /// The APP's command execution result.
