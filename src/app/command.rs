@@ -115,8 +115,9 @@ pub enum RuntimeCommand {
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
+	/// Runtime Storage Commands Staffs
 	#[command(subcommand)]
-	RuntimeStorageCommand,
+	RuntimeStorage(RuntimeStorageCommand),
 	/// Get the runtime version
 	RuntimeVersion {
 		#[arg(value_name = "HASH", long)]
@@ -129,5 +130,9 @@ pub enum RuntimeCommand {
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "runtime-storage")]
 pub enum RuntimeStorageCommand {
-	
+	TypeInfo {
+		#[arg(name = "type-name", long)]
+		type_name: Option<String>,
+	},
+	StorageKey,
 }

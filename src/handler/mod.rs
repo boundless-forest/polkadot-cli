@@ -14,7 +14,10 @@ use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
+	app::{
+		AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
+		RuntimeStorageCommand,
+	},
 	errors::AppError,
 	handler::printer::print_storage_type,
 	networks::{ChainInfo, Network},
@@ -213,6 +216,14 @@ pub async fn handle_commands<CI: ChainInfo>(
 				} else {
 					println!("Did not find the pallet.");
 				}
+			},
+			RuntimeCommand::RuntimeStorage(sub_command) => match sub_command {
+				RuntimeStorageCommand::TypeInfo { type_name } => {
+					todo!();
+				},
+				RuntimeStorageCommand::StorageKey => {
+					todo!();
+				},
 			},
 			RuntimeCommand::RuntimeVersion { hash } => {
 				let hash = if let Some(hash) = hash {
