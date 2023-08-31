@@ -172,7 +172,7 @@ pub async fn handle_commands<CI: ChainInfo>(
 				if let Some(p) = pallet {
 					p.storage.as_ref().map(|storage| {
 						let mut table = Table::new();
-						table.add_row(row!["Storage Name", "Type", "Doc"]);
+						table.add_row(row!["NAME", "TYPE", "DOC"]);
 						storage.entries.iter().for_each(|e| {
 							table.add_row(row![
 								e.name.bold(),
@@ -200,16 +200,15 @@ pub async fn handle_commands<CI: ChainInfo>(
 				};
 
 				if let Some(p) = pallet {
-					p.storage.as_ref().map(|storage| {
-						let mut table = Table::new();
-						table.add_row(row!["Constant Name", "Doc"]);
-						p.constants.iter().for_each(|c| {
-							table.add_row(row![
-								c.name.bold(),
-								c.docs.get(0).unwrap_or(&"".to_owned())
-							]);
-						});
-						table.printstd();
+					let mut table = Table::new();
+					table.add_row(row!["NAME", "VALUE", "DOC"]);
+					p.constants.iter().for_each(|c| {
+						// TODO: add type parse
+						table.add_row(row![
+							c.name.bold(),
+							"TODO",
+							c.docs.get(0).unwrap_or(&"".to_owned())
+						]);
 					});
 				} else {
 					println!("Did not find the pallet.");

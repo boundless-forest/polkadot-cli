@@ -2,6 +2,7 @@ use core::any::TypeId;
 use frame_metadata::v14::{RuntimeMetadataV14, StorageEntryType};
 use scale_info::{form::PortableForm, interner::UntrackedSymbol, TypeDef};
 
+/// Fetch the storage type string.
 pub fn print_storage_type(
 	entry_type: &StorageEntryType<PortableForm>,
 	metadata: &RuntimeMetadataV14,
@@ -55,7 +56,7 @@ pub fn print_storage_type(
 
 	match entry_type {
 		StorageEntryType::Plain(t) => type_name(t, metadata),
-		StorageEntryType::Map { hashers: _, key, value } =>
+		StorageEntryType::Map { h: _, key, value } =>
 			format!("{} -> {}", type_name(key, metadata), type_name(value, metadata)),
 	}
 }
