@@ -104,12 +104,16 @@ pub enum RuntimeCommand {
 	/// List storages of the certain pallet
 	ListPalletStorages {
 		#[arg(name = "pallet-name", long)]
-		pallet_name: String,
+		pallet_name: Option<String>,
+		#[arg(name = "pallet-id", long)]
+		pallet_id: Option<u8>,
 	},
 	/// List constants of the certain pallet
 	ListPalletConstants {
 		#[arg(name = "pallet-name", long)]
-		pallet_name: String,
+		pallet_name: Option<String>,
+		#[arg(name = "pallet-id", long)]
+		pallet_id: Option<u8>,
 	},
 	/// Get the runtime version
 	RuntimeVersion {
