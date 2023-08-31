@@ -56,7 +56,7 @@ pub fn print_storage_type(
 
 	match entry_type {
 		StorageEntryType::Plain(t) => type_name(t, metadata),
-		StorageEntryType::Map { h: _, key, value } =>
+		StorageEntryType::Map { hashers: _, key, value } =>
 			format!("{} -> {}", type_name(key, metadata), type_name(value, metadata)),
 	}
 }
