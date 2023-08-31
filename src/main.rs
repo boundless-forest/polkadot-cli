@@ -105,7 +105,10 @@ pub async fn run<CI: ChainInfo>(
 				},
 				Err(e) => {
 					log::debug!(target: "cli", "failed to parse the command, err: {:?}", e);
-					println!("{}", "invalid input command, TAB to complete.".to_string().italic().bright_red());
+					println!(
+						"{}",
+						"invalid input, TAB to complete.".to_string().italic().bright_red()
+					);
 					continue;
 				},
 			},

@@ -5,10 +5,11 @@ use std::str::FromStr;
 // crates.io
 use clap::Command;
 use colored::Colorize;
-use frame_metadata::RuntimeMetadata;
+use frame_metadata::{v14::PalletMetadata, RuntimeMetadata};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
+use scale_info::form::PortableForm;
 use serde::Serialize;
 use sp_runtime::traits::Header;
 // this crate
@@ -155,39 +156,51 @@ pub async fn handle_commands<CI: ChainInfo>(
 				});
 				table.printstd();
 			},
-			RuntimeCommand::ListPalletStorages { pallet_name } => {
+			RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
 				let metadata = client.runtime_metadata().await?;
 				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
 					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
 				};
-
-				match metadata.pallets.iter().find(|p| p.name == pallet_name) {
-					Some(p) =>
-						if let Some(storage) = &p.storage {
-							let mut table = Table::new();
-							table.add_row(row!["Storage Name", "Type", "Doc"]);
-							storage.entries.iter().for_each(|e| {
-								table.add_row(row![
-									e.name.bold(),
-									print_storage_type(&e.ty, metadata),
-									e.docs.get(0).unwrap_or(&"".to_owned())
-								]);
-							});
-							table.printstd();
-						},
-					None => {
-						println!("Did not find the pallet.");
-					},
+				let pallet: Option<&PalletMetadata<PortableForm>> = match (pallet_name, pallet_id) {
+					(Some(name), Some(id)) =>
+						metadata.pallets.iter().find(|p| p.name == name && p.index == id),
+					(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
+					(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
+					_ => None,
 				};
+
+				if let Some(p) = pallet {
+					p.storage.as_ref().map(|storage| {
+						let mut table = Table::new();
+						table.add_row(row!["Storage Name", "Type", "Doc"]);
+						storage.entries.iter().for_each(|e| {
+							table.add_row(row![
+								e.name.bold(),
+								print_storage_type(&e.ty, metadata),
+								e.docs.get(0).unwrap_or(&"".to_owned())
+							]);
+						});
+						table.printstd();
+					});
+				} else {
+					println!("Did not find the pallet.");
+				}
 			},
-			RuntimeCommand::ListPalletConstants { pallet_name } => {
+			RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
 				let metadata = client.runtime_metadata().await?;
 				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
 					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
 				};
+				let pallet: Option<&PalletMetadata<PortableForm>> = match (pallet_name, pallet_id) {
+					(Some(name), Some(id)) =>
+						metadata.pallets.iter().find(|p| p.name == name && p.index == id),
+					(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
+					(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
+					_ => None,
+				};
 
-				match metadata.pallets.iter().find(|p| p.name == pallet_name) {
-					Some(p) => {
+				if let Some(p) = pallet {
+					p.storage.as_ref().map(|storage| {
 						let mut table = Table::new();
 						table.add_row(row!["Constant Name", "Doc"]);
 						p.constants.iter().for_each(|c| {
@@ -197,11 +210,10 @@ pub async fn handle_commands<CI: ChainInfo>(
 							]);
 						});
 						table.printstd();
-					},
-					None => {
-						println!("Did not find the pallet.");
-					},
-				};
+					});
+				} else {
+					println!("Did not find the pallet.");
+				}
 			},
 			RuntimeCommand::RuntimeVersion { hash } => {
 				let hash = if let Some(hash) = hash {
