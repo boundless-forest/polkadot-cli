@@ -209,10 +209,11 @@ pub async fn handle_commands<CI: ChainInfo>(
 						// TODO: add type parse
 						table.add_row(row![
 							c.name.bold(),
-							"TODO",
+							"VALUE",
 							c.docs.get(0).unwrap_or(&"".to_owned())
 						]);
 					});
+					table.printstd();
 				} else {
 					println!("Did not find the pallet.");
 				}
