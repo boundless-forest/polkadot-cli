@@ -13,9 +13,6 @@ pub fn single_map_storage_key<K: Encode>(
 	storage_name: &str,
 	key: K,
 ) -> Result<StorageKey, String> {
-	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
-	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
-
 	let RuntimeMetadata::V14(metadata) = &runtime_metadata  else {
 		return Err("Only support the runtime metadata V14 now.".to_string());
 	};
@@ -28,6 +25,9 @@ pub fn single_map_storage_key<K: Encode>(
 	let StorageEntryType::Map { hashers, key: _, value : _} = entry.ty else {
 		return Err("Only support single map entry in this function".to_string());
 	};
+
+	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
+	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
 
 	let hasher = hashers.get(0).expect("Failed to get hasher");
 	storage_key.extend(key_hash(&key, hasher));
