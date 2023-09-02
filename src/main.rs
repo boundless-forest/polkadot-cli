@@ -17,6 +17,7 @@ use rustyline::{hint::HistoryHinter, history::FileHistory, Editor};
 use crate::{
 	app::{create_editor, history_path, print_welcome_message, AppCommand, Config, EditorHelper},
 	errors::AppError,
+	handler::Handler,
 	networks::{NoteTemplate, PangolinChain},
 };
 
@@ -97,8 +98,9 @@ pub async fn run<CI: ChainInfo>(
 			Ok(prompt) => match AppCommand::try_parse_from(prompt.split_whitespace()) {
 				Ok(command) => {
 					log::debug!(target: "cli", "command: {:?}", command);
+					let handler = Handler::new(rpc_client).await?;
 					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-						handler::handle_commands(command, rpc_client).await
+						handler.handle_command(command).await
 					{
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
