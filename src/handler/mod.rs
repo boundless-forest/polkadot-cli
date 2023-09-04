@@ -52,6 +52,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 		log::debug!(target: "cli", "Runtime metadata file path: {:?}", runtime_file);
 
 		if !runtime_file.is_file() {
+			// New network or new runtime version detected.
 			let metadata = client.runtime_metadata().await?.1;
 			let mut metadata_file = File::create(runtime_file).map_err(|e| {
 				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
@@ -62,6 +63,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			log::debug!(target: "cli", "Wrote runtime metadata file successfully");
 			Ok(Self { client, metadata })
 		} else {
+			// Reload from the existed runtime metadata file.
 			let mut f = File::open(runtime_file).map_err(|e| {
 				AppError::Custom(format!("Failed to open runtime metadata file: {:?}", e))
 			})?;
@@ -72,7 +74,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			let metadata = RuntimeMetadata::decode(&mut bytes.as_slice()).map_err(|e| {
 				AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e))
 			})?;
-			log::debug!(target: "cli", "Read runtime metadata file successfully");
+			log::debug!(target: "cli", "Reload runtime metadata file successfully");
 			Ok(Self { client, metadata })
 		}
 	}
