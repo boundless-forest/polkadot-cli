@@ -28,6 +28,9 @@ macro_rules! switch_network_or_break {
 				$editor.helper_mut().unwrap().save_config(Config { network })?;
 				continue;
 			},
+			Err(e) => {
+				log::debug!(target: "cli", "run command err: {:?}", e);
+			},
 			_ => {
 				break;
 			},
@@ -89,6 +92,8 @@ pub async fn run<CI: ChainInfo>(
 	editor: &mut Editor<EditorHelper<HistoryHinter>, FileHistory>,
 	rpc_client: &RpcClient<CI>,
 ) -> Result<ExecutionResult, AppError> {
+	let handler = Handler::new(rpc_client).await?;
+
 	loop {
 		let command_tip = format!("substrate-cli ({:?}) >> ", <CI as ChainInfo>::NET_WORK)
 			.bright_green()
@@ -98,7 +103,6 @@ pub async fn run<CI: ChainInfo>(
 			Ok(prompt) => match AppCommand::try_parse_from(prompt.split_whitespace()) {
 				Ok(command) => {
 					log::debug!(target: "cli", "command: {:?}", command);
-					let handler = Handler::new(rpc_client).await?;
 					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
 						handler.handle_command(command).await
 					{

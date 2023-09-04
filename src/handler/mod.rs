@@ -1,7 +1,7 @@
 mod printer;
 
 // std
-use std::str::FromStr;
+use std::{fs::File, io::Write, str::FromStr};
 // crates.io
 use clap::Command;
 use colored::Colorize;
@@ -11,10 +11,13 @@ use pallet_balances::AccountData;
 use prettytable::{row, Table};
 use scale_info::form::PortableForm;
 use serde::Serialize;
+use sp_core::Encode;
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
+	app::{
+		metadata_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
+	},
 	errors::AppError,
 	handler::printer::print_storage_type,
 	networks::{ChainInfo, Network},
@@ -32,8 +35,30 @@ pub struct Handler<'a, CI> {
 impl<'a, CI: ChainInfo> Handler<'a, CI> {
 	/// Create a new handler
 	pub async fn new(client: &'a RpcClient<CI>) -> Result<Handler<'a, CI>, AppError> {
-		let metadata_prefix = client.runtime_metadata().await?;
-		Ok(Self { client, metadata: metadata_prefix.1 })
+		let metadata_path = metadata_path().expect("Failed to get metadata path");
+		let metadata = client.runtime_metadata().await?.1;
+		let runtime_version = client
+			.runtime_version(
+				client.get_finalized_head().await?.expect("Failed to get finalized head"),
+			)
+			.await
+			.expect("Failed to get runtime version");
+		let file_name =
+			format!("{}-runtime-{}.meta", runtime_version.spec_name, runtime_version.spec_version);
+		let runtime_file = metadata_path.join(file_name);
+		log::debug!(target: "cli", "Runtime metadata file path: {:?}", runtime_file);
+
+		if !runtime_file.is_file() {
+			let mut metadata_file = File::create(runtime_file).map_err(|e| {
+				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
+			})?;
+			metadata_file
+				.write_all(&metadata.encode())
+				.map_err(|e| AppError::Custom(format!("Failed to write metadata file: {:?}", e)))?;
+			log::debug!(target: "cli", "Wrote runtime metadata file successfully");
+		}
+
+		Ok(Self { client, metadata })
 	}
 
 	/// Execute the captured command
