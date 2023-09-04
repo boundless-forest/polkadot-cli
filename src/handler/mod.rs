@@ -1,7 +1,11 @@
 mod printer;
 
 // std
-use std::{fs::File, io::Write, str::FromStr};
+use std::{
+	fs::File,
+	io::{Read, Write},
+	str::FromStr,
+};
 // crates.io
 use clap::Command;
 use colored::Colorize;
@@ -11,7 +15,7 @@ use pallet_balances::AccountData;
 use prettytable::{row, Table};
 use scale_info::form::PortableForm;
 use serde::Serialize;
-use sp_core::Encode;
+use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
@@ -36,7 +40,6 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 	/// Create a new handler
 	pub async fn new(client: &'a RpcClient<CI>) -> Result<Handler<'a, CI>, AppError> {
 		let metadata_path = metadata_path().expect("Failed to get metadata path");
-		let metadata = client.runtime_metadata().await?.1;
 		let runtime_version = client
 			.runtime_version(
 				client.get_finalized_head().await?.expect("Failed to get finalized head"),
@@ -49,6 +52,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 		log::debug!(target: "cli", "Runtime metadata file path: {:?}", runtime_file);
 
 		if !runtime_file.is_file() {
+			let metadata = client.runtime_metadata().await?.1;
 			let mut metadata_file = File::create(runtime_file).map_err(|e| {
 				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
 			})?;
@@ -56,9 +60,21 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				.write_all(&metadata.encode())
 				.map_err(|e| AppError::Custom(format!("Failed to write metadata file: {:?}", e)))?;
 			log::debug!(target: "cli", "Wrote runtime metadata file successfully");
+			Ok(Self { client, metadata })
+		} else {
+			let mut f = File::open(runtime_file).map_err(|e| {
+				AppError::Custom(format!("Failed to open runtime metadata file: {:?}", e))
+			})?;
+			let mut bytes = Vec::new();
+			f.read_to_end(&mut bytes).map_err(|e| {
+				AppError::Custom(format!("Failed to read runtime metadata file: {:?}", e))
+			})?;
+			let metadata = RuntimeMetadata::decode(&mut bytes.as_slice()).map_err(|e| {
+				AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e))
+			})?;
+			log::debug!(target: "cli", "Read runtime metadata file successfully");
+			Ok(Self { client, metadata })
 		}
-
-		Ok(Self { client, metadata })
 	}
 
 	/// Execute the captured command
@@ -202,6 +218,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
 							_ => None,
 						};
+					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage.as_ref() {
@@ -233,6 +250,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
 							_ => None,
 						};
+					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
@@ -245,6 +263,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 								c.docs.get(0).unwrap_or(&"".to_owned())
 							]);
 						});
+						table.printstd();
 					} else {
 						println!("Did not find the pallet.");
 					}
