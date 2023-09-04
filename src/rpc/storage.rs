@@ -1,22 +1,19 @@
 // crates.io
 use frame_metadata::{
 	v14::{StorageEntryType, StorageHasher},
-	RuntimeMetadata, RuntimeMetadataPrefixed,
+	RuntimeMetadata,
 };
 use sp_core::Encode;
 use sp_storage::StorageKey;
 
 /// Get the storage key with the provided pallet information and runtime metadata.
 pub fn single_map_storage_key<K: Encode>(
-	runtime_metadata: &RuntimeMetadataPrefixed,
+	runtime_metadata: &RuntimeMetadata,
 	pallet_name: &str,
 	storage_name: &str,
 	key: K,
 ) -> Result<StorageKey, String> {
-	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
-	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
-
-	let RuntimeMetadata::V14(metadata) = &runtime_metadata.1  else {
+	let RuntimeMetadata::V14(metadata) = &runtime_metadata  else {
 		return Err("Only support the runtime metadata V14 now.".to_string());
 	};
 	let Some(p) = metadata.pallets.iter().find(|p| p.name == pallet_name) else {
@@ -28,6 +25,9 @@ pub fn single_map_storage_key<K: Encode>(
 	let StorageEntryType::Map { hashers, key: _, value : _} = entry.ty else {
 		return Err("Only support single map entry in this function".to_string());
 	};
+
+	let mut storage_key = sp_core::twox_128(pallet_name.as_bytes()).to_vec();
+	storage_key.extend(&sp_core::twox_128(storage_name.as_bytes()));
 
 	let hasher = hashers.get(0).expect("Failed to get hasher");
 	storage_key.extend(key_hash(&key, hasher));

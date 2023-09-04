@@ -223,14 +223,22 @@ fn prefix_command<'s, I: Iterator<Item = &'s str>>(
 	}
 }
 
-fn app_root_path() -> Result<PathBuf, AppError> {
+pub fn app_root_path() -> Result<PathBuf, AppError> {
 	let mut root = dirs::home_dir().unwrap();
 	root.push(".substrate-cli");
 
 	if !root.exists() {
 		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
+
+		let metadata_path = root.join("metadata");
+		fs::create_dir(metadata_path).expect("Failed to create metadata directory");
 	}
 	Ok(root)
+}
+
+pub fn metadata_path() -> Result<PathBuf, AppError> {
+	let metadata_path = app_root_path().expect("Failed to get app root path").join("metadata");
+	Ok(metadata_path)
 }
 
 /// Print the app welcome message.

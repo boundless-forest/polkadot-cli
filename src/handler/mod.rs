@@ -1,7 +1,11 @@
 mod printer;
 
 // std
-use std::str::FromStr;
+use std::{
+	fs::File,
+	io::{Read, Write},
+	str::FromStr,
+};
 // crates.io
 use clap::Command;
 use colored::Colorize;
@@ -11,10 +15,13 @@ use pallet_balances::AccountData;
 use prettytable::{row, Table};
 use scale_info::form::PortableForm;
 use serde::Serialize;
+use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 // this crate
 use crate::{
-	app::{AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand},
+	app::{
+		metadata_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
+	},
 	errors::AppError,
 	handler::printer::print_storage_type,
 	networks::{ChainInfo, Network},
@@ -24,217 +31,270 @@ use crate::{
 	},
 };
 
-pub async fn handle_commands<CI: ChainInfo>(
-	command: AppCommand,
-	client: &RpcClient<CI>,
-) -> Result<ExecutionResult, AppError> {
-	match command {
-		AppCommand::SwitchNetwork(network) => {
-			return Ok(ExecutionResult::SwitchNetworkTo(network));
-		},
-		AppCommand::Rpc(sub_commands) => match sub_commands {
-			RpcCommand::SysName => {
-				let res = client.system_name().await;
-				print_result(res);
-			},
-			RpcCommand::SysProperties => {
-				let res = client.system_properties().await;
-				print_result(res);
-			},
-			RpcCommand::SysVersion => {
-				let res = client.system_version().await;
-				print_result(res);
-			},
-			RpcCommand::Chain => {
-				let res = client.chain().await;
-				print_result(res);
-			},
-			RpcCommand::ChainType => {
-				let res = client.chain_type().await;
-				print_result(res);
-			},
-			RpcCommand::Health => {
-				let res = client.health().await;
-				print_result(res);
-			},
-			RpcCommand::SyncState => {
-				let res = client.sync_state().await;
-				print_result(res);
-			},
-			RpcCommand::Usage => {
-				print_usage::<RpcCommand>("substrate-cli rpc");
-			},
-		},
-		AppCommand::Chain(sub_command) => match sub_command {
-			ChainCommand::GetBlock { hash } => {
-				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-					.map_err(|_| RpcError::InvalidParams)?;
-				let res = client.get_block(hash).await;
-				print_result(res);
-			},
-			ChainCommand::GetBlockHash { number } => {
-				let number: <CI as ChainInfo>::BlockNumber = number.into();
-				let res = client.get_block_hash(number).await;
-				print_result(res);
-			},
-			ChainCommand::GetFinalizedHead => {
-				let res = client.get_finalized_head().await;
-				print_result(res);
-			},
-			ChainCommand::GetFinalizedNumber => {
-				let finalized_hash = client.get_finalized_head().await?;
+pub struct Handler<'a, CI> {
+	client: &'a RpcClient<CI>,
+	metadata: RuntimeMetadata,
+}
 
-				if let Some(hash) = finalized_hash {
-					let res = client.get_header(hash).await?;
-					print_result(Ok(res.number()));
-				}
+impl<'a, CI: ChainInfo> Handler<'a, CI> {
+	/// Create a new handler
+	pub async fn new(client: &'a RpcClient<CI>) -> Result<Handler<'a, CI>, AppError> {
+		let metadata_path = metadata_path().expect("Failed to get metadata path");
+		let runtime_version = client
+			.runtime_version(
+				client.get_finalized_head().await?.expect("Failed to get finalized head"),
+			)
+			.await
+			.expect("Failed to get runtime version");
+		let file_name =
+			format!("{}-runtime-{}.meta", runtime_version.spec_name, runtime_version.spec_version);
+		let runtime_file = metadata_path.join(file_name);
+		log::debug!(target: "cli", "Runtime metadata file path: {:?}", runtime_file);
+
+		if !runtime_file.is_file() {
+			// New network or new runtime version detected.
+			let metadata = client.runtime_metadata().await?.1;
+			let mut metadata_file = File::create(runtime_file).map_err(|e| {
+				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
+			})?;
+			metadata_file
+				.write_all(&metadata.encode())
+				.map_err(|e| AppError::Custom(format!("Failed to write metadata file: {:?}", e)))?;
+			log::debug!(target: "cli", "Wrote runtime metadata file successfully");
+			Ok(Self { client, metadata })
+		} else {
+			// Reload from the existed runtime metadata file.
+			let mut f = File::open(runtime_file).map_err(|e| {
+				AppError::Custom(format!("Failed to open runtime metadata file: {:?}", e))
+			})?;
+			let mut bytes = Vec::new();
+			f.read_to_end(&mut bytes).map_err(|e| {
+				AppError::Custom(format!("Failed to read runtime metadata file: {:?}", e))
+			})?;
+			let metadata = RuntimeMetadata::decode(&mut bytes.as_slice()).map_err(|e| {
+				AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e))
+			})?;
+			log::debug!(target: "cli", "Reload runtime metadata file successfully");
+			Ok(Self { client, metadata })
+		}
+	}
+
+	/// Execute the captured command
+	pub async fn handle_command(&self, command: AppCommand) -> Result<ExecutionResult, AppError> {
+		match command {
+			AppCommand::SwitchNetwork(network) => {
+				return Ok(ExecutionResult::SwitchNetworkTo(network));
 			},
-
-			ChainCommand::GetHeader { hash } => {
-				let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-					.map_err(|_| RpcError::InvalidParams)?;
-				let res = client.get_header(hash).await;
-				print_result(res);
+			AppCommand::Rpc(sub_commands) => match sub_commands {
+				RpcCommand::SysName => {
+					let res = self.client.system_name().await;
+					print_result(res);
+				},
+				RpcCommand::SysProperties => {
+					let res = self.client.system_properties().await;
+					print_result(res);
+				},
+				RpcCommand::SysVersion => {
+					let res = self.client.system_version().await;
+					print_result(res);
+				},
+				RpcCommand::Chain => {
+					let res = self.client.chain().await;
+					print_result(res);
+				},
+				RpcCommand::ChainType => {
+					let res = self.client.chain_type().await;
+					print_result(res);
+				},
+				RpcCommand::Health => {
+					let res = self.client.health().await;
+					print_result(res);
+				},
+				RpcCommand::SyncState => {
+					let res = self.client.sync_state().await;
+					print_result(res);
+				},
+				RpcCommand::Usage => {
+					print_usage::<RpcCommand>("substrate-cli rpc");
+				},
 			},
-			ChainCommand::Usage => {
-				print_usage::<ChainCommand>("substrate-cli chain");
+			AppCommand::Chain(sub_command) => match sub_command {
+				ChainCommand::GetBlock { hash } => {
+					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
+						.map_err(|_| RpcError::InvalidParams)?;
+					let res = self.client.get_block(hash).await;
+					print_result(res);
+				},
+				ChainCommand::GetBlockHash { number } => {
+					let number: <CI as ChainInfo>::BlockNumber = number.into();
+					let res = self.client.get_block_hash(number).await;
+					print_result(res);
+				},
+				ChainCommand::GetFinalizedHead => {
+					let res = self.client.get_finalized_head().await;
+					print_result(res);
+				},
+				ChainCommand::GetFinalizedNumber => {
+					let finalized_hash = self.client.get_finalized_head().await?;
+
+					if let Some(hash) = finalized_hash {
+						let res = self.client.get_header(hash).await?;
+						print_result(Ok(res.number()));
+					}
+				},
+
+				ChainCommand::GetHeader { hash } => {
+					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
+						.map_err(|_| RpcError::InvalidParams)?;
+					let res = self.client.get_header(hash).await;
+					print_result(res);
+				},
+				ChainCommand::Usage => {
+					print_usage::<ChainCommand>("substrate-cli chain");
+				},
 			},
-		},
-		AppCommand::AccountInfo(sub_command) => match sub_command {
-			AccountInfoCommand::Balances { account_id, at_block } => {
-				let metadata = client.runtime_metadata().await?;
-				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
+			AppCommand::AccountInfo(sub_command) => match sub_command {
+				AccountInfoCommand::Balances { account_id, at_block } => {
+					let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
-				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-					.map_err(|_| RpcError::InvalidParams)?;
-				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
-					.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
+					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
+						.map_err(|_| RpcError::InvalidParams)?;
+					let storage_key =
+						single_map_storage_key(&self.metadata, "System", "Account", key)
+							.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
 
-				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
-					client.get_storage(storage_key, hash).await?;
-				if let Some(a) = account {
-					print_result(Ok(AccountBalances {
-						free: a.data.free,
-						reserved: a.data.reserved,
-						frozen: a.data.frozen,
-					}));
-				}
+					let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
+						self.client.get_storage(storage_key, hash).await?;
+					if let Some(a) = account {
+						print_result(Ok(AccountBalances {
+							free: a.data.free,
+							reserved: a.data.reserved,
+							frozen: a.data.frozen,
+						}));
+					}
+				},
+				AccountInfoCommand::Nonce { account_id, at_block } => {
+					let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
+
+					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
+						.map_err(|_| RpcError::InvalidParams)?;
+					let storage_key =
+						single_map_storage_key(&self.metadata, "System", "Account", key)
+							.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
+
+					let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
+						self.client.get_storage(storage_key, hash).await?;
+					if let Some(a) = account {
+						print_result(Ok(AccountNonce { nonce: a.nonce }));
+					}
+				},
+				AccountInfoCommand::Usage => {
+					print_usage::<AccountInfoCommand>("substrate-cli account-info");
+				},
 			},
-			AccountInfoCommand::Nonce { account_id, at_block } => {
-				let metadata = client.runtime_metadata().await?;
-				let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
+			AppCommand::Runtime(sub_command) => match sub_command {
+				RuntimeCommand::ListPallets => {
+					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
+						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					};
 
-				let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-					.map_err(|_| RpcError::InvalidParams)?;
-				let storage_key = single_map_storage_key(&metadata, "System", "Account", key)
-					.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
+					let mut pallets = metadata.pallets.to_vec();
+					pallets.sort_by_key(|p| p.index);
 
-				let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
-					client.get_storage(storage_key, hash).await?;
-				if let Some(a) = account {
-					print_result(Ok(AccountNonce { nonce: a.nonce }));
-				}
-			},
-			AccountInfoCommand::Usage => {
-				print_usage::<AccountInfoCommand>("substrate-cli account-info");
-			},
-		},
-		AppCommand::Runtime(sub_command) => match sub_command {
-			RuntimeCommand::ListPallets => {
-				let metadata = client.runtime_metadata().await?;
-				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
-					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-				};
+					let mut table = Table::new();
+					table.add_row(row!["Pallet", "Index"]);
+					pallets.iter().for_each(|p| {
+						table.add_row(row![p.name, p.index]);
+					});
+					table.printstd();
+				},
+				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
+					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
+						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					};
+					let pallet: Option<&PalletMetadata<PortableForm>> =
+						match (pallet_name, pallet_id) {
+							(Some(name), Some(id)) =>
+								metadata.pallets.iter().find(|p| p.name == name && p.index == id),
+							(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
+							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
+							_ => None,
+						};
+					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
-				let mut pallets = metadata.pallets.to_vec();
-				pallets.sort_by_key(|p| p.index);
+					if let Some(p) = pallet {
+						if let Some(s) = p.storage.as_ref() {
+							let mut table = Table::new();
+							table.add_row(row!["NAME", "TYPE", "DOC"]);
+							s.entries.iter().for_each(|e| {
+								table.add_row(row![
+									e.name.bold(),
+									print_storage_type(&e.ty, metadata),
+									e.docs.get(0).unwrap_or(&"".to_owned())
+								]);
+							});
+							table.printstd();
+						}
+					} else {
+						println!("Did not find the pallet.");
+					}
+				},
+				RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
+					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
+						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					};
 
-				let mut table = Table::new();
-				table.add_row(row!["Pallet", "Index"]);
-				pallets.iter().for_each(|p| {
-					table.add_row(row![p.name, p.index]);
-				});
-				table.printstd();
-			},
-			RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
-				let metadata = client.runtime_metadata().await?;
-				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
-					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-				};
-				let pallet: Option<&PalletMetadata<PortableForm>> = match (pallet_name, pallet_id) {
-					(Some(name), Some(id)) =>
-						metadata.pallets.iter().find(|p| p.name == name && p.index == id),
-					(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
-					(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
-					_ => None,
-				};
+					let pallet: Option<&PalletMetadata<PortableForm>> =
+						match (pallet_name, pallet_id) {
+							(Some(name), Some(id)) =>
+								metadata.pallets.iter().find(|p| p.name == name && p.index == id),
+							(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
+							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
+							_ => None,
+						};
+					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
-				if let Some(p) = pallet {
-					if let Some(s) = p.storage.as_ref() {
+					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.add_row(row!["NAME", "TYPE", "DOC"]);
-						s.entries.iter().for_each(|e| {
+						table.add_row(row!["NAME", "VALUE", "DOC"]);
+						p.constants.iter().for_each(|c| {
+							// TODO: add type parse
 							table.add_row(row![
-								e.name.bold(),
-								print_storage_type(&e.ty, metadata),
-								e.docs.get(0).unwrap_or(&"".to_owned())
+								c.name.bold(),
+								"TODO",
+								c.docs.get(0).unwrap_or(&"".to_owned())
 							]);
 						});
 						table.printstd();
+					} else {
+						println!("Did not find the pallet.");
 					}
-				} else {
-					println!("Did not find the pallet.");
-				}
-			},
-			RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
-				let metadata = client.runtime_metadata().await?;
-				let RuntimeMetadata::V14(metadata) = &metadata.1  else {
-					return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-				};
-				let pallet: Option<&PalletMetadata<PortableForm>> = match (pallet_name, pallet_id) {
-					(Some(name), Some(id)) =>
-						metadata.pallets.iter().find(|p| p.name == name && p.index == id),
-					(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
-					(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
-					_ => None,
-				};
+				},
+				RuntimeCommand::RuntimeVersion { hash } => {
+					let hash = if let Some(hash) = hash {
+						<CI as ChainInfo>::Hash::from_str(hash.as_str())
+							.map_err(|_| RpcError::InvalidParams)?
+					} else {
+						self.client
+							.get_finalized_head()
+							.await?
+							.expect("Failed to get finalized head")
+					};
 
-				if let Some(p) = pallet {
-					let mut table = Table::new();
-					table.add_row(row!["NAME", "VALUE", "DOC"]);
-					p.constants.iter().for_each(|c| {
-						// TODO: add type parse
-						table.add_row(row![
-							c.name.bold(),
-							"TODO",
-							c.docs.get(0).unwrap_or(&"".to_owned())
-						]);
-					});
-				} else {
-					println!("Did not find the pallet.");
-				}
+					let res = self.client.runtime_version(hash).await;
+					print_result(res);
+				},
+				RuntimeCommand::Usage => {
+					print_usage::<RuntimeCommand>("substrate-cli runtime");
+				},
 			},
-			RuntimeCommand::RuntimeVersion { hash } => {
-				let hash = if let Some(hash) = hash {
-					<CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidParams)?
-				} else {
-					client.get_finalized_head().await?.expect("Failed to get finalized head")
-				};
+			AppCommand::Usage => {
+				print_usage::<AppCommand>("substrate-cli");
+			},
+		}
 
-				let res = client.runtime_version(hash).await;
-				print_result(res);
-			},
-			RuntimeCommand::Usage => {
-				print_usage::<RuntimeCommand>("substrate-cli runtime");
-			},
-		},
-		AppCommand::Usage => {
-			print_usage::<AppCommand>("substrate-cli");
-		},
+		Ok(ExecutionResult::Success)
 	}
-
-	Ok(ExecutionResult::Success)
 }
 
 /// The APP's command execution result.
