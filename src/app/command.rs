@@ -120,6 +120,11 @@ pub enum RuntimeCommand {
 		#[arg(value_name = "HASH", long)]
 		hash: Option<String>,
 	},
+	/// Export the runtime type json schema.
+	ExportJsonTypeSchema {
+		#[arg(value_name = "PATH", long)]
+		path: String,
+	},
 	/// Print usage
 	Usage,
 }
