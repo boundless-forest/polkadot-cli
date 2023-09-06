@@ -10,7 +10,7 @@ version = "0.0.1"
 
 [dependencies]
 # crate.io
-jsonrpsee             = { version = "0.18.2", features = ["http-client", "async-client", "client-ws-transport-native-tls"] }
+jsonrpsee             = { version = "0.16.2", features = ["http-client", "async-client", "client-ws-transport"] }
 tokio                 = { version = "1.29.0", features = ["rt", "macros", "rt-multi-thread"] }
 rustyline             = { version = "12.0.0", features = ["with-fuzzy"] }
 clap                  = { version = "4.3.8", features = ["derive"] }
@@ -38,3 +38,4 @@ pallet-balances  = { git = "https://github.com/paritytech/substrate", branch = "
 frame-system     = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 fp-account       = { git = "https://github.com/boundless-forest/frontier", branch = "bear-polkadot-v1.0.0" }
 schemars = "0.8.13"
+subxt-codegen = "0.31.0"
