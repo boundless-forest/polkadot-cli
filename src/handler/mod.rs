@@ -12,7 +12,6 @@ use colored::Colorize;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
-use scale_info::form::PortableForm;
 use serde::Serialize;
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
@@ -218,7 +217,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 							s.entries().iter().for_each(|e| {
 								table.add_row(row![
 									e.name().bold(),
-									print_storage_type(&e.ty, metadata),
+									print_storage_type(e.entry_type().clone(), &self.metadata),
 									e.docs().get(0).unwrap_or(&"".to_owned())
 								]);
 							});
