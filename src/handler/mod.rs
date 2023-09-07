@@ -9,14 +9,13 @@ use std::{
 // crates.io
 use clap::Command;
 use colored::Colorize;
-use frame_metadata::{v14::PalletMetadata, RuntimeMetadata};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
-use scale_info::form::PortableForm;
 use serde::Serialize;
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
+use subxt_metadata::{Metadata, PalletMetadata};
 // this crate
 use crate::{
 	app::{
@@ -34,7 +33,7 @@ use crate::{
 
 pub struct Handler<'a, CI> {
 	client: &'a RpcClient<CI>,
-	metadata: RuntimeMetadata,
+	metadata: Metadata,
 }
 
 impl<'a, CI: ChainInfo> Handler<'a, CI> {
@@ -54,7 +53,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 		if !runtime_file.is_file() {
 			// New network or new runtime version detected.
-			let metadata = client.runtime_metadata().await?.1;
+			let metadata = client.runtime_metadata().await?;
 			let mut metadata_file = File::create(runtime_file).map_err(|e| {
 				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
 			})?;
@@ -72,7 +71,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			f.read_to_end(&mut bytes).map_err(|e| {
 				AppError::Custom(format!("Failed to read runtime metadata file: {:?}", e))
 			})?;
-			let metadata = RuntimeMetadata::decode(&mut bytes.as_slice()).map_err(|e| {
+			let metadata = Metadata::decode(&mut bytes.as_slice()).map_err(|e| {
 				AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e))
 			})?;
 			log::debug!(target: "cli", "Reload runtime metadata file successfully");
@@ -195,43 +194,32 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
 				RuntimeCommand::ListPallets => {
-					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
-						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-					};
-
-					let mut pallets = metadata.pallets.to_vec();
-					pallets.sort_by_key(|p| p.index);
-
 					let mut table = Table::new();
 					table.add_row(row!["Pallet", "Index"]);
-					pallets.iter().for_each(|p| {
-						table.add_row(row![p.name, p.index]);
+					self.metadata.pallets().for_each(|p| {
+						table.add_row(row![p.name(), p.index()]);
 					});
 					table.printstd();
 				},
 				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
-					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
-						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
+						(Some(name), Some(id)) =>
+							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), None) => self.metadata.pallet_by_name(&name),
+						(None, Some(id)) => self.metadata.pallet_by_index(id),
+						_ => None,
 					};
-					let pallet: Option<&PalletMetadata<PortableForm>> =
-						match (pallet_name, pallet_id) {
-							(Some(name), Some(id)) =>
-								metadata.pallets.iter().find(|p| p.name == name && p.index == id),
-							(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
-							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
-							_ => None,
-						};
 					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
 					if let Some(p) = pallet {
-						if let Some(s) = p.storage.as_ref() {
+						if let Some(s) = p.storage() {
 							let mut table = Table::new();
 							table.add_row(row!["NAME", "TYPE", "DOC"]);
-							s.entries.iter().for_each(|e| {
+							s.entries().iter().for_each(|e| {
 								table.add_row(row![
-									e.name.bold(),
-									print_storage_type(&e.ty, metadata),
-									e.docs.get(0).unwrap_or(&"".to_owned())
+									e.name().bold(),
+									print_storage_type(e.entry_type().clone(), &self.metadata),
+									e.docs().get(0).unwrap_or(&"".to_owned())
 								]);
 							});
 							table.printstd();
@@ -241,29 +229,24 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					}
 				},
 				RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
-					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
-						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
+						(Some(name), Some(id)) =>
+							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), None) => self.metadata.pallet_by_name(&name),
+						(None, Some(id)) => self.metadata.pallet_by_index(id),
+						_ => None,
 					};
-
-					let pallet: Option<&PalletMetadata<PortableForm>> =
-						match (pallet_name, pallet_id) {
-							(Some(name), Some(id)) =>
-								metadata.pallets.iter().find(|p| p.name == name && p.index == id),
-							(Some(name), None) => metadata.pallets.iter().find(|p| p.name == name),
-							(None, Some(id)) => metadata.pallets.iter().find(|p| p.index == id),
-							_ => None,
-						};
 					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
 						table.add_row(row!["NAME", "VALUE", "DOC"]);
-						p.constants.iter().for_each(|c| {
+						p.constants().for_each(|c| {
 							// TODO: add type parse
 							table.add_row(row![
-								c.name.bold(),
+								c.name().bold(),
 								"TODO",
-								c.docs.get(0).unwrap_or(&"".to_owned())
+								c.docs().get(0).unwrap_or(&"".to_owned())
 							]);
 						});
 						table.printstd();

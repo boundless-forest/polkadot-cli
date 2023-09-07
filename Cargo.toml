@@ -29,6 +29,7 @@ env_logger            = { version = "0.10.0" }
 log                   = { version = "0.4.19"}
 scale-info            = { version = "2.9.0", features = ["schema"]}
 walkdir               = { version = "2.3.3" }
+subxt-metadata        = { version = "0.31.0" }
 # substrate
 sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }

@@ -1,28 +1,22 @@
 // crates.io
-use frame_metadata::{
-	v14::{StorageEntryType, StorageHasher},
-	RuntimeMetadata,
-};
 use sp_core::Encode;
 use sp_storage::StorageKey;
+use subxt_metadata::{Metadata, StorageEntryType, StorageHasher};
 
 /// Get the storage key with the provided pallet information and runtime metadata.
 pub fn single_map_storage_key<K: Encode>(
-	runtime_metadata: &RuntimeMetadata,
+	runtime_metadata: &Metadata,
 	pallet_name: &str,
 	storage_name: &str,
 	key: K,
 ) -> Result<StorageKey, String> {
-	let RuntimeMetadata::V14(metadata) = &runtime_metadata  else {
-		return Err("Only support the runtime metadata V14 now.".to_string());
-	};
-	let Some(p) = metadata.pallets.iter().find(|p| p.name == pallet_name) else {
+	let Some(p) = runtime_metadata.pallets().find(|p| p.name() == pallet_name) else {
 		return Err("Did not find the pallet.".to_string());
 	};
-	let Some(entry) = p.storage.clone().map(|s| s.entries).and_then(|entries| entries.into_iter().find(|e| e.name == storage_name)) else {
+	let Some(entry) = p.storage().map(|s| s.entries()).and_then(|entries| entries.iter().find(|e| e.name() == storage_name)) else {
 		return Err("Did not find the storage item.".to_string());
 	};
-	let StorageEntryType::Map { hashers, key: _, value : _} = entry.ty else {
+	let StorageEntryType::Map { hashers, key_ty: _, value_ty: _} = entry.entry_type() else {
 		return Err("Only support single map entry in this function".to_string());
 	};
 

@@ -12,6 +12,7 @@ use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
 use sp_storage::{StorageData, StorageKey};
 use sp_version::RuntimeVersion;
+use subxt_metadata::Metadata;
 // this crate
 use super::{
 	api::{
@@ -190,14 +191,16 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 	}
 
 	/// Get the runtime metadata
-	async fn runtime_metadata(&self) -> RpcResult<RuntimeMetadataPrefixed> {
+	async fn runtime_metadata(&self) -> RpcResult<Metadata> {
 		let metadata_bytes: Bytes = self
 			.client
 			.request("state_getMetadata", rpc_params![])
 			.await
 			.map_err(RpcError::from)?;
-		let metadata = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
+		let metadata_prefix = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
 			.map_err(|_| RpcError::DecodeError)?;
+		let metadata = metadata_prefix.try_into().map_err(|_| RpcError::DecodeError)?;
+
 		Ok(metadata)
 	}
 
