@@ -1,14 +1,11 @@
 use core::any::TypeId;
-use frame_metadata::v14::{RuntimeMetadataV14, StorageEntryType};
-use scale_info::{form::PortableForm, interner::UntrackedSymbol, TypeDef};
+use scale_info::{interner::UntrackedSymbol, TypeDef};
+use subxt_metadata::{Metadata, StorageEntryType};
 
 /// Fetch the storage type string.
-pub fn print_storage_type(
-	entry_type: &StorageEntryType<PortableForm>,
-	metadata: &RuntimeMetadataV14,
-) -> String {
-	fn type_name(sym: &UntrackedSymbol<TypeId>, metadata: &RuntimeMetadataV14) -> String {
-		match metadata.types.resolve(sym.id) {
+pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> String {
+	fn type_name(sym: UntrackedSymbol<TypeId>, metadata: &Metadata) -> String {
+		match metadata.types().resolve(sym.id) {
 			Some(ty) => {
 				if let Some(i) = ty.path.ident() {
 					log::debug!(target: "cli", "ident: {:?}", i);
@@ -21,16 +18,17 @@ pub fn print_storage_type(
 							format!("{:?}", t)
 						},
 						TypeDef::Array(t) => {
-							format!("[{}; {}]", type_name(&t.type_param, metadata), t.len)
+							format!("[{}; {}]", type_name(t.type_param, metadata), t.len)
 						},
 						TypeDef::Sequence(t) => {
-							format!("Vec<{}>", type_name(&t.type_param, metadata))
+							format!("Vec<{}>", type_name(t.type_param, metadata))
 						},
 						TypeDef::Tuple(t) => {
 							format!(
 								"({})",
 								t.fields
-									.iter()
+									.clone()
+									.into_iter()
 									.enumerate()
 									.map(|(i, f)| {
 										if i != t.fields.len() - 1 {
@@ -43,7 +41,7 @@ pub fn print_storage_type(
 							)
 						},
 						TypeDef::Compact(t) => {
-							format!("{:?}", type_name(&t.type_param, metadata))
+							format!("{:?}", type_name(t.type_param, metadata))
 						},
 						TypeDef::BitSequence(_) => "Not support BitSequence now".to_string(),
 						_ => "Unexpected def type".to_string(),
@@ -55,8 +53,11 @@ pub fn print_storage_type(
 	}
 
 	match entry_type {
-		StorageEntryType::Plain(t) => type_name(t, metadata),
-		StorageEntryType::Map { hashers: _, key, value } =>
-			format!("{} -> {}", type_name(key, metadata), type_name(value, metadata)),
+		StorageEntryType::Plain(t) => type_name(t.into(), metadata),
+		StorageEntryType::Map { hashers: _, key_ty, value_ty } => format!(
+			"{} -> {}",
+			type_name(key_ty.into(), metadata),
+			type_name(value_ty.into(), metadata)
+		),
 	}
 }
