@@ -269,22 +269,23 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RuntimeCommand::ExportJsonTypeSchema { path } => {
-					use schemars::schema_for_value;
+					// use schemars::schema_for_value;
 
-					let schema_path = schema_path().expect("Failed to get metadata path");
-					let schema_name = schema_path.join(path);
-					let RuntimeMetadata::V14(metadata) = &self.metadata  else {
-						return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-					};
-					let schema = schema_for_value!(metadata.types);
-					log::debug!(target: "cli", "schema saved path: {:?}", schema_name);
+					// let schema_path = schema_path().expect("Failed to get metadata path");
+					// let schema_name = schema_path.join(path);
+					// let RuntimeMetadata::V14(metadata) = &self.metadata  else {
+					// 	return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
+					// };
+					// let schema = schema_for_value!(metadata.types);
+					// log::debug!(target: "cli", "schema saved path: {:?}", schema_name);
 
-					let schema_file = File::create(schema_name).map_err(|e| {
-						AppError::Custom(format!("Failed to create schema file: {:?}", e))
-					})?;
-					serde_json::to_writer_pretty(schema_file, &schema).map_err(|e| {
-						AppError::Custom(format!("Failed to write metadata file: {:?}", e))
-					})?;
+					// let schema_file = File::create(schema_name).map_err(|e| {
+					// 	AppError::Custom(format!("Failed to create schema file: {:?}", e))
+					// })?;
+					// serde_json::to_writer_pretty(schema_file, &schema).map_err(|e| {
+					// 	AppError::Custom(format!("Failed to write metadata file: {:?}", e))
+					// })?;
+					todo!();
 				},
 				RuntimeCommand::Usage => {
 					print_usage::<RuntimeCommand>("substrate-cli runtime");
