@@ -244,11 +244,6 @@ pub fn metadata_path() -> Result<PathBuf, AppError> {
 	Ok(path)
 }
 
-pub fn schema_path() -> Result<PathBuf, AppError> {
-	let path = app_root_path().expect("Failed to get app root path").join("schema");
-	Ok(path)
-}
-
 /// Print the app welcome message.
 pub fn print_welcome_message() {
 	const INTRODUCTION: &str =

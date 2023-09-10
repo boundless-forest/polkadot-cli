@@ -115,6 +115,15 @@ pub enum RuntimeCommand {
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
+	/// Get the constant value of the certain pallet
+	GetConstant {
+		#[arg(name = "pallet-name", long)]
+		pallet_name: Option<String>,
+		#[arg(name = "pallet-id", long)]
+		pallet_id: Option<u8>,
+		#[arg(name = "constant-name", long)]
+		constant_name: String,
+	},
 	/// Get the runtime version
 	RuntimeVersion {
 		#[arg(value_name = "HASH", long)]
