@@ -237,8 +237,8 @@ pub fn app_root_path() -> Result<PathBuf, AppError> {
 }
 
 pub fn metadata_path() -> Result<PathBuf, AppError> {
-	let metadata_path = app_root_path().expect("Failed to get app root path").join("metadata");
-	Ok(metadata_path)
+	let path = app_root_path().expect("Failed to get app root path").join("metadata");
+	Ok(path)
 }
 
 /// Print the app welcome message.

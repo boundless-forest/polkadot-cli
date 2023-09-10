@@ -194,9 +194,9 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			AppCommand::Runtime(sub_command) => match sub_command {
 				RuntimeCommand::ListPallets => {
 					let mut table = Table::new();
-					table.add_row(row!["Pallet", "Index"]);
+					table.set_titles(row!["Pallet", "Index"]);
 					self.metadata.pallets().for_each(|p| {
-						table.add_row(row![p.name(), p.index()]);
+						table.add_row(row![p.name().bold(), p.index()]);
 					});
 					table.printstd();
 				},
@@ -213,7 +213,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.add_row(row!["NAME", "TYPE", "DOC"]);
+							table.set_titles(row!["NAME", "TYPE", "DOC"]);
 							s.entries().iter().for_each(|e| {
 								table.add_row(row![
 									e.name().bold(),
@@ -221,6 +221,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 									e.docs().get(0).unwrap_or(&"".to_owned())
 								]);
 							});
+
+							println!(
+								"PalletName: {}, PalletIndex: {}",
+								p.name().red().bold(),
+								p.index().to_string().red().bold()
+							);
 							table.printstd();
 						}
 					} else {
@@ -239,16 +245,57 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.add_row(row!["NAME", "VALUE", "DOC"]);
+						table.set_titles(row!["NAME", "DOC"]);
 						p.constants().for_each(|c| {
-							// TODO: add type parse
 							table.add_row(row![
 								c.name().bold(),
-								"TODO",
 								c.docs().get(0).unwrap_or(&"".to_owned())
 							]);
 						});
+
+						println!(
+							"PalletName: {}, PalletIndex: {}",
+							p.name().red().bold(),
+							p.index().to_string().red().bold()
+						);
 						table.printstd();
+					} else {
+						println!("Did not find the pallet.");
+					}
+				},
+				RuntimeCommand::GetConstant { pallet_name, pallet_id, constant_name } => {
+					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
+						(Some(name), Some(id)) =>
+							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), None) => self.metadata.pallet_by_name(&name),
+						(None, Some(id)) => self.metadata.pallet_by_index(id),
+						_ => None,
+					};
+					log::debug!(target: "cli", "Fetch the pallet metadata result: {:?}", pallet.is_some());
+
+					if let Some(p) = pallet {
+						if let Some(c) = p.constants().find(|c| c.name() == constant_name) {
+							let ty_id = c.ty();
+							let mut bytes = c.value();
+							let value = scale_value::scale::decode_as_type(
+								&mut bytes,
+								ty_id,
+								self.metadata.types(),
+							)
+							.map_err(|e| {
+								AppError::Custom(format!(
+									"Failed to decode constant value: {:?}",
+									e
+								))
+							})?;
+							println!(
+								"{} => {}",
+								c.name(),
+								serde_json::to_string_pretty(&value).unwrap()
+							);
+						} else {
+							println!("Did not find the constant.");
+						}
 					} else {
 						println!("Did not find the pallet.");
 					}
