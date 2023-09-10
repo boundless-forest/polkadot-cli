@@ -38,5 +38,11 @@ sp-version       = { git = "https://github.com/paritytech/substrate", branch = "
 pallet-balances  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 frame-system     = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 fp-account       = { git = "https://github.com/boundless-forest/frontier", branch = "bear-polkadot-v1.0.0" }
-schemars = "0.8.13"
 subxt-codegen = "0.31.0"
+scale-decode = "0.9.0"
+scale-encode = "0.5.0"
+scale-value = "0.12.0"
+scale-bits = "0.4.0"
+codec = { package = "parity-scale-codec", version = "3.4.0", features = ["derive"] }
+# primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "scale-info", "serde"] }
+subxt = "0.31.0"

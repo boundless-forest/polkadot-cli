@@ -19,8 +19,7 @@ use subxt_metadata::{Metadata, PalletMetadata};
 // this crate
 use crate::{
 	app::{
-		metadata_path, schema_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand,
-		RuntimeCommand,
+		metadata_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
 	},
 	errors::AppError,
 	handler::printer::print_storage_type,
@@ -274,8 +273,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					// let schema_path = schema_path().expect("Failed to get metadata path");
 					// let schema_name = schema_path.join(path);
 					// let RuntimeMetadata::V14(metadata) = &self.metadata  else {
-					// 	return Err(AppError::Custom("Only support the runtime metadata V14 now.".to_string()));
-					// };
+					// 	return Err(AppError::Custom("Only support the runtime metadata V14
+					// now.".to_string())); };
 					// let schema = schema_for_value!(metadata.types);
 					// log::debug!(target: "cli", "schema saved path: {:?}", schema_name);
 
