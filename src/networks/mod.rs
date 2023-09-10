@@ -1,7 +1,6 @@
 mod darwinia;
 mod node_template;
 mod polkadot;
-pub mod types;
 
 pub use darwinia::{CrabChain, DarwiniaChain, PangolinChain, PangoroChain};
 pub use node_template::NoteTemplate;

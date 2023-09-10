@@ -232,9 +232,6 @@ pub fn app_root_path() -> Result<PathBuf, AppError> {
 
 		let metadata_path = root.join("metadata");
 		fs::create_dir(metadata_path).expect("Failed to create metadata directory");
-
-		let schema_path = root.join("schema");
-		fs::create_dir(schema_path).expect("Failed to create schema directory");
 	}
 	Ok(root)
 }
