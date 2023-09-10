@@ -194,9 +194,9 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			AppCommand::Runtime(sub_command) => match sub_command {
 				RuntimeCommand::ListPallets => {
 					let mut table = Table::new();
-					table.add_row(row!["Pallet", "Index"]);
+					table.set_titles(row!["Pallet", "Index"]);
 					self.metadata.pallets().for_each(|p| {
-						table.add_row(row![p.name(), p.index()]);
+						table.add_row(row![p.name().bold(), p.index()]);
 					});
 					table.printstd();
 				},
@@ -213,7 +213,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.add_row(row!["NAME", "TYPE", "DOC"]);
+							table.add_row(row![p.name().bold(), p.index(), "TODO"]);
+							table.set_titles(row!["NAME", "TYPE", "DOC"]);
 							s.entries().iter().for_each(|e| {
 								table.add_row(row![
 									e.name().bold(),
@@ -239,7 +240,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.add_row(row!["NAME", "DOC"]);
+						table.set_titles(row!["NAME", "DOC"]);
 						p.constants().for_each(|c| {
 							table.add_row(row![
 								c.name().bold(),
@@ -270,8 +271,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 								ty_id,
 								self.metadata.types(),
 							)
-							.unwrap();
-							// println!("{} => {}", c.name(), value);
+							.map_err(|e| {
+								AppError::Custom(format!(
+									"Failed to decode constant value: {:?}",
+									e
+								))
+							})?;
 							println!(
 								"{} => {}",
 								c.name(),
