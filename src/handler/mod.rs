@@ -213,7 +213,6 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.add_row(row![p.name().bold(), p.index(), "TODO"]);
 							table.set_titles(row!["NAME", "TYPE", "DOC"]);
 							s.entries().iter().for_each(|e| {
 								table.add_row(row![
@@ -222,6 +221,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 									e.docs().get(0).unwrap_or(&"".to_owned())
 								]);
 							});
+
+							println!(
+								"PalletName: {}, PalletIndex: {}",
+								p.name().red().bold(),
+								p.index().to_string().red().bold()
+							);
 							table.printstd();
 						}
 					} else {
@@ -247,6 +252,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 								c.docs().get(0).unwrap_or(&"".to_owned())
 							]);
 						});
+
+						println!(
+							"PalletName: {}, PalletIndex: {}",
+							p.name().red().bold(),
+							p.index().to_string().red().bold()
+						);
 						table.printstd();
 					} else {
 						println!("Did not find the pallet.");
