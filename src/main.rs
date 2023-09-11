@@ -95,7 +95,7 @@ pub async fn run<CI: ChainInfo>(
 	let handler = Handler::new(rpc_client).await?;
 
 	loop {
-		let command_tip = format!("substrate-cli ({:?}) >> ", <CI as ChainInfo>::NET_WORK)
+		let command_tip = format!("polkadot-cli ({:?}) >> ", <CI as ChainInfo>::NET_WORK)
 			.bright_green()
 			.italic();
 		let prompt = editor.readline(command_tip.to_string().as_str());

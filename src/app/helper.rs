@@ -81,7 +81,7 @@ pub struct EditorHelper<H> {
 impl<H> EditorHelper<H> {
 	/// EditorHelper constructor
 	fn new(hinter: H) -> Self {
-		let init = Command::new("substrate-cli")
+		let init = Command::new("polkadot-cli")
 			.disable_help_flag(true)
 			.disable_help_subcommand(true)
 			.no_binary_name(true);
@@ -225,7 +225,7 @@ fn prefix_command<'s, I: Iterator<Item = &'s str>>(
 
 pub fn app_root_path() -> Result<PathBuf, AppError> {
 	let mut root = dirs::home_dir().unwrap();
-	root.push(".substrate-cli");
+	root.push(".polkadot-cli");
 
 	if !root.exists() {
 		fs::create_dir(root.clone()).map_err(|e| AppError::Custom(e.to_string()))?;
@@ -253,7 +253,7 @@ Tips:
 ";
 
 	let font = FIGfont::from_file("src/resources/univers.flf").unwrap();
-	let figure = font.convert("substrate-cli");
+	let figure = font.convert("polkadot-cli");
 	if let Some(figure) = figure {
 		println!("{}", figure);
 		println!("{}", INTRODUCTION.bright_purple().bold().italic());

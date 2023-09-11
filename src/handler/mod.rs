@@ -114,7 +114,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RpcCommand::Usage => {
-					print_usage::<RpcCommand>("substrate-cli rpc");
+					print_usage::<RpcCommand>("polkadot-cli rpc");
 				},
 			},
 			AppCommand::Chain(sub_command) => match sub_command {
@@ -149,7 +149,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				ChainCommand::Usage => {
-					print_usage::<ChainCommand>("substrate-cli chain");
+					print_usage::<ChainCommand>("polkadot-cli chain");
 				},
 			},
 			AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -188,7 +188,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					}
 				},
 				AccountInfoCommand::Usage => {
-					print_usage::<AccountInfoCommand>("substrate-cli account-info");
+					print_usage::<AccountInfoCommand>("polkadot-cli account-info");
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
@@ -315,11 +315,11 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RuntimeCommand::Usage => {
-					print_usage::<RuntimeCommand>("substrate-cli runtime");
+					print_usage::<RuntimeCommand>("polkadot-cli runtime");
 				},
 			},
 			AppCommand::Usage => {
-				print_usage::<AppCommand>("substrate-cli");
+				print_usage::<AppCommand>("polkadot-cli");
 			},
 		}
 
