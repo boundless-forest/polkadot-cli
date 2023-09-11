@@ -7,7 +7,7 @@ use std::{
 	str::FromStr,
 };
 // crates.io
-use clap::Command;
+use clap::{builder::Str, Command};
 use colored::Colorize;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
@@ -20,6 +20,7 @@ use subxt_metadata::{Metadata, PalletMetadata};
 use crate::{
 	app::{
 		metadata_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
+		POLKADOT_CLI,
 	},
 	errors::AppError,
 	handler::printer::print_storage_type,
@@ -114,7 +115,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RpcCommand::Usage => {
-					print_usage::<RpcCommand>("polkadot-cli rpc");
+					let command_name = format!("{:?} rpc", POLKADOT_CLI);
+					print_usage::<RpcCommand>(command_name.into());
 				},
 			},
 			AppCommand::Chain(sub_command) => match sub_command {
@@ -149,7 +151,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				ChainCommand::Usage => {
-					print_usage::<ChainCommand>("polkadot-cli chain");
+					let command_name = format!("{:?} chain", POLKADOT_CLI);
+					print_usage::<RpcCommand>(command_name.into());
 				},
 			},
 			AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -188,7 +191,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					}
 				},
 				AccountInfoCommand::Usage => {
-					print_usage::<AccountInfoCommand>("polkadot-cli account-info");
+					let command_name = format!("{:?} account-info", POLKADOT_CLI);
+					print_usage::<RpcCommand>(command_name.into());
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
@@ -315,11 +319,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RuntimeCommand::Usage => {
-					print_usage::<RuntimeCommand>("polkadot-cli runtime");
+					let command_name = format!("{:?} runtime", POLKADOT_CLI);
+					print_usage::<RpcCommand>(command_name.into());
 				},
 			},
 			AppCommand::Usage => {
-				print_usage::<AppCommand>("polkadot-cli");
+				print_usage::<AppCommand>(POLKADOT_CLI.into());
 			},
 		}
 
@@ -351,7 +356,7 @@ pub fn print_result<T: Serialize>(data: RpcResult<T>) {
 	}
 }
 
-pub fn print_usage<T: clap::Subcommand>(command_name: &'static str) {
+pub fn print_usage<T: clap::Subcommand>(command_name: Str) {
 	let mock = Command::new(command_name)
 		.disable_help_flag(true)
 		.disable_help_subcommand(true)
