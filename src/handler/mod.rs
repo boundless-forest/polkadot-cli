@@ -115,7 +115,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RpcCommand::Usage => {
-					let command_name = format!("{:?} rpc", POLKADOT_CLI);
+					let command_name = format!("{} rpc", POLKADOT_CLI);
 					print_usage::<RpcCommand>(command_name.into());
 				},
 			},
@@ -151,8 +151,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				ChainCommand::Usage => {
-					let command_name = format!("{:?} chain", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					let command_name = format!("{} chain", POLKADOT_CLI);
+					print_usage::<ChainCommand>(command_name.into());
 				},
 			},
 			AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -191,8 +191,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					}
 				},
 				AccountInfoCommand::Usage => {
-					let command_name = format!("{:?} account-info", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					let command_name = format!("{} account-info", POLKADOT_CLI);
+					print_usage::<AccountInfoCommand>(command_name.into());
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
@@ -319,8 +319,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					print_result(res);
 				},
 				RuntimeCommand::Usage => {
-					let command_name = format!("{:?} runtime", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					let command_name = format!("{} runtime", POLKADOT_CLI);
+					print_usage::<RuntimeCommand>(command_name.into());
 				},
 			},
 			AppCommand::Usage => {
