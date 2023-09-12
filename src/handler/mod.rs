@@ -152,7 +152,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				},
 				ChainCommand::Usage => {
 					let command_name = format!("{:?} chain", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					print_usage::<ChainCommand>(command_name.into());
 				},
 			},
 			AppCommand::AccountInfo(sub_command) => match sub_command {
@@ -192,7 +192,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				},
 				AccountInfoCommand::Usage => {
 					let command_name = format!("{:?} account-info", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					print_usage::<AccountInfoCommand>(command_name.into());
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
@@ -320,7 +320,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				},
 				RuntimeCommand::Usage => {
 					let command_name = format!("{:?} runtime", POLKADOT_CLI);
-					print_usage::<RpcCommand>(command_name.into());
+					print_usage::<RuntimeCommand>(command_name.into());
 				},
 			},
 			AppCommand::Usage => {

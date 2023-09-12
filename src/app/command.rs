@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 #[command(author, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
-	/// Switch to another network. [Polkadot | Kusama | Darwinia | Crab | Pangolin | Pangoro]
+	/// Switch to another network. [Polkadot | Kusama | Darwinia | Crab | Pangolin | Pangoro].
 	#[command(subcommand)]
 	SwitchNetwork(Network),
 	/// RPC commands, e.g sys-name, sys-version, chain-type, health.
@@ -22,28 +22,28 @@ pub enum AppCommand {
 	/// Runtime commands, e.g list-pallets, list-pallet-storages, list-runtime-storages.
 	#[command(subcommand)]
 	Runtime(RuntimeCommand),
-	/// Print usage
+	/// Print usage.
 	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "rpc")]
 pub enum RpcCommand {
-	/// Get the node name
+	/// Get the node name.
 	SysName,
-	/// Get System Properties
+	/// Get System Properties.
 	SysProperties,
-	/// Get System Version
+	/// Get System Version.
 	SysVersion,
-	/// Get the chain
+	/// Get the chain.
 	Chain,
-	/// Get the chain type
+	/// Get the chain type.
 	ChainType,
-	/// Get the health status of the node
+	/// Get the health status of the node.
 	Health,
-	/// Get the state of the syncing of the node
+	/// Get the state of the syncing of the node.
 	SyncState,
-	/// Print usage
+	/// Print usage.
 	Usage,
 }
 
@@ -51,21 +51,21 @@ pub enum RpcCommand {
 #[command(name = "chain")]
 #[allow(clippy::enum_variant_names)]
 pub enum ChainCommand {
-	/// Get the chain block by hash
+	/// Get the chain block by hash.
 	GetBlock {
 		#[arg(value_name = "HASH", long)]
 		hash: String,
 	},
-	/// Get the block hash by number
+	/// Get the block hash by number.
 	GetBlockHash {
 		#[arg(long)]
 		number: u32,
 	},
-	/// Get the finalized head hash
+	/// Get the finalized head hash.
 	GetFinalizedHead,
-	/// Get the finalized head number
+	/// Get the finalized head number.
 	GetFinalizedNumber,
-	/// Get the header for a specific block by hash
+	/// Get the header for a specific block by hash.
 	GetHeader {
 		#[arg(value_name = "HASH", long)]
 		hash: String,
@@ -77,14 +77,14 @@ pub enum ChainCommand {
 #[derive(Subcommand, Clone, Debug)]
 #[command(name = "account-info")]
 pub enum AccountInfoCommand {
-	/// Get the account balance
+	/// Get the account balance.
 	Balances {
 		#[arg(name = "account-id", value_name = "ACCOUNT_ID", long)]
 		account_id: String,
 		#[arg(name = "at-block", help = "which block", long)]
 		at_block: Option<String>,
 	},
-	/// Get the account nonce
+	/// Get the account nonce.
 	Nonce {
 		#[arg(name = "account-id", value_name = "ACCOUNT_ID", long)]
 		account_id: String,
@@ -99,23 +99,23 @@ pub enum AccountInfoCommand {
 #[command(name = "pallets")]
 #[allow(clippy::enum_variant_names)]
 pub enum RuntimeCommand {
-	/// List all pallets in this chain
+	/// List all pallets of this chain.
 	ListPallets,
-	/// List storages of the certain pallet
+	/// List the storages of the particular pallet by pallet-name or pallet-id.
 	ListPalletStorages {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
-	/// List constants of the certain pallet
+	/// List constants of the particular pallet by pallet-name or pallet-id.
 	ListPalletConstants {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
-	/// Get the constant value of the certain pallet
+	/// Get the constant value the particular pallet by pallet-name or pallet-id.
 	GetConstant {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
@@ -124,7 +124,7 @@ pub enum RuntimeCommand {
 		#[arg(name = "constant-name", long)]
 		constant_name: String,
 	},
-	/// Get the runtime version
+	/// Get the runtime version.
 	RuntimeVersion {
 		#[arg(value_name = "HASH", long)]
 		hash: Option<String>,
