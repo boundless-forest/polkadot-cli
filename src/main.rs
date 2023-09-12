@@ -51,7 +51,6 @@ async fn main() -> Result<(), AppError> {
 	print_welcome_message();
 	loop {
 		let config = editor.helper_mut().unwrap().load_config().unwrap();
-		editor.save_history(&path)?;
 
 		log::debug!(target: "cli", "Starting up, network: {:?}", config.network);
 		match config.network {
@@ -85,6 +84,8 @@ async fn main() -> Result<(), AppError> {
 			},
 		}
 	}
+	editor.save_history(&path)?;
+	log::debug!(target: "cli", "Exiting the app, saved the history.");
 	Ok(())
 }
 
