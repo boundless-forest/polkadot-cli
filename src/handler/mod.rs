@@ -7,12 +7,10 @@ use std::{
 	str::FromStr,
 };
 // crates.io
-use clap::{builder::Str, Command};
 use colored::Colorize;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use prettytable::{row, Table};
-use serde::Serialize;
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -23,11 +21,11 @@ use crate::{
 		POLKADOT_CLI,
 	},
 	errors::AppError,
-	handler::printer::print_storage_type,
+	handler::printer::{print_result, print_storage_type, print_usage},
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
-		RpcResult, StateApi, SystemApi,
+		StateApi, SystemApi,
 	},
 };
 
@@ -143,7 +141,6 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 						print_result(Ok(res.number()));
 					}
 				},
-
 				ChainCommand::GetHeader { hash } => {
 					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
 						.map_err(|_| RpcError::InvalidParams)?;
@@ -340,27 +337,4 @@ pub enum ExecutionResult {
 	Success,
 	/// Execute failed.
 	Exited,
-}
-
-/// Print the result in JSON format.
-pub fn print_result<T: Serialize>(data: RpcResult<T>) {
-	let Ok(data) = data else {
-		println!("{}", RpcError::EmptyResult.to_string().italic().bright_magenta());
-		return;
-	};
-
-	if let Ok(data) = serde_json::to_string_pretty(&data) {
-		println!("{}", data.italic().bright_magenta());
-	} else {
-		println!("{}", RpcError::InvalidJsonObject.to_string().italic().bright_magenta());
-	}
-}
-
-pub fn print_usage<T: clap::Subcommand>(command_name: Str) {
-	let mock = Command::new(command_name)
-		.disable_help_flag(true)
-		.disable_help_subcommand(true)
-		.no_binary_name(true);
-	let mut command = <T as clap::Subcommand>::augment_subcommands(mock);
-	println!("{}", command.render_long_help());
 }
