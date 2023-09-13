@@ -1,6 +1,12 @@
+// crates.io
+use clap::{builder::Str, Command};
+use colored::Colorize;
 use core::any::TypeId;
 use scale_info::{interner::UntrackedSymbol, TypeDef};
+use serde::Serialize;
 use subxt_metadata::{Metadata, StorageEntryType};
+// this crate
+use crate::rpc::{RpcError, RpcResult};
 
 /// Fetch the storage type string.
 pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> String {
@@ -60,4 +66,27 @@ pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> 
 			type_name(value_ty.into(), metadata)
 		),
 	}
+}
+
+/// Print the result in JSON format.
+pub fn print_result<T: Serialize>(data: RpcResult<T>) {
+	let Ok(data) = data else {
+		println!("{}", RpcError::EmptyResult.to_string().italic().bright_magenta());
+		return;
+	};
+
+	if let Ok(data) = serde_json::to_string_pretty(&data) {
+		println!("{}", data.italic().bright_magenta());
+	} else {
+		println!("{}", RpcError::InvalidJsonObject.to_string().italic().bright_magenta());
+	}
+}
+
+pub fn print_usage<T: clap::Subcommand>(command_name: Str) {
+	let mock = Command::new(command_name)
+		.disable_help_flag(true)
+		.disable_help_subcommand(true)
+		.no_binary_name(true);
+	let mut command = <T as clap::Subcommand>::augment_subcommands(mock);
+	println!("{}", command.render_long_help());
 }
