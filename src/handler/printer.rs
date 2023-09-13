@@ -8,7 +8,7 @@ use subxt_metadata::{Metadata, StorageEntryType};
 // this crate
 use crate::rpc::{RpcError, RpcResult};
 
-const VEC_WRAPPER: [&'static str; 3] = ["BoundedVec", "WeakBoundedVec", "Option"];
+const VEC_WRAPPER: [&str; 3] = ["BoundedVec", "WeakBoundedVec", "Option"];
 
 /// Fetch the storage type string.
 pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> String {
