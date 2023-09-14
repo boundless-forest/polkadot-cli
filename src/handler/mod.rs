@@ -193,7 +193,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
-				RuntimeCommand::ListPallets => {
+				RuntimeCommand::ListAllPallets => {
 					let mut table = Table::new();
 					table
 						.set_header(vec!["Pallet", "Index"])
@@ -205,7 +205,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					});
 					println!("{}", table);
 				},
-				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
+				RuntimeCommand::StoragesOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -242,7 +242,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
+				RuntimeCommand::ConstantsOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -274,7 +274,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::GetConstant { pallet_name, pallet_id, constant_name } => {
+				RuntimeCommand::GetConstantByName { pallet_name, pallet_id, constant_name } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -311,7 +311,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::RuntimeVersion { hash } => {
+				RuntimeCommand::GetRuntimeVersion { hash } => {
 					let hash = if let Some(hash) = hash {
 						<CI as ChainInfo>::Hash::from_str(hash.as_str())
 							.map_err(|_| RpcError::InvalidParams)?

@@ -100,23 +100,23 @@ pub enum AccountInfoCommand {
 #[allow(clippy::enum_variant_names)]
 pub enum RuntimeCommand {
 	/// List all pallets of this chain.
-	ListPallets,
+	ListAllPallets,
 	/// List the storages of the particular pallet by pallet-name or pallet-id.
-	ListPalletStorages {
+	StoragesOfPallet {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
 	/// List constants of the particular pallet by pallet-name or pallet-id.
-	ListPalletConstants {
+	ConstantsOfPallet {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
 		#[arg(name = "pallet-id", long)]
 		pallet_id: Option<u8>,
 	},
 	/// Get the constant value the particular pallet by pallet-name or pallet-id.
-	GetConstant {
+	GetConstantByName {
 		#[arg(name = "pallet-name", long)]
 		pallet_name: Option<String>,
 		#[arg(name = "pallet-id", long)]
@@ -125,7 +125,7 @@ pub enum RuntimeCommand {
 		constant_name: String,
 	},
 	/// Get the runtime version.
-	RuntimeVersion {
+	GetRuntimeVersion {
 		#[arg(value_name = "HASH", long)]
 		hash: Option<String>,
 	},
