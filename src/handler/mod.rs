@@ -203,7 +203,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					self.metadata.pallets().for_each(|p| {
 						table.add_row(vec![p.name(), &p.index().to_string()]);
 					});
-					println!("{}", table);
+					println!("{table}");
 				},
 				RuntimeCommand::StoragesOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
