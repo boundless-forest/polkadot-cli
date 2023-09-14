@@ -10,7 +10,8 @@ use std::{
 use colored::Colorize;
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
-use prettytable::{row, Table};
+// use prettytable::{row, Table};
+use comfy_table::Table;
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -195,11 +196,11 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			AppCommand::Runtime(sub_command) => match sub_command {
 				RuntimeCommand::ListPallets => {
 					let mut table = Table::new();
-					table.set_titles(row!["Pallet", "Index"]);
+					table.set_header(vec!["Pallet", "Index"]);
 					self.metadata.pallets().for_each(|p| {
-						table.add_row(row![p.name().bold(), p.index()]);
+						table.add_row(vec![p.name().green(), p.index().to_string().green()]);
 					});
-					table.printstd();
+					println!("{table}");
 				},
 				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
@@ -214,12 +215,13 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.set_titles(row!["NAME", "TYPE", "DOC"]);
+							table.set_header(vec!["NAME", "TYPE", "DOC"]);
 							s.entries().iter().for_each(|e| {
-								table.add_row(row![
-									e.name().bold(),
-									print_storage_type(e.entry_type().clone(), &self.metadata),
-									e.docs().get(0).unwrap_or(&"".to_owned())
+								table.add_row(vec![
+									e.name().green(),
+									print_storage_type(e.entry_type().clone(), &self.metadata)
+										.green(),
+									e.docs().get(0).unwrap_or(&"".to_owned()).green(),
 								]);
 							});
 
@@ -228,7 +230,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 								p.name().red().bold(),
 								p.index().to_string().red().bold()
 							);
-							table.printstd();
+							println!("{table}");
 						}
 					} else {
 						println!("Did not find the pallet.");
@@ -246,11 +248,11 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.set_titles(row!["NAME", "DOC"]);
+						table.set_header(vec!["NAME", "DOC"]);
 						p.constants().for_each(|c| {
-							table.add_row(row![
-								c.name().bold(),
-								c.docs().get(0).unwrap_or(&"".to_owned())
+							table.add_row(vec![
+								c.name().green(),
+								c.docs().get(0).unwrap_or(&"".to_owned()).green(),
 							]);
 						});
 
@@ -259,7 +261,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 							p.name().red().bold(),
 							p.index().to_string().red().bold()
 						);
-						table.printstd();
+						println!("{table}");
 					} else {
 						println!("Did not find the pallet.");
 					}
