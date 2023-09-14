@@ -8,9 +8,9 @@ use std::{
 };
 // crates.io
 use colored::Colorize;
+use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, ContentArrangement, Table};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
-use prettytable::{row, Table};
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -193,15 +193,19 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				},
 			},
 			AppCommand::Runtime(sub_command) => match sub_command {
-				RuntimeCommand::ListPallets => {
+				RuntimeCommand::ListAllPallets => {
 					let mut table = Table::new();
-					table.set_titles(row!["Pallet", "Index"]);
+					table
+						.set_header(vec!["Pallet", "Index"])
+						.load_preset(UTF8_FULL)
+						.apply_modifier(UTF8_ROUND_CORNERS)
+						.set_content_arrangement(ContentArrangement::Dynamic);
 					self.metadata.pallets().for_each(|p| {
-						table.add_row(row![p.name().bold(), p.index()]);
+						table.add_row(vec![p.name(), &p.index().to_string()]);
 					});
-					table.printstd();
+					println!("{table}");
 				},
-				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
+				RuntimeCommand::StoragesOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -214,12 +218,16 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.set_titles(row!["NAME", "TYPE", "DOC"]);
+							table
+								.set_header(vec!["NAME", "TYPE", "DOC"])
+								.load_preset(UTF8_FULL)
+								.apply_modifier(UTF8_ROUND_CORNERS)
+								.set_content_arrangement(ContentArrangement::Dynamic);
 							s.entries().iter().for_each(|e| {
-								table.add_row(row![
-									e.name().bold(),
-									print_storage_type(e.entry_type().clone(), &self.metadata),
-									e.docs().get(0).unwrap_or(&"".to_owned())
+								table.add_row(vec![
+									e.name(),
+									&print_storage_type(e.entry_type().clone(), &self.metadata),
+									e.docs().get(0).unwrap_or(&"".to_owned()),
 								]);
 							});
 
@@ -228,13 +236,13 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 								p.name().red().bold(),
 								p.index().to_string().red().bold()
 							);
-							table.printstd();
+							println!("{table}");
 						}
 					} else {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::ListPalletConstants { pallet_name, pallet_id } => {
+				RuntimeCommand::ConstantsOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -246,12 +254,14 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.set_titles(row!["NAME", "DOC"]);
+						table
+							.set_header(vec!["NAME", "DOC"])
+							.load_preset(UTF8_FULL)
+							.apply_modifier(UTF8_ROUND_CORNERS)
+							.set_content_arrangement(ContentArrangement::Dynamic);
 						p.constants().for_each(|c| {
-							table.add_row(row![
-								c.name().bold(),
-								c.docs().get(0).unwrap_or(&"".to_owned())
-							]);
+							table
+								.add_row(vec![c.name(), c.docs().get(0).unwrap_or(&"".to_owned())]);
 						});
 
 						println!(
@@ -259,12 +269,12 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 							p.name().red().bold(),
 							p.index().to_string().red().bold()
 						);
-						table.printstd();
+						println!("{table}");
 					} else {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::GetConstant { pallet_name, pallet_id, constant_name } => {
+				RuntimeCommand::GetConstantByName { pallet_name, pallet_id, constant_name } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
 						(Some(name), Some(id)) =>
 							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
@@ -301,7 +311,7 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 						println!("Did not find the pallet.");
 					}
 				},
-				RuntimeCommand::RuntimeVersion { hash } => {
+				RuntimeCommand::GetRuntimeVersion { hash } => {
 					let hash = if let Some(hash) = hash {
 						<CI as ChainInfo>::Hash::from_str(hash.as_str())
 							.map_err(|_| RpcError::InvalidParams)?
