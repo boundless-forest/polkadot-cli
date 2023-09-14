@@ -8,10 +8,9 @@ use std::{
 };
 // crates.io
 use colored::Colorize;
+use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, ContentArrangement, Table};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
-// use prettytable::{row, Table};
-use comfy_table::Table;
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -196,11 +195,15 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 			AppCommand::Runtime(sub_command) => match sub_command {
 				RuntimeCommand::ListPallets => {
 					let mut table = Table::new();
-					table.set_header(vec!["Pallet", "Index"]);
+					table
+						.set_header(vec!["Pallet", "Index"])
+						.load_preset(UTF8_FULL)
+						.apply_modifier(UTF8_ROUND_CORNERS)
+						.set_content_arrangement(ContentArrangement::Dynamic);
 					self.metadata.pallets().for_each(|p| {
-						table.add_row(vec![p.name().green(), p.index().to_string().green()]);
+						table.add_row(vec![p.name(), &p.index().to_string()]);
 					});
-					println!("{table}");
+					println!("{}", table);
 				},
 				RuntimeCommand::ListPalletStorages { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
@@ -215,13 +218,16 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					if let Some(p) = pallet {
 						if let Some(s) = p.storage() {
 							let mut table = Table::new();
-							table.set_header(vec!["NAME", "TYPE", "DOC"]);
+							table
+								.set_header(vec!["NAME", "TYPE", "DOC"])
+								.load_preset(UTF8_FULL)
+								.apply_modifier(UTF8_ROUND_CORNERS)
+								.set_content_arrangement(ContentArrangement::Dynamic);
 							s.entries().iter().for_each(|e| {
 								table.add_row(vec![
-									e.name().green(),
-									print_storage_type(e.entry_type().clone(), &self.metadata)
-										.green(),
-									e.docs().get(0).unwrap_or(&"".to_owned()).green(),
+									e.name(),
+									&print_storage_type(e.entry_type().clone(), &self.metadata),
+									e.docs().get(0).unwrap_or(&"".to_owned()),
 								]);
 							});
 
@@ -248,12 +254,14 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 					if let Some(p) = pallet {
 						let mut table = Table::new();
-						table.set_header(vec!["NAME", "DOC"]);
+						table
+							.set_header(vec!["NAME", "DOC"])
+							.load_preset(UTF8_FULL)
+							.apply_modifier(UTF8_ROUND_CORNERS)
+							.set_content_arrangement(ContentArrangement::Dynamic);
 						p.constants().for_each(|c| {
-							table.add_row(vec![
-								c.name().green(),
-								c.docs().get(0).unwrap_or(&"".to_owned()).green(),
-							]);
+							table
+								.add_row(vec![c.name(), c.docs().get(0).unwrap_or(&"".to_owned())]);
 						});
 
 						println!(
