@@ -17,8 +17,8 @@ use subxt_metadata::{Metadata, PalletMetadata};
 // this crate
 use crate::{
 	app::{
-		metadata_path, AccountInfoCommand, AppCommand, ChainCommand, RpcCommand, RuntimeCommand,
-		POLKADOT_CLI,
+		metadata_path, AccountInfoCommand, AppCommand, ApplicationCommand, ChainCommand,
+		RpcCommand, RuntimeCommand, POLKADOT_CLI,
 	},
 	errors::AppError,
 	handler::printer::{print_result, print_storage_type, print_usage},
@@ -80,8 +80,10 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 	/// Execute the captured command
 	pub async fn handle_command(&self, command: AppCommand) -> Result<ExecutionResult, AppError> {
 		match command {
-			AppCommand::SwitchNetwork(network) => {
-				return Ok(ExecutionResult::SwitchNetworkTo(network));
+			AppCommand::App(sub_commands) => match sub_commands {
+				ApplicationCommand::SwitchNetwork { network } => {
+					return Ok(ExecutionResult::SwitchNetworkTo(network));
+				},
 			},
 			AppCommand::Rpc(sub_commands) => match sub_commands {
 				RpcCommand::SysName => {
