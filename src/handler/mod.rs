@@ -84,6 +84,15 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 				ApplicationCommand::SwitchNetwork { network } => {
 					return Ok(ExecutionResult::SwitchNetworkTo(network));
 				},
+				ApplicationCommand::DashBoard => {
+					todo!();
+				},
+				ApplicationCommand::CleanHistory => {
+					todo!();
+				},
+				ApplicationCommand::Usage => {
+					todo!();
+				},
 			},
 			AppCommand::Rpc(sub_commands) => match sub_commands {
 				RpcCommand::SysName => {

@@ -10,6 +10,7 @@ pub enum AppCommand {
 	/// Application command.
 	#[command(subcommand)]
 	App(ApplicationCommand),
+	/// RPC commands, e.g sys-name, sys-version, chain-type, health.
 	#[command(subcommand)]
 	Rpc(RpcCommand),
 	/// Chain commands, e.g get-block, get-block-hash, get-finalized-head, get-finalized-number.
@@ -33,6 +34,12 @@ pub enum ApplicationCommand {
 		#[arg(name = "network", long)]
 		network: Network,
 	},
+	/// Display dashboard information.
+	DashBoard,
+	/// Clean the history.
+	CleanHistory,
+	/// Print usage.
+	Usage,
 }
 
 #[derive(Subcommand, Clone, Debug)]
