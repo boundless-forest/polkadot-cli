@@ -1,16 +1,24 @@
+mod dashboard;
 mod printer;
 
 // std
 use std::{
 	fs::File,
+	io,
 	io::{Read, Write},
 	str::FromStr,
 };
 // crates.io
 use colored::Colorize;
 use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, ContentArrangement, Table};
+use crossterm::{
+	event::{DisableMouseCapture, EnableMouseCapture},
+	execute,
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
 use frame_system::AccountInfo;
 use pallet_balances::AccountData;
+use ratatui::prelude::{CrosstermBackend, Terminal};
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -21,7 +29,10 @@ use crate::{
 		RpcCommand, RuntimeCommand, POLKADOT_CLI,
 	},
 	errors::AppError,
-	handler::printer::{print_result, print_storage_type, print_usage},
+	handler::{
+		dashboard::{run_dashboard, DashBoard},
+		printer::{print_result, print_storage_type, print_usage},
+	},
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
@@ -85,7 +96,20 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					return Ok(ExecutionResult::SwitchNetworkTo(network));
 				},
 				ApplicationCommand::DashBoard => {
-					todo!();
+					// setup terminal
+					enable_raw_mode()?;
+					let mut stdout = io::stdout();
+					execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+					let backend = CrosstermBackend::new(stdout);
+					let mut terminal = Terminal::new(backend)?;
+
+					let dashboard = DashBoard::new();
+					run_dashboard(&mut terminal, dashboard)?;
+
+					// restore terminal
+					disable_raw_mode()?;
+					execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+					terminal.show_cursor()?;
 				},
 				ApplicationCommand::CleanHistory => {
 					todo!();
@@ -244,8 +268,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 							println!(
 								"PalletName: {}, PalletIndex: {}",
-								p.name().red().bold(),
-								p.index().to_string().red().bold()
+								Colorize::red(p.name()).bold(),
+								Colorize::red(p.index().to_string().as_str()).bold()
 							);
 							println!("{table}");
 						}
@@ -277,8 +301,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 
 						println!(
 							"PalletName: {}, PalletIndex: {}",
-							p.name().red().bold(),
-							p.index().to_string().red().bold()
+							Colorize::red(p.name()).bold(),
+							Colorize::red(p.index().to_string().as_str()).bold()
 						);
 						println!("{table}");
 					} else {
