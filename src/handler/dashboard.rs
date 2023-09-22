@@ -4,8 +4,8 @@ use std::io;
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
 	prelude::{
-		text, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style,
-		Terminal,
+		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
+		Style, Terminal,
 	},
 	style::Stylize,
 	widgets::*,
@@ -132,14 +132,15 @@ where
 	let titles = app
 		.tab_titles
 		.iter()
-		.map(|t| text::Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
+		.map(|t| Line::from(Span::styled(*t, Style::default().fg(Color::Yellow).bold())))
 		.collect();
 	let tabs = Tabs::new(titles)
 		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
 		.select(app.index)
-		.style(Style::default().fg(Color::Cyan))
-		.highlight_style(Style::default().fg(Color::Yellow));
+		.style(Style::default().fg(Color::Yellow))
+		.highlight_style(Style::default().fg(Color::Cyan));
 	f.render_widget(tabs, chunks[0]);
+
 	match app.index {
 		0 => draw_blocks_tab(f, app, chunks[1]),
 		1 => draw_transactions_tab(f, app, chunks[1]),
@@ -153,14 +154,8 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![text::Line::from(
-		"This is a paragraph with several lines. You can change style your text the way you want",
-	)];
-	let block = Block::default().borders(Borders::ALL).title(Span::styled(
-		"Footer1",
-		Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
-	));
-	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+	let text = vec![Line::from("Block Page")];
+	let paragraph = Paragraph::new(text);
 	f.render_widget(paragraph, area);
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
@@ -168,14 +163,8 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![text::Line::from(
-		"This is a paragraph with several lines. You can change style your text the way you want",
-	)];
-	let block = Block::default().borders(Borders::ALL).title(Span::styled(
-		"Footer2",
-		Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
-	));
-	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+	let text = vec![Line::from("Transaction Page")];
+	let paragraph = Paragraph::new(text);
 	f.render_widget(paragraph, area);
 }
 
@@ -184,13 +173,7 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![text::Line::from(
-		"This is a paragraph with several lines. You can change style your text the way you want",
-	)];
-	let block = Block::default().borders(Borders::ALL).title(Span::styled(
-		"Footer3",
-		Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
-	));
-	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+	let text = vec![Line::from("Event Page")];
+	let paragraph = Paragraph::new(text);
 	f.render_widget(paragraph, area);
 }
