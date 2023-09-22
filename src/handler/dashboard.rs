@@ -4,8 +4,8 @@ use std::io;
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
 	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
-		Style, Terminal,
+		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Rect, Span, Style,
+		Terminal,
 	},
 	style::Stylize,
 	widgets::*,
@@ -17,6 +17,7 @@ use crate::{
 };
 
 pub(crate) struct DashBoard<'a, CI> {
+	#[allow(dead_code)]
 	pub client: &'a RpcClient<CI>,
 	pub system_pane_info: SystemPaneInfo,
 	pub tab_titles: Vec<&'a str>,
