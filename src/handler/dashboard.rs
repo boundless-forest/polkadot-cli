@@ -18,7 +18,7 @@ use crate::{
 pub(crate) struct DashBoard<'a, CI> {
 	pub client: &'a RpcClient<CI>,
 	pub system_pane_info: SystemPaneInfo,
-	pub titles: Vec<&'a str>,
+	pub tab_titles: Vec<&'a str>,
 	pub index: usize,
 }
 
@@ -30,20 +30,20 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 		DashBoard {
 			client,
 			system_pane_info,
-			titles: vec!["Blocks", "Transactions", "Events"],
+			tab_titles: vec!["Blocks", "Transactions", "Events"],
 			index: 0,
 		}
 	}
 
 	pub fn next(&mut self) {
-		self.index = (self.index + 1) % self.titles.len();
+		self.index = (self.index + 1) % self.tab_titles.len();
 	}
 
 	pub fn previous(&mut self) {
 		if self.index > 0 {
 			self.index -= 1;
 		} else {
-			self.index = self.titles.len() - 1;
+			self.index = self.tab_titles.len() - 1;
 		}
 	}
 }
@@ -97,34 +97,19 @@ where
 		.constraints(vec![Constraint::Percentage(100)])
 		.split(area);
 
-	use crate::rpc::SystemApi;
-	let system_name = app.client.system_name();
-	let configs = [
-		"RuntimeVersion",
-		"SystemVersion",
-		"SystemName",
-		"SystemVersion",
-		"TokenDecimal",
-		"TokenSymbol",
-		"Chain",
-		"ChainType",
-		"SpecName",
-		"ImplName",
-		"SpecVersion",
+	let spec_version = app.system_pane_info.runtime_version.spec_version.to_string();
+	let rows = vec![
+		Row::new(vec!["Item", "Value"]),
+		Row::new(vec!["SystemName", app.system_pane_info.system_name.as_str()]),
+		Row::new(vec!["SystemVersion", app.system_pane_info.system_version.as_str()]),
+		Row::new(vec!["ChainName", app.system_pane_info.chain_name.as_str()]),
+		Row::new(vec!["ChainType", app.system_pane_info.chain_type.as_str()]),
+		Row::new(vec!["SpecName", &app.system_pane_info.runtime_version.spec_name]),
+		Row::new(vec!["ImplName", &app.system_pane_info.runtime_version.impl_name]),
+		Row::new(vec!["SpecVersion", spec_version.as_str()]),
 	];
-	let items: Vec<Row> = configs
-		.iter()
-		.map(|c| {
-			let cells = vec![
-				Cell::from(Span::raw(format!("{c:?}: "))),
-				Cell::from(Span::styled("TODO", Style::default())),
-				Cell::from(Span::styled("TODO", Style::default())),
-			];
-			Row::new(cells)
-		})
-		.collect();
 
-	let table = Table::new(items)
+	let table = Table::new(rows)
 		.block(Block::default().title("System Information").borders(Borders::ALL))
 		.style(Style::default().fg(Color::Cyan))
 		.widths(&[Constraint::Length(15), Constraint::Length(15), Constraint::Length(10)]);
@@ -141,7 +126,7 @@ where
 		.constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
 		.split(area);
 	let titles = app
-		.titles
+		.tab_titles
 		.iter()
 		.map(|t| text::Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
 		.collect();

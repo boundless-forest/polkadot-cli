@@ -56,7 +56,7 @@ impl<CI: ChainInfo> RpcClient<CI> {
 		Ok(SystemPaneInfo {
 			system_name,
 			system_version,
-			chain_type,
+			chain_type: chain_type.to_string(),
 			chain_name,
 			token_symbol: "TODO".to_string(),
 			token_decimals: 0,

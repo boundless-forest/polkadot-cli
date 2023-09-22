@@ -23,6 +23,17 @@ pub enum ChainType {
 	Custom(String),
 }
 
+impl std::fmt::Display for ChainType {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			ChainType::Development => write!(f, "Development"),
+			ChainType::Local => write!(f, "Local"),
+			ChainType::Live => write!(f, "Live"),
+			ChainType::Custom(s) => write!(f, "{}", s),
+		}
+	}
+}
+
 /// Health struct returned by the RPC
 // https://github.com/paritytech/substrate/blob/c172d0f683fab3792b90d876fd6ca27056af9fe9/client/rpc-api/src/system/helpers.rs#L40-L58
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -58,7 +69,7 @@ pub mod this_crate_types {
 	pub struct SystemPaneInfo {
 		pub system_name: String,
 		pub system_version: String,
-		pub chain_type: ChainType,
+		pub chain_type: String,
 		pub chain_name: String,
 		pub token_symbol: String,
 		pub token_decimals: u32,
