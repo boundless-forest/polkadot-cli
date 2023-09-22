@@ -7,6 +7,7 @@ use ratatui::{
 		text, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style,
 		Terminal,
 	},
+	style::Stylize,
 	widgets::*,
 };
 // this crate
@@ -99,20 +100,21 @@ where
 
 	let spec_version = app.system_pane_info.runtime_version.spec_version.to_string();
 	let rows = vec![
-		Row::new(vec!["Item", "Value"]),
-		Row::new(vec!["SystemName", app.system_pane_info.system_name.as_str()]),
-		Row::new(vec!["SystemVersion", app.system_pane_info.system_version.as_str()]),
-		Row::new(vec!["ChainName", app.system_pane_info.chain_name.as_str()]),
-		Row::new(vec!["ChainType", app.system_pane_info.chain_type.as_str()]),
-		Row::new(vec!["SpecName", &app.system_pane_info.runtime_version.spec_name]),
-		Row::new(vec!["ImplName", &app.system_pane_info.runtime_version.impl_name]),
-		Row::new(vec!["SpecVersion", spec_version.as_str()]),
+		Row::new(vec!["SystemName    =>", app.system_pane_info.system_name.as_str()]),
+		Row::new(vec!["SystemVersion =>", app.system_pane_info.system_version.as_str()]),
+		Row::new(vec!["ChainName     =>", app.system_pane_info.chain_name.as_str()]),
+		Row::new(vec!["ChainType     =>", app.system_pane_info.chain_type.as_str()]),
+		Row::new(vec!["SpecName      =>", &app.system_pane_info.runtime_version.spec_name]),
+		Row::new(vec!["ImplName      =>", &app.system_pane_info.runtime_version.impl_name]),
+		Row::new(vec!["SpecVersion   =>", spec_version.as_str()]),
 	];
 
 	let table = Table::new(rows)
 		.block(Block::default().title("System Information").borders(Borders::ALL))
-		.style(Style::default().fg(Color::Cyan))
-		.widths(&[Constraint::Length(15), Constraint::Length(15), Constraint::Length(10)]);
+		.header(Row::new(vec!["ITEM", "VALUE"]).style(Style::default().fg(Color::Cyan)).bold())
+		.style(Style::default().fg(Color::Yellow))
+		.column_spacing(1)
+		.widths(&[Constraint::Length(20), Constraint::Length(20)]);
 	f.render_widget(table, chunks[0]);
 }
 
