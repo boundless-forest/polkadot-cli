@@ -103,7 +103,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					let backend = CrosstermBackend::new(stdout);
 					let mut terminal = Terminal::new(backend)?;
 
-					let dashboard = DashBoard::new();
+					let system_pane_info = self.client.system_pane_info().await?;
+					let dashboard = DashBoard::new(&self.client, system_pane_info);
 					run_dashboard(&mut terminal, dashboard)?;
 
 					// restore terminal

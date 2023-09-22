@@ -9,15 +9,30 @@ use ratatui::{
 	},
 	widgets::*,
 };
+// this crate
+use crate::{
+	networks::ChainInfo,
+	rpc::{RpcClient, SystemPaneInfo},
+};
 
-pub(crate) struct DashBoard<'a> {
+pub(crate) struct DashBoard<'a, CI> {
+	pub client: &'a RpcClient<CI>,
+	pub system_pane_info: SystemPaneInfo,
 	pub titles: Vec<&'a str>,
 	pub index: usize,
 }
 
-impl<'a> DashBoard<'a> {
-	pub(crate) fn new() -> DashBoard<'a> {
-		DashBoard { titles: vec!["Blocks", "Transactions", "Events"], index: 0 }
+impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
+	pub(crate) fn new(
+		client: &'a RpcClient<CI>,
+		system_pane_info: SystemPaneInfo,
+	) -> DashBoard<'a, CI> {
+		DashBoard {
+			client,
+			system_pane_info,
+			titles: vec!["Blocks", "Transactions", "Events"],
+			index: 0,
+		}
 	}
 
 	pub fn next(&mut self) {
@@ -33,10 +48,14 @@ impl<'a> DashBoard<'a> {
 	}
 }
 
-pub(crate) fn run_dashboard<B: Backend>(
+pub(crate) fn run_dashboard<B, CI>(
 	terminal: &mut Terminal<B>,
-	mut app: DashBoard,
-) -> io::Result<()> {
+	mut app: DashBoard<CI>,
+) -> io::Result<()>
+where
+	B: Backend,
+	CI: ChainInfo,
+{
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
@@ -53,7 +72,11 @@ pub(crate) fn run_dashboard<B: Backend>(
 	}
 }
 
-pub(crate) fn ui<B: Backend>(f: &mut Frame<B>, app: &mut DashBoard) {
+pub(crate) fn ui<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>)
+where
+	B: Backend,
+	CI: ChainInfo,
+{
 	let size = f.size();
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
@@ -64,9 +87,54 @@ pub(crate) fn ui<B: Backend>(f: &mut Frame<B>, app: &mut DashBoard) {
 	draw_tabs(f, app, chunks[1]);
 }
 
-fn draw_tabs<B>(f: &mut Frame<B>, app: &mut DashBoard, area: Rect)
+fn draw_system<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
+	CI: ChainInfo,
+{
+	let chunks = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![Constraint::Percentage(100)])
+		.split(area);
+
+	use crate::rpc::SystemApi;
+	let system_name = app.client.system_name();
+	let configs = [
+		"RuntimeVersion",
+		"SystemVersion",
+		"SystemName",
+		"SystemVersion",
+		"TokenDecimal",
+		"TokenSymbol",
+		"Chain",
+		"ChainType",
+		"SpecName",
+		"ImplName",
+		"SpecVersion",
+	];
+	let items: Vec<Row> = configs
+		.iter()
+		.map(|c| {
+			let cells = vec![
+				Cell::from(Span::raw(format!("{c:?}: "))),
+				Cell::from(Span::styled("TODO", Style::default())),
+				Cell::from(Span::styled("TODO", Style::default())),
+			];
+			Row::new(cells)
+		})
+		.collect();
+
+	let table = Table::new(items)
+		.block(Block::default().title("System Information").borders(Borders::ALL))
+		.style(Style::default().fg(Color::Cyan))
+		.widths(&[Constraint::Length(15), Constraint::Length(15), Constraint::Length(10)]);
+	f.render_widget(table, chunks[0]);
+}
+
+fn draw_tabs<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
+where
+	B: Backend,
+	CI: ChainInfo,
 {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
@@ -78,7 +146,7 @@ where
 		.map(|t| text::Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
 		.collect();
 	let tabs = Tabs::new(titles)
-		.block(Block::default().borders(Borders::ALL).title("DashBoard"))
+		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
 		.select(app.index)
 		.style(Style::default().fg(Color::Cyan))
 		.highlight_style(Style::default().fg(Color::Yellow));
@@ -91,38 +159,10 @@ where
 	};
 }
 
-fn draw_system<B>(f: &mut Frame<B>, app: &mut DashBoard, area: Rect)
+fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
-{
-	let chunks = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(vec![Constraint::Percentage(100)])
-		.split(area);
-	let configs = ["RuntimeVersion", "SystemVersion"];
-	let items: Vec<Row> = configs
-		.iter()
-		.map(|c| {
-			let cells = vec![
-				Cell::from(Span::raw(format!("{c:?}: "))),
-				Cell::from(Span::styled("TODO", Style::default())),
-				Cell::from(Span::styled("TODO", Style::default())),
-			];
-			Row::new(cells)
-		})
-		.collect();
-	let table = Table::new(items)
-		.block(Block::default().title("System").borders(Borders::ALL))
-		.widths(&[
-            Constraint::Length(15),
-            Constraint::Length(15),
-            Constraint::Length(10),
-        ]);
-	f.render_widget(table, chunks[0]);
-}
-fn draw_blocks_tab<B>(f: &mut Frame<B>, app: &mut DashBoard, area: Rect)
-where
-	B: Backend,
+	CI: ChainInfo,
 {
 	let text = vec![text::Line::from(
 		"This is a paragraph with several lines. You can change style your text the way you want",
@@ -134,9 +174,10 @@ where
 	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
 	f.render_widget(paragraph, area);
 }
-fn draw_transactions_tab<B>(f: &mut Frame<B>, app: &mut DashBoard, area: Rect)
+fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
+	CI: ChainInfo,
 {
 	let text = vec![text::Line::from(
 		"This is a paragraph with several lines. You can change style your text the way you want",
@@ -148,9 +189,11 @@ where
 	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
 	f.render_widget(paragraph, area);
 }
-fn draw_events_tab<B>(f: &mut Frame<B>, app: &mut DashBoard, area: Rect)
+
+fn draw_events_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
+	CI: ChainInfo,
 {
 	let text = vec![text::Line::from(
 		"This is a paragraph with several lines. You can change style your text the way you want",

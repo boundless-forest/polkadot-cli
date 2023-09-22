@@ -20,7 +20,7 @@ use super::{
 		SystemApi,
 	},
 	errors::RpcError,
-	types::{ChainType, Health, Properties},
+	types::{this_crate_types::SystemPaneInfo, ChainType, Health, Properties},
 };
 use crate::networks::ChainInfo;
 
@@ -43,6 +43,25 @@ impl<CI: ChainInfo> RpcClient<CI> {
 			.map_err(|_| RpcError::WsHandshakeError)?;
 		let client = ClientBuilder::default().build_with_tokio(tx, rx);
 		Ok(Self { client: Arc::new(client), _chain_info: PhantomData })
+	}
+
+	pub async fn system_pane_info(&self) -> RpcResult<SystemPaneInfo> {
+		let system_name = self.system_name().await?;
+		let system_version = self.system_version().await?;
+		let chain_type = self.chain_type().await?;
+		let chain_name = self.chain().await?;
+
+		let hash = self.get_finalized_head().await?.expect("Failed to get finalized head");
+		let runtime_version = self.runtime_version(hash).await?;
+		Ok(SystemPaneInfo {
+			system_name,
+			system_version,
+			chain_type,
+			chain_name,
+			token_symbol: "TODO".to_string(),
+			token_decimals: 0,
+			runtime_version,
+		})
 	}
 }
 

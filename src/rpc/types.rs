@@ -1,5 +1,6 @@
 // crates.io
 use serde::{Deserialize, Serialize};
+use sp_version::RuntimeVersion;
 
 /// Arbitrary properties defined in chain spec as a JSON object
 // https://github.com/paritytech/substrate/blob/c172d0f683fab3792b90d876fd6ca27056af9fe9/client/chain-spec/src/lib.rs#L215-L216
@@ -52,5 +53,15 @@ pub mod this_crate_types {
 	#[derive(Serialize, Deserialize)]
 	pub struct AccountNonce<Nonce> {
 		pub nonce: Nonce,
+	}
+
+	pub struct SystemPaneInfo {
+		pub system_name: String,
+		pub system_version: String,
+		pub chain_type: ChainType,
+		pub chain_name: String,
+		pub token_symbol: String,
+		pub token_decimals: u32,
+		pub runtime_version: RuntimeVersion,
 	}
 }
