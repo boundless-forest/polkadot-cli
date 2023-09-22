@@ -48,18 +48,29 @@ impl<CI: ChainInfo> RpcClient<CI> {
 	pub async fn system_pane_info(&self) -> RpcResult<SystemPaneInfo> {
 		let system_name = self.system_name().await?;
 		let system_version = self.system_version().await?;
-		let chain_type = self.chain_type().await?;
+		let chain_type = self.chain_type().await?.to_string();
 		let chain_name = self.chain().await?;
+		let properties = self.system_properties().await?;
+		let token_decimal = properties
+			.get("tokenDecimals")
+			.expect("Failed to get token decimals")
+			.to_string();
+		let token_symbol = properties
+			.get("tokenSymbol")
+			.expect("Failed to get token decimals")
+			.to_string()
+			.trim_matches('\"')
+			.to_string();
 
 		let hash = self.get_finalized_head().await?.expect("Failed to get finalized head");
 		let runtime_version = self.runtime_version(hash).await?;
 		Ok(SystemPaneInfo {
 			system_name,
 			system_version,
-			chain_type: chain_type.to_string(),
+			chain_type,
 			chain_name,
-			token_symbol: "TODO".to_string(),
-			token_decimals: 0,
+			token_symbol,
+			token_decimal,
 			runtime_version,
 		})
 	}

@@ -72,7 +72,7 @@ pub mod this_crate_types {
 		pub chain_type: String,
 		pub chain_name: String,
 		pub token_symbol: String,
-		pub token_decimals: u32,
+		pub token_decimal: String,
 		pub runtime_version: RuntimeVersion,
 	}
 }

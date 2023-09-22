@@ -104,6 +104,8 @@ where
 		Row::new(vec!["SystemVersion =>", app.system_pane_info.system_version.as_str()]),
 		Row::new(vec!["ChainName     =>", app.system_pane_info.chain_name.as_str()]),
 		Row::new(vec!["ChainType     =>", app.system_pane_info.chain_type.as_str()]),
+		Row::new(vec!["TokenSymbol   =>", app.system_pane_info.token_symbol.as_str()]),
+		Row::new(vec!["TokenDecimal  =>", app.system_pane_info.token_decimal.as_str()]),
 		Row::new(vec!["SpecName      =>", &app.system_pane_info.runtime_version.spec_name]),
 		Row::new(vec!["ImplName      =>", &app.system_pane_info.runtime_version.impl_name]),
 		Row::new(vec!["SpecVersion   =>", spec_version.as_str()]),
