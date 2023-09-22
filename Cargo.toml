@@ -29,6 +29,8 @@ scale-info            = { version = "2.9.0" }
 subxt-metadata        = { version = "0.31.0" }
 scale-value           = { version = "0.12.0" }
 comfy-table           = { version = "7.0.1" }
+ratatui               = { version = "0.23.0", features = ["all-widgets"] }
+crossterm             = { version = "0.27.0" }
 # substrate
 sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }

@@ -1,5 +1,6 @@
 // crates.io
 use serde::{Deserialize, Serialize};
+use sp_version::RuntimeVersion;
 
 /// Arbitrary properties defined in chain spec as a JSON object
 // https://github.com/paritytech/substrate/blob/c172d0f683fab3792b90d876fd6ca27056af9fe9/client/chain-spec/src/lib.rs#L215-L216
@@ -20,6 +21,17 @@ pub enum ChainType {
 	Live,
 	/// Some custom chain type.
 	Custom(String),
+}
+
+impl std::fmt::Display for ChainType {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			ChainType::Development => write!(f, "Development"),
+			ChainType::Local => write!(f, "Local"),
+			ChainType::Live => write!(f, "Live"),
+			ChainType::Custom(s) => write!(f, "{}", s),
+		}
+	}
 }
 
 /// Health struct returned by the RPC
@@ -52,5 +64,15 @@ pub mod this_crate_types {
 	#[derive(Serialize, Deserialize)]
 	pub struct AccountNonce<Nonce> {
 		pub nonce: Nonce,
+	}
+
+	pub struct SystemPaneInfo {
+		pub system_name: String,
+		pub system_version: String,
+		pub chain_type: String,
+		pub chain_name: String,
+		pub token_symbol: String,
+		pub token_decimal: String,
+		pub runtime_version: RuntimeVersion,
 	}
 }

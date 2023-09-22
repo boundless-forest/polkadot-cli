@@ -7,9 +7,9 @@ use clap::{Parser, Subcommand};
 #[command(author, about, long_about = None)]
 #[clap(no_binary_name = true)]
 pub enum AppCommand {
-	/// Switch to another network. [Polkadot | Kusama | Darwinia | Crab | Pangolin | Pangoro].
+	/// Application command.
 	#[command(subcommand)]
-	SwitchNetwork(Network),
+	App(ApplicationCommand),
 	/// RPC commands, e.g sys-name, sys-version, chain-type, health.
 	#[command(subcommand)]
 	Rpc(RpcCommand),
@@ -22,6 +22,22 @@ pub enum AppCommand {
 	/// Runtime commands, e.g list-pallets, list-pallet-storages, list-runtime-storages.
 	#[command(subcommand)]
 	Runtime(RuntimeCommand),
+	/// Print usage.
+	Usage,
+}
+
+#[derive(Subcommand, Clone, Debug)]
+#[command(name = "app")]
+pub enum ApplicationCommand {
+	/// Switch to another network. [Polkadot | Kusama | Darwinia | Crab | Pangolin | Pangoro].
+	SwitchNetwork {
+		#[arg(name = "network", long)]
+		network: Network,
+	},
+	/// Display dashboard information.
+	DashBoard,
+	/// Clean the history.
+	CleanHistory,
 	/// Print usage.
 	Usage,
 }
