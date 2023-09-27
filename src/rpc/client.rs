@@ -5,9 +5,13 @@ use async_trait::async_trait;
 use frame_metadata::RuntimeMetadataPrefixed;
 use jsonrpsee::{
 	client_transport::ws::{Uri, WsTransportClientBuilder},
-	core::client::{Client, ClientBuilder, ClientT},
+	core::{
+		client::{Client, ClientBuilder, ClientT, Subscription, SubscriptionClientT},
+		traits::ToRpcParams,
+	},
 	rpc_params,
 };
+use serde::de::DeserializeOwned;
 use sp_core::{Bytes, Decode};
 use sp_runtime::generic::SignedBlock;
 use sp_storage::{StorageData, StorageKey};
@@ -17,7 +21,7 @@ use subxt_metadata::Metadata;
 use super::{
 	api::{
 		BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi,
-		SystemApi,
+		SubscribeApi, SystemApi,
 	},
 	errors::RpcError,
 	types::{this_crate_types::SystemPaneInfo, ChainType, Health, Properties},
@@ -249,5 +253,28 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			return Ok(Some(R::decode(&mut data.0.as_slice()).map_err(|_| RpcError::DecodeError)?));
 		}
 		Ok(None)
+	}
+}
+
+#[async_trait]
+impl<CI: ChainInfo> SubscribeApi for RpcClient<CI> {
+	type ChainInfo = CI;
+
+	async fn subscribe<Params, Notif>(
+		&self,
+		subscribe_method: &str,
+		params: Params,
+		unsubscribe_method: &str,
+	) -> RpcResult<Subscription<Notif>>
+	where
+		Params: ToRpcParams + Send,
+		Notif: DeserializeOwned,
+	{
+		let res = self
+			.client
+			.subscribe(subscribe_method, params, unsubscribe_method)
+			.await
+			.map_err(RpcError::from)?;
+		Ok(res)
 	}
 }

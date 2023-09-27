@@ -37,7 +37,7 @@ use crate::{
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
-		StateApi, SystemApi,
+		StateApi, SubscribeApi, SystemApi,
 	},
 };
 
@@ -92,6 +92,12 @@ impl<CI: ChainInfo> Handler<CI> {
 	/// Execute the captured command
 	pub async fn handle_command(&self, command: AppCommand) -> Result<ExecutionResult, AppError> {
 		match command {
+			AppCommand::TMP => {
+				let mut subscription = self.client.subscribe_finalized_heads().await.unwrap();
+				while let Some(res) = subscription.next().await {
+					println!("{:?}", res);
+				}
+			},
 			AppCommand::App(sub_commands) => match sub_commands {
 				ApplicationCommand::SwitchNetwork { network } => {
 					return Ok(ExecutionResult::SwitchNetworkTo(network));

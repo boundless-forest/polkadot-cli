@@ -24,6 +24,7 @@ pub enum AppCommand {
 	Runtime(RuntimeCommand),
 	/// Print usage.
 	Usage,
+	TMP,
 }
 
 #[derive(Subcommand, Clone, Debug)]
