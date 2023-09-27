@@ -6,8 +6,8 @@ use futures::{executor::block_on, FutureExt};
 use jsonrpsee::core::client::Subscription;
 use ratatui::{
 	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Line, Modifier, Rect,
-		Span, Style, Terminal,
+		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
+		Style, Terminal,
 	},
 	style::Stylize,
 	widgets::*,
@@ -162,22 +162,37 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let mut headers = Vec::new();
-	for _ in 0..3 {
-		let h = block_on(app.headers_subscription.next());
-		headers.push(h.unwrap().unwrap());
-	}
+	use crate::rpc::ChainApi;
+	use std::collections::VecDeque;
 
-	let mut state = StatefulList::with_items(headers.clone());
-	let tasks: Vec<ListItem> = headers
-		.iter()
-		.map(|h| ListItem::new(vec![Line::from(Span::raw(h.number().to_string()))]))
-		.collect();
-	let tasks = List::new(tasks)
-		.block(Block::default().borders(Borders::ALL).title("List"))
-		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
-		.highlight_symbol("> ");
-	f.render_stateful_widget(tasks, area, &mut state.state);
+	let mut headers = Vec::with_capacity(4);
+	if let Some(h) = block_on(app.headers_subscription.next()) {
+		if let Ok(header) = h {
+			headers.push(header);
+			// let parent_hash = header.parent_hash();
+			// let parent_hash =
+			// block_on(app.client.get_block_hash(header.number())).unwrap().unwrap();
+			// let parent_header = block_on(app.client.get_header(parent_hash));
+		}
+		log::debug!(target: "cli", "Dashboard: draw_blocks_tab, headers: {:?}", headers.iter().map(|h|h.number()).collect::<Vec<_>>());
+
+		let mut state = StatefulList::with_items(headers.clone());
+		let tasks: Vec<ListItem> = headers
+			.iter()
+			.map(|h| {
+				ListItem::new(vec![
+					Line::from(Span::raw(h.number().to_string())),
+					Line::from(Span::raw(h.hash().to_string())),
+				])
+			})
+			.collect();
+
+		let tasks = List::new(tasks)
+			// .block(Block::default().borders(Borders::ALL).title("List"))
+			.highlight_style(Style::default().add_modifier(Modifier::BOLD))
+			.highlight_symbol("> ");
+		f.render_stateful_widget(tasks, area, &mut state.state);
+	}
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
