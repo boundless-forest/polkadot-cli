@@ -2,18 +2,21 @@
 use std::{io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
+use futures::{executor::block_on, FutureExt};
+use jsonrpsee::core::client::Subscription;
 use ratatui::{
 	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Rect, Span, Style,
-		Terminal,
+		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Line, Modifier, Rect,
+		Span, Style, Terminal,
 	},
 	style::Stylize,
 	widgets::*,
 };
+use sp_runtime::traits::Header;
 // this crate
 use crate::{
 	networks::ChainInfo,
-	rpc::{RpcClient, SystemPaneInfo},
+	rpc::{HeaderForChain, RpcClient, SubscribeApi, SystemPaneInfo},
 };
 
 pub(crate) struct DashBoard<CI> {
@@ -154,14 +157,27 @@ where
 	};
 }
 
-fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
+fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![Line::from("Block Page")];
-	let paragraph = Paragraph::new(text);
-	f.render_widget(paragraph, area);
+	let mut headers = Vec::new();
+	for _ in 0..3 {
+		let h = block_on(app.headers_subscription.next());
+		headers.push(h.unwrap().unwrap());
+	}
+
+	let mut state = StatefulList::with_items(headers.clone());
+	let tasks: Vec<ListItem> = headers
+		.iter()
+		.map(|h| ListItem::new(vec![Line::from(Span::raw(h.number().to_string()))]))
+		.collect();
+	let tasks = List::new(tasks)
+		.block(Block::default().borders(Borders::ALL).title("List"))
+		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
+		.highlight_symbol("> ");
+	f.render_stateful_widget(tasks, area, &mut state.state);
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
@@ -181,4 +197,41 @@ where
 	let text = vec![Line::from("Event Page")];
 	let paragraph = Paragraph::new(text);
 	f.render_widget(paragraph, area);
+}
+
+pub struct StatefulList<T> {
+	pub state: ListState,
+	pub items: Vec<T>,
+}
+
+impl<T> StatefulList<T> {
+	pub fn with_items(items: Vec<T>) -> StatefulList<T> {
+		StatefulList { state: ListState::default(), items }
+	}
+
+	pub fn next(&mut self) {
+		let i = match self.state.selected() {
+			Some(i) =>
+				if i >= self.items.len() - 1 {
+					0
+				} else {
+					i + 1
+				},
+			None => 0,
+		};
+		self.state.select(Some(i));
+	}
+
+	pub fn previous(&mut self) {
+		let i = match self.state.selected() {
+			Some(i) =>
+				if i == 0 {
+					self.items.len() - 1
+				} else {
+					i - 1
+				},
+			None => 0,
+		};
+		self.state.select(Some(i));
+	}
 }

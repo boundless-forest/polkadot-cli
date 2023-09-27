@@ -111,8 +111,12 @@ impl<CI: ChainInfo> Handler<CI> {
 					let mut terminal = Terminal::new(backend)?;
 
 					let system_pane_info = self.client.system_pane_info().await?;
-					let dashboard = DashBoard::new(self.client.clone(), system_pane_info);
-					run_dashboard(&mut terminal, dashboard).await?;
+					// let dashboard = DashBoard::new(self.client.clone(), system_pane_info);
+					let headers_subscription =
+						self.client.subscribe_finalized_heads().await.unwrap();
+					let dashboard =
+						DashBoard::new(self.client, system_pane_info, headers_subscription);
+						run_dashboard(&mut terminal, dashboard).await?;
 
 					// restore terminal
 					disable_raw_mode()?;
