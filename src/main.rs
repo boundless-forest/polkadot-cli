@@ -6,7 +6,7 @@ mod rpc;
 
 // std
 use app::POLKADOT_CLI;
-use std::{io, marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 // crates.io
 use clap::Parser;
 use colored::Colorize;
@@ -26,7 +26,7 @@ use crate::{
 
 macro_rules! switch_network_or_break {
 	($editor: expr, $rpc_client: expr) => {
-		match run(&mut $editor, &$rpc_client).await {
+		match run(&mut $editor, $rpc_client).await {
 			Ok(ExecutionResult::SwitchNetworkTo(network)) => {
 				$editor.helper_mut().unwrap().save_config(Config { network })?;
 				continue;

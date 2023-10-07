@@ -41,13 +41,12 @@ use crate::{
 	},
 };
 
-#[derive(Clone)]
-pub struct Handler<CI: Clone> {
+pub struct Handler<CI> {
 	client: Arc<RpcClient<CI>>,
 	metadata: Metadata,
 }
 
-impl<CI: ChainInfo + Clone> Handler<CI> {
+impl<CI: ChainInfo> Handler<CI> {
 	/// Create a new handler
 	pub async fn new(client: Arc<RpcClient<CI>>) -> Result<Handler<CI>, AppError> {
 		let metadata_path = metadata_path().expect("Failed to get metadata path");

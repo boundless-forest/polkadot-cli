@@ -1,5 +1,5 @@
 // std
-use std::{io, marker::PhantomData, sync::Arc};
+use std::{io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
@@ -137,7 +137,7 @@ where
 	let titles = app
 		.tab_titles
 		.iter()
-		.map(|t| Line::from(Span::styled(*t, Style::default().fg(Color::Yellow).bold())))
+		.map(|t| Line::from(Span::styled(t, Style::default().fg(Color::Yellow).bold())))
 		.collect();
 	let tabs = Tabs::new(titles)
 		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
