@@ -164,24 +164,23 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let mut headers: Vec<HeaderForChain<CI>> = Vec::with_capacity(10);
+	let mut headers: Vec<HeaderForChain<CI>> = Vec::new();
 	while let Ok(header) = app.blocks_rev.try_recv() {
 		log::debug!(target: "cli", "Get blocks: {:?}", header.number());
 		headers.push(header);
 
-		let mut state = StatefulList::with_items(headers.clone());
-		let tasks: Vec<ListItem> = headers
+		let mut state =
+			StatefulList::with_items(headers.iter().map(|h| (h.number(), h.hash())).collect());
+		let tasks: Vec<ListItem> = state
+			.items
 			.iter()
-			.map(|h| {
-				ListItem::new(vec![
-					Line::from(Span::raw(h.number().to_string())),
-					Line::from(Span::raw(h.hash().to_string())),
-				])
+			.map(|(number, hash)| {
+				ListItem::new(vec![Line::from(format!("number: {:?}, hash: {:?}", number, hash))])
 			})
 			.collect();
 
 		let tasks = List::new(tasks)
-			// .block(Block::default().borders(Borders::ALL).title("List"))
+			.block(Block::default().borders(Borders::ALL).title("List"))
 			.highlight_style(Style::default().add_modifier(Modifier::BOLD))
 			.highlight_symbol("> ");
 		f.render_stateful_widget(tasks, area, &mut state.state);
