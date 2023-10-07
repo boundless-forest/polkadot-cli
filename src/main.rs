@@ -4,7 +4,9 @@ mod handler;
 mod networks;
 mod rpc;
 
+// std
 use app::POLKADOT_CLI;
+use std::sync::Arc;
 // crates.io
 use clap::Parser;
 use colored::Colorize;
@@ -24,7 +26,7 @@ use crate::{
 
 macro_rules! switch_network_or_break {
 	($editor: expr, $rpc_client: expr) => {
-		match run(&mut $editor, &$rpc_client).await {
+		match run(&mut $editor, $rpc_client).await {
 			Ok(ExecutionResult::SwitchNetworkTo(network)) => {
 				$editor.helper_mut().unwrap().save_config(Config { network })?;
 				continue;
@@ -56,31 +58,31 @@ async fn main() -> Result<(), AppError> {
 		match config.network {
 			Network::Local => {
 				let rpc_client = RpcClient::<NoteTemplate>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Polkadot => {
 				let rpc_client = RpcClient::<PolkadotChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Kusama => {
 				let rpc_client = RpcClient::<KusamaChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Crab => {
 				let rpc_client = RpcClient::<CrabChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Darwinia => {
 				let rpc_client = RpcClient::<DarwiniaChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Pangolin => {
 				let rpc_client = RpcClient::<PangolinChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 			Network::Pangoro => {
 				let rpc_client = RpcClient::<PangoroChain>::new().await?;
-				switch_network_or_break!(&mut editor, &rpc_client);
+				switch_network_or_break!(&mut editor, Arc::new(rpc_client));
 			},
 		}
 	}
@@ -92,7 +94,7 @@ async fn main() -> Result<(), AppError> {
 // Command execution loop
 pub async fn run<CI: ChainInfo>(
 	editor: &mut Editor<EditorHelper<HistoryHinter>, FileHistory>,
-	rpc_client: &RpcClient<CI>,
+	rpc_client: Arc<RpcClient<CI>>,
 ) -> Result<ExecutionResult, AppError> {
 	let handler = Handler::new(rpc_client).await?;
 

@@ -28,7 +28,6 @@ use crate::networks::ChainInfo;
 pub type RpcResult<T> = Result<T, RpcError>;
 
 /// RPC client.
-#[derive(Clone)]
 pub struct RpcClient<CI> {
 	pub client: Arc<Client>,
 	_chain_info: PhantomData<CI>,
