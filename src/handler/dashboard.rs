@@ -2,8 +2,6 @@
 use std::{io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
-use futures::{executor::block_on, FutureExt};
-use jsonrpsee::core::client::Subscription;
 use ratatui::{
 	prelude::{
 		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
@@ -13,16 +11,18 @@ use ratatui::{
 	widgets::*,
 };
 use sp_runtime::traits::Header;
+use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
 	networks::ChainInfo,
-	rpc::{HeaderForChain, RpcClient, SubscribeApi, SystemPaneInfo},
+	rpc::{HeaderForChain, RpcClient, SystemPaneInfo},
 };
 
-pub(crate) struct DashBoard<CI> {
+pub(crate) struct DashBoard<CI: ChainInfo> {
 	#[allow(dead_code)]
 	pub client: Arc<RpcClient<CI>>,
 	pub system_pane_info: SystemPaneInfo,
+	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -31,10 +31,12 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
 		client: Arc<RpcClient<CI>>,
 		system_pane_info: SystemPaneInfo,
+		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	) -> DashBoard<CI> {
 		DashBoard {
 			client,
 			system_pane_info,
+			blocks_rev,
 			tab_titles: vec![
 				String::from("Blocks"),
 				String::from("Transactions"),
@@ -162,19 +164,10 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	use crate::rpc::ChainApi;
-	use std::collections::VecDeque;
-
-	let mut headers = Vec::with_capacity(4);
-	if let Some(h) = block_on(app.headers_subscription.next()) {
-		if let Ok(header) = h {
-			headers.push(header);
-			// let parent_hash = header.parent_hash();
-			// let parent_hash =
-			// block_on(app.client.get_block_hash(header.number())).unwrap().unwrap();
-			// let parent_header = block_on(app.client.get_header(parent_hash));
-		}
-		log::debug!(target: "cli", "Dashboard: draw_blocks_tab, headers: {:?}", headers.iter().map(|h|h.number()).collect::<Vec<_>>());
+	let mut headers: Vec<HeaderForChain<CI>> = Vec::with_capacity(10);
+	while let Ok(header) = app.blocks_rev.try_recv() {
+		log::debug!(target: "cli", "Get blocks: {:?}", header.number());
+		headers.push(header);
 
 		let mut state = StatefulList::with_items(headers.clone());
 		let tasks: Vec<ListItem> = headers
