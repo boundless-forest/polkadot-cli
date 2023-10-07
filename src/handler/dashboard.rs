@@ -23,6 +23,7 @@ pub(crate) struct DashBoard<CI: ChainInfo> {
 	pub client: Arc<RpcClient<CI>>,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
+	pub block_headers: StatefulList<HeaderForChain<CI>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -37,6 +38,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			client,
 			system_pane_info,
 			blocks_rev,
+			block_headers: StatefulList::with_items(vec![]),
 			tab_titles: vec![
 				String::from("Blocks"),
 				String::from("Transactions"),
@@ -46,16 +48,24 @@ impl<CI: ChainInfo> DashBoard<CI> {
 		}
 	}
 
-	pub fn next(&mut self) {
+	pub fn next_tab(&mut self) {
 		self.index = (self.index + 1) % self.tab_titles.len();
 	}
 
-	pub fn previous(&mut self) {
+	pub fn previous_tab(&mut self) {
 		if self.index > 0 {
 			self.index -= 1;
 		} else {
 			self.index = self.tab_titles.len() - 1;
 		}
+	}
+
+	pub fn previous_block(&mut self) {
+		self.block_headers.previous();
+	}
+
+	pub fn next_block(&mut self) {
+		self.block_headers.next();
 	}
 }
 
@@ -70,12 +80,18 @@ where
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
+		if let Ok(header) = app.blocks_rev.try_recv() {
+			app.block_headers.items.push(header);
+		}
+
 		if let Event::Key(key) = read()? {
 			if key.kind == KeyEventKind::Press {
 				match key.code {
 					KeyCode::Char('q') => return Ok(()),
-					KeyCode::Right => app.next(),
-					KeyCode::Left => app.previous(),
+					KeyCode::Right => app.next_tab(),
+					KeyCode::Left => app.previous_tab(),
+					KeyCode::Up => app.previous_block(),
+					KeyCode::Down => app.next_block(),
 					_ => {},
 				}
 			}
@@ -164,27 +180,24 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let mut headers: Vec<HeaderForChain<CI>> = Vec::new();
-	while let Ok(header) = app.blocks_rev.try_recv() {
-		log::debug!(target: "cli", "Get blocks: {:?}", header.number());
-		headers.push(header);
+	let blocks: Vec<ListItem> = app
+		.block_headers
+		.items
+		.iter()
+		.map(|h| {
+			ListItem::new(vec![Line::from(Span::styled(
+				format!("{:?} >  {:?}", h.number(), h.hash()),
+				Style::default().fg(Color::Yellow),
+			))])
+		})
+		.collect();
 
-		let mut state =
-			StatefulList::with_items(headers.iter().map(|h| (h.number(), h.hash())).collect());
-		let tasks: Vec<ListItem> = state
-			.items
-			.iter()
-			.map(|(number, hash)| {
-				ListItem::new(vec![Line::from(format!("number: {:?}, hash: {:?}", number, hash))])
-			})
-			.collect();
-
-		let tasks = List::new(tasks)
-			.block(Block::default().borders(Borders::ALL).title("List"))
-			.highlight_style(Style::default().add_modifier(Modifier::BOLD))
-			.highlight_symbol("> ");
-		f.render_stateful_widget(tasks, area, &mut state.state);
-	}
+	let l = List::new(blocks)
+		.block(Block::default().borders(Borders::ALL).title("Latest Blocks"))
+		.style(Style::default().fg(Color::Yellow))
+		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
+		.highlight_symbol("> ");
+	f.render_stateful_widget(l, area, &mut app.block_headers.state);
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
@@ -226,6 +239,7 @@ impl<T> StatefulList<T> {
 				},
 			None => 0,
 		};
+		log::debug!(target: "cli", "detect down key, select, {:?}", i);
 		self.state.select(Some(i));
 	}
 
@@ -239,6 +253,7 @@ impl<T> StatefulList<T> {
 				},
 			None => 0,
 		};
+		log::debug!(target: "cli", "detect up key, select, {:?}", i);
 		self.state.select(Some(i));
 	}
 }
