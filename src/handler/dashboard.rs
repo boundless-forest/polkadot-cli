@@ -24,7 +24,7 @@ pub(crate) struct DashBoard<CI> {
 	pub index: usize,
 }
 
-impl<'a, CI: ChainInfo> DashBoard<CI> {
+impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
 		client: Arc<RpcClient<CI>>,
 		system_pane_info: SystemPaneInfo,
