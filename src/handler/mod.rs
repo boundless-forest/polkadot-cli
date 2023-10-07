@@ -7,6 +7,7 @@ use std::{
 	io,
 	io::{Read, Write},
 	str::FromStr,
+	sync::Arc,
 };
 // crates.io
 use colored::Colorize;
@@ -40,14 +41,15 @@ use crate::{
 	},
 };
 
-pub struct Handler<'a, CI> {
-	client: &'a RpcClient<CI>,
+#[derive(Clone)]
+pub struct Handler<CI: Clone> {
+	client: Arc<RpcClient<CI>>,
 	metadata: Metadata,
 }
 
-impl<'a, CI: ChainInfo> Handler<'a, CI> {
+impl<CI: ChainInfo + Clone> Handler<CI> {
 	/// Create a new handler
-	pub async fn new(client: &'a RpcClient<CI>) -> Result<Handler<'a, CI>, AppError> {
+	pub async fn new(client: Arc<RpcClient<CI>>) -> Result<Handler<CI>, AppError> {
 		let metadata_path = metadata_path().expect("Failed to get metadata path");
 		let runtime_version = client
 			.runtime_version(
@@ -104,8 +106,8 @@ impl<'a, CI: ChainInfo> Handler<'a, CI> {
 					let mut terminal = Terminal::new(backend)?;
 
 					let system_pane_info = self.client.system_pane_info().await?;
-					let dashboard = DashBoard::new(self.client, system_pane_info);
-					run_dashboard(&mut terminal, dashboard)?;
+					let dashboard = DashBoard::new(self.client.clone(), system_pane_info);
+					run_dashboard(&mut terminal, dashboard).await?;
 
 					// restore terminal
 					disable_raw_mode()?;

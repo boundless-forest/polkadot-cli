@@ -1,5 +1,5 @@
 // std
-use std::io;
+use std::{io, marker::PhantomData, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
@@ -16,23 +16,27 @@ use crate::{
 	rpc::{RpcClient, SystemPaneInfo},
 };
 
-pub(crate) struct DashBoard<'a, CI> {
+pub(crate) struct DashBoard<CI> {
 	#[allow(dead_code)]
-	pub client: &'a RpcClient<CI>,
+	pub client: Arc<RpcClient<CI>>,
 	pub system_pane_info: SystemPaneInfo,
-	pub tab_titles: Vec<&'a str>,
+	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
 
-impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
+impl<'a, CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
-		client: &'a RpcClient<CI>,
+		client: Arc<RpcClient<CI>>,
 		system_pane_info: SystemPaneInfo,
-	) -> DashBoard<'a, CI> {
+	) -> DashBoard<CI> {
 		DashBoard {
 			client,
 			system_pane_info,
-			tab_titles: vec!["Blocks", "Transactions", "Events"],
+			tab_titles: vec![
+				String::from("Blocks"),
+				String::from("Transactions"),
+				String::from("Events"),
+			],
 			index: 0,
 		}
 	}
@@ -50,7 +54,7 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 	}
 }
 
-pub(crate) fn run_dashboard<B, CI>(
+pub(crate) async fn run_dashboard<B, CI>(
 	terminal: &mut Terminal<B>,
 	mut app: DashBoard<CI>,
 ) -> io::Result<()>
