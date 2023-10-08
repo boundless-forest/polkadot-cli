@@ -1,5 +1,5 @@
 // std
-use std::{io, sync::Arc};
+use std::{collections::VecDeque, io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
@@ -17,6 +17,8 @@ use crate::{
 	networks::ChainInfo,
 	rpc::{HeaderForChain, RpcClient, SystemPaneInfo},
 };
+
+const BLOCKS_MAX_LIMIT: usize = 20;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
 	#[allow(dead_code)]
@@ -38,7 +40,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			client,
 			system_pane_info,
 			blocks_rev,
-			block_headers: StatefulList::with_items(vec![]),
+			block_headers: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			tab_titles: vec![
 				String::from("Blocks"),
 				String::from("Transactions"),
@@ -81,7 +83,10 @@ where
 		terminal.draw(|f| ui(f, &mut app))?;
 
 		if let Ok(header) = app.blocks_rev.try_recv() {
-			app.block_headers.items.push(header);
+			if app.block_headers.items.len() == app.block_headers.items.capacity() {
+				app.block_headers.items.pop_front();
+			}
+			app.block_headers.items.push_back(header);
 		}
 
 		if let Event::Key(key) = read()? {
@@ -184,16 +189,21 @@ where
 		.block_headers
 		.items
 		.iter()
+		.rev()
 		.map(|h| {
 			ListItem::new(vec![Line::from(Span::styled(
-				format!("{:?} >  {:?}", h.number(), h.hash()),
+				format!("{:?} > {:?}", h.number(), h.hash()),
 				Style::default().fg(Color::Yellow),
 			))])
 		})
 		.collect();
 
 	let l = List::new(blocks)
-		.block(Block::default().borders(Borders::ALL).title("Latest Blocks"))
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title(format!("Latest {} Blocks", BLOCKS_MAX_LIMIT)),
+		)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
 		.highlight_symbol("> ");
@@ -221,11 +231,11 @@ where
 
 pub struct StatefulList<T> {
 	pub state: ListState,
-	pub items: Vec<T>,
+	pub items: VecDeque<T>,
 }
 
 impl<T> StatefulList<T> {
-	pub fn with_items(items: Vec<T>) -> StatefulList<T> {
+	pub fn with_items(items: VecDeque<T>) -> StatefulList<T> {
 		StatefulList { state: ListState::default(), items }
 	}
 
