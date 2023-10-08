@@ -185,6 +185,11 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
+	let chunks = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![Constraint::Percentage(40), Constraint::Percentage(60)])
+		.split(area);
+
 	let blocks: Vec<ListItem> = app
 		.block_headers
 		.items
@@ -207,7 +212,15 @@ where
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
 		.highlight_symbol("> ");
-	f.render_stateful_widget(l, area, &mut app.block_headers.state);
+	f.render_stateful_widget(l, chunks[0], &mut app.block_headers.state);
+
+	let text = vec![Line::from("Block Details Page")];
+	let block = Block::default()
+		.borders(Borders::ALL)
+		.title("Block Details")
+		.style(Style::default().fg(Color::Yellow));
+	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+	f.render_widget(paragraph, chunks[1]);
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
