@@ -32,6 +32,7 @@ comfy-table           = { version = "7.0.1" }
 ratatui               = { version = "0.23.0", features = ["all-widgets"] }
 crossterm             = { version = "0.27.0" }
 futures = "0.3.28"
+array-bytes = "6.1.0"
 # substrate
 sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
 sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }

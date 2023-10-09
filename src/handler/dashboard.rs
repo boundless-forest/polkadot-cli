@@ -10,7 +10,7 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
-use sp_runtime::traits::Header;
+use sp_runtime::{traits::Header, DigestItem};
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
 	rpc::{HeaderForChain, RpcClient, SystemPaneInfo},
 };
 
-const BLOCKS_MAX_LIMIT: usize = 20;
+const BLOCKS_MAX_LIMIT: usize = 5;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
 	#[allow(dead_code)]
@@ -26,6 +26,7 @@ pub(crate) struct DashBoard<CI: ChainInfo> {
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub block_headers: StatefulList<HeaderForChain<CI>>,
+	pub selected_block: Option<HeaderForChain<CI>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -40,6 +41,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			client,
 			system_pane_info,
 			blocks_rev,
+			selected_block: None,
 			block_headers: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			tab_titles: vec![
 				String::from("Blocks"),
@@ -64,10 +66,16 @@ impl<CI: ChainInfo> DashBoard<CI> {
 
 	pub fn previous_block(&mut self) {
 		self.block_headers.previous();
+		if let Some(selected) = self.block_headers.state.selected() {
+			self.selected_block = self.block_headers.items.get(selected).cloned();
+		}
 	}
 
 	pub fn next_block(&mut self) {
 		self.block_headers.next();
+		if let Some(selected) = self.block_headers.state.selected() {
+			self.selected_block = self.block_headers.items.get(selected).cloned();
+		}
 	}
 }
 
@@ -84,9 +92,9 @@ where
 
 		if let Ok(header) = app.blocks_rev.try_recv() {
 			if app.block_headers.items.len() == app.block_headers.items.capacity() {
-				app.block_headers.items.pop_front();
+				app.block_headers.items.pop_back();
 			}
-			app.block_headers.items.push_back(header);
+			app.block_headers.items.push_front(header);
 		}
 
 		if let Event::Key(key) = read()? {
@@ -187,14 +195,13 @@ where
 {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints(vec![Constraint::Percentage(40), Constraint::Percentage(60)])
+		.constraints(vec![Constraint::Percentage(30), Constraint::Percentage(70)])
 		.split(area);
 
 	let blocks: Vec<ListItem> = app
 		.block_headers
 		.items
 		.iter()
-		.rev()
 		.map(|h| {
 			ListItem::new(vec![Line::from(Span::styled(
 				format!("{:?} > {:?}", h.number(), h.hash()),
@@ -214,13 +221,61 @@ where
 		.highlight_symbol("> ");
 	f.render_stateful_widget(l, chunks[0], &mut app.block_headers.state);
 
-	let text = vec![Line::from("Block Details Page")];
+	let selected_header = if let Some(header) = &app.selected_block {
+		Some(header)
+	} else if let Some(latest_block) = app.block_headers.items.front() {
+		Some(latest_block)
+	} else {
+		None
+	};
+
 	let block = Block::default()
 		.borders(Borders::ALL)
 		.title("Block Details")
 		.style(Style::default().fg(Color::Yellow));
-	let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-	f.render_widget(paragraph, chunks[1]);
+	if let Some(header) = selected_header {
+		let mut items = vec![
+			ListItem::new(format!("ParentHash     => {:?}", header.parent_hash())),
+			ListItem::new(format!("Number         => {:?}", header.number())),
+			ListItem::new(format!("StateRoot      => {:?}", header.state_root())),
+			ListItem::new(format!("ExtrinsicRoot  => {:?}", header.extrinsics_root())),
+			ListItem::new(format!("Digest         => ")),
+		];
+
+		for (index, item) in header.digest().logs().iter().enumerate() {
+			let message = match item {
+				DigestItem::PreRuntime(id, data) => {
+					let id = String::from_utf8_lossy(id);
+					let data = array_bytes::bytes2hex("0x", &data);
+					format!("PreRuntime[{}]: {}", id, data)
+				},
+				DigestItem::Consensus(id, data) => {
+					let id = String::from_utf8_lossy(id);
+					let data = array_bytes::bytes2hex("0x", &data);
+					format!("Consensus[{}]: {}", id, data)
+				},
+				DigestItem::Seal(id, data) => {
+					let id = String::from_utf8_lossy(id);
+					let data = array_bytes::bytes2hex("0x", &data);
+					format!("Seal[{}]: {}", id, data)
+				},
+				DigestItem::Other(data) => {
+					let data = array_bytes::bytes2hex("0x", &data);
+					format!("Other: {}", data)
+				},
+				DigestItem::RuntimeEnvironmentUpdated => "RuntimeEnvironmentUpdated".to_string(),
+			};
+
+			items.push(ListItem::new(format!("          log{index} => {}", message)));
+		}
+
+		let l = List::new(items).block(block);
+		f.render_widget(l, chunks[1]);
+	} else {
+		let text = "Block Details Page".to_string();
+		let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+		f.render_widget(paragraph, chunks[1]);
+	}
 }
 fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
 where
