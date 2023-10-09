@@ -4,7 +4,7 @@ mod errors;
 mod storage;
 mod types;
 
-pub use api::{ChainApi, HeaderForChain, StateApi, SubscribeApi, SystemApi};
+pub use api::{BlockForChain, ChainApi, HeaderForChain, StateApi, SubscribeApi, SystemApi};
 pub use client::{RpcClient, RpcResult};
 pub use errors::RpcError;
 pub use storage::single_map_storage_key;
