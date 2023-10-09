@@ -1,8 +1,7 @@
 // crates.io
-use sp_core::H256;
 use sp_runtime::{
 	generic::{Block, Header},
-	traits::BlakeTwo256,
+	traits::{BlakeTwo256, Hash as HashT},
 	OpaqueExtrinsic as UncheckedExtrinsic,
 };
 // this crate
@@ -20,8 +19,9 @@ impl ChainInfo for PangolinChain {
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
-	type Hash = H256;
-	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Hash = <Self::Hashing as HashT>::Output;
+	type Hashing = BlakeTwo256;
+	type Header = Header<Self::BlockNumber, Self::Hashing>;
 	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Pangolin;
@@ -36,8 +36,9 @@ impl ChainInfo for PangoroChain {
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
-	type Hash = H256;
-	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Hash = <Self::Hashing as HashT>::Output;
+	type Hashing = BlakeTwo256;
+	type Header = Header<Self::BlockNumber, Self::Hashing>;
 	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Pangoro;
@@ -52,8 +53,9 @@ impl ChainInfo for CrabChain {
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
-	type Hash = H256;
-	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Hash = <Self::Hashing as HashT>::Output;
+	type Hashing = BlakeTwo256;
+	type Header = Header<Self::BlockNumber, Self::Hashing>;
 	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Crab;
@@ -68,8 +70,9 @@ impl ChainInfo for DarwiniaChain {
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
-	type Hash = H256;
-	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Hash = <Self::Hashing as HashT>::Output;
+	type Hashing = BlakeTwo256;
+	type Header = Header<Self::BlockNumber, Self::Hashing>;
 	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Darwinia;

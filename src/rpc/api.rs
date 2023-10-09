@@ -1,5 +1,10 @@
 // crates.io
 use async_trait::async_trait;
+use jsonrpsee::{
+	core::{client::Subscription, traits::ToRpcParams},
+	rpc_params,
+};
+use serde::de::DeserializeOwned;
 use sp_core::Decode;
 use sp_runtime::generic::SignedBlock;
 use sp_storage::StorageKey;
@@ -89,4 +94,32 @@ pub trait StateApi {
 		storage_key: StorageKey,
 		at_block: Option<HashForChain<Self::ChainInfo>>,
 	) -> RpcResult<Option<R>>;
+}
+
+/// The Subscribe API
+#[async_trait]
+pub trait SubscribeApi {
+	/// The chain info type
+	type ChainInfo: ChainInfo;
+
+	async fn subscribe<Params, Notif>(
+		&self,
+		subscribe_method: &str,
+		params: Params,
+		unsubscribe_method: &str,
+	) -> RpcResult<Subscription<Notif>>
+	where
+		Params: ToRpcParams + Send,
+		Notif: DeserializeOwned;
+
+	async fn subscribe_finalized_heads(
+		&self,
+	) -> RpcResult<Subscription<HeaderForChain<Self::ChainInfo>>> {
+		self.subscribe(
+			"chain_subscribeFinalizedHeads",
+			rpc_params![],
+			"chain_unsubscribeFinalizedHeads",
+		)
+		.await
+	}
 }

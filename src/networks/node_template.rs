@@ -1,8 +1,7 @@
 // crates.io
-use sp_core::H256;
 use sp_runtime::{
 	generic::{Block, Header},
-	traits::{BlakeTwo256, IdentifyAccount, Verify},
+	traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify},
 	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
 };
 // this crate
@@ -19,8 +18,9 @@ impl ChainInfo for NoteTemplate {
 	type Balance = u128;
 	type Block = Block<Self::Header, UncheckedExtrinsic>;
 	type BlockNumber = u32;
-	type Hash = H256;
-	type Header = Header<Self::BlockNumber, BlakeTwo256>;
+	type Hash = <Self::Hashing as HashT>::Output;
+	type Hashing = BlakeTwo256;
+	type Header = Header<Self::BlockNumber, Self::Hashing>;
 	type Nonce = u32;
 
 	const NET_WORK: Network = Network::Local;

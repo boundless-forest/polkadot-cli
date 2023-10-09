@@ -23,6 +23,7 @@ use ratatui::prelude::{CrosstermBackend, Terminal};
 use sp_core::{Decode, Encode};
 use sp_runtime::traits::Header;
 use subxt_metadata::{Metadata, PalletMetadata};
+use tokio::sync::mpsc;
 // this crate
 use crate::{
 	app::{
@@ -37,7 +38,7 @@ use crate::{
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
-		StateApi, SystemApi,
+		StateApi, SubscribeApi, SystemApi,
 	},
 };
 
@@ -104,8 +105,21 @@ impl<CI: ChainInfo> Handler<CI> {
 					let backend = CrosstermBackend::new(stdout);
 					let mut terminal = Terminal::new(backend)?;
 
+					let (blocks_tx, blocks_rx) = mpsc::unbounded_channel();
 					let system_pane_info = self.client.system_pane_info().await?;
-					let dashboard = DashBoard::new(self.client.clone(), system_pane_info);
+					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
+
+					// TODO: Deal with the returned handler?
+					tokio::spawn(async move {
+						while let Some(header) = headers_subs.next().await {
+							if let Ok(header) = header {
+								blocks_tx.send(header).unwrap();
+							}
+						}
+					});
+
+					let dashboard =
+						DashBoard::new(self.client.clone(), system_pane_info, blocks_rx);
 					run_dashboard(&mut terminal, dashboard).await?;
 
 					// restore terminal
