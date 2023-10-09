@@ -1,1 +1,1 @@
-# Substrate Cli
+# Polkadot Cli
