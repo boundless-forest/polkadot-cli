@@ -112,15 +112,14 @@ impl<CI: ChainInfo> Handler<CI> {
 					tokio::spawn(async move {
 						while let Some(header) = headers_subs.next().await {
 							if let Ok(header) = header {
-								if let Err(_) = blocks_tx.send(header) {
+								if blocks_tx.send(header).is_err() {
 									break;
 								}
 							}
 						}
 					});
 
-					let dashboard =
-						DashBoard::new(self.client.clone(), system_pane_info, blocks_rx);
+					let dashboard = DashBoard::new(system_pane_info, blocks_rx);
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal

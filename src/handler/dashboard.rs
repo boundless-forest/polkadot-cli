@@ -25,8 +25,6 @@ use crate::{
 const BLOCKS_MAX_LIMIT: usize = 30;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
-	#[allow(dead_code)]
-	pub client: Arc<RpcClient<CI>>,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub blocks: StatefulList<BlockForChain<CI>>,
@@ -37,12 +35,10 @@ pub(crate) struct DashBoard<CI: ChainInfo> {
 
 impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
-		client: Arc<RpcClient<CI>>,
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	) -> DashBoard<CI> {
 		DashBoard {
-			client,
 			system_pane_info,
 			blocks_rev,
 			selected_block: None,
@@ -64,14 +60,14 @@ impl<CI: ChainInfo> DashBoard<CI> {
 		}
 	}
 
-	pub async fn previous_block(&mut self) {
+	pub fn previous_block(&mut self) {
 		self.blocks.previous();
 		if let Some(i) = self.blocks.state.selected() {
 			self.selected_block = self.blocks.items.get(i).cloned();
 		}
 	}
 
-	pub async fn next_block(&mut self) {
+	pub fn next_block(&mut self) {
 		self.blocks.next();
 		if let Some(i) = self.blocks.state.selected() {
 			self.selected_block = self.blocks.items.get(i).cloned();
@@ -106,8 +102,8 @@ where
 					KeyCode::Char('q') => return Ok(()),
 					KeyCode::Right => app.next_tab(),
 					KeyCode::Left => app.previous_tab(),
-					KeyCode::Up => app.previous_block().await,
-					KeyCode::Down => app.next_block().await,
+					KeyCode::Up => app.previous_block(),
+					KeyCode::Down => app.next_block(),
 					_ => {},
 				}
 			}
@@ -268,10 +264,10 @@ where
 
 		// Extrinsics
 		items.push(ListItem::new("Extrinsic      => ".to_string()));
-		for (index, ext) in b.extrinsics().iter().enumerate() {
+		for (i, e) in b.extrinsics().iter().enumerate() {
 			items.push(ListItem::new(format!(
-				"          ext{index} => {:?}",
-				CI::Hashing::hash(&ext.encode())
+				"          ext{i} => {:?}",
+				CI::Hashing::hash(&e.encode())
 			)));
 		}
 
