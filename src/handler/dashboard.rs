@@ -178,8 +178,7 @@ where
 
 	match app.index {
 		0 => draw_blocks_tab(f, app, chunks[1]),
-		1 => draw_transactions_tab(f, app, chunks[1]),
-		2 => draw_events_tab(f, app, chunks[1]),
+		1 => draw_events_tab(f, app, chunks[1]),
 		_ => {},
 	};
 }
@@ -270,15 +269,6 @@ where
 		let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
 		f.render_widget(paragraph, chunks[1]);
 	}
-}
-fn draw_transactions_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
-	let text = vec![Line::from("Transaction Page")];
-	let paragraph = Paragraph::new(text);
-	f.render_widget(paragraph, area);
 }
 
 fn draw_events_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
