@@ -10,39 +10,39 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
-use sp_runtime::{traits::Header, DigestItem};
+use sp_core::Encode;
+use sp_runtime::{
+	traits::{Block as BlockT, Hash, Header as HeaderT},
+	DigestItem,
+};
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
 	networks::ChainInfo,
-	rpc::{HeaderForChain, RpcClient, SystemPaneInfo},
+	rpc::{BlockForChain, ChainApi, HeaderForChain, RpcClient, SystemPaneInfo},
 };
 
-const BLOCKS_MAX_LIMIT: usize = 20;
+const BLOCKS_MAX_LIMIT: usize = 30;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
-	#[allow(dead_code)]
-	pub client: Arc<RpcClient<CI>>,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
-	pub block_headers: StatefulList<HeaderForChain<CI>>,
-	pub selected_block: Option<HeaderForChain<CI>>,
+	pub blocks: StatefulList<BlockForChain<CI>>,
+	pub selected_block: Option<BlockForChain<CI>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
 
 impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
-		client: Arc<RpcClient<CI>>,
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	) -> DashBoard<CI> {
 		DashBoard {
-			client,
 			system_pane_info,
 			blocks_rev,
 			selected_block: None,
-			block_headers: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
+			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			tab_titles: vec![String::from("Blocks"), String::from("Events")],
 			index: 0,
 		}
@@ -61,21 +61,22 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	}
 
 	pub fn previous_block(&mut self) {
-		self.block_headers.previous();
-		if let Some(selected) = self.block_headers.state.selected() {
-			self.selected_block = self.block_headers.items.get(selected).cloned();
+		self.blocks.previous();
+		if let Some(i) = self.blocks.state.selected() {
+			self.selected_block = self.blocks.items.get(i).cloned();
 		}
 	}
 
 	pub fn next_block(&mut self) {
-		self.block_headers.next();
-		if let Some(selected) = self.block_headers.state.selected() {
-			self.selected_block = self.block_headers.items.get(selected).cloned();
+		self.blocks.next();
+		if let Some(i) = self.blocks.state.selected() {
+			self.selected_block = self.blocks.items.get(i).cloned();
 		}
 	}
 }
 
 pub(crate) async fn run_dashboard<B, CI>(
+	client: Arc<RpcClient<CI>>,
 	terminal: &mut Terminal<B>,
 	mut app: DashBoard<CI>,
 ) -> io::Result<()>
@@ -87,10 +88,12 @@ where
 		terminal.draw(|f| ui(f, &mut app))?;
 
 		if let Ok(header) = app.blocks_rev.try_recv() {
-			if app.block_headers.items.len() == app.block_headers.items.capacity() {
-				app.block_headers.items.pop_back();
+			if app.blocks.items.len() == app.blocks.items.capacity() {
+				app.blocks.items.pop_front();
 			}
-			app.block_headers.items.push_front(header);
+			if let Ok(signed_block) = client.get_block(header.hash().into()).await {
+				app.blocks.items.push_back(signed_block.block);
+			}
 		}
 
 		if let Event::Key(key) = read()? {
@@ -194,12 +197,12 @@ where
 		.split(area);
 
 	let blocks: Vec<ListItem> = app
-		.block_headers
+		.blocks
 		.items
 		.iter()
-		.map(|h| {
+		.map(|b| {
 			ListItem::new(vec![Line::from(Span::styled(
-				format!("{:?} > {:?}", h.number(), h.hash()),
+				format!("{:?} > {:?}", b.header().number(), b.header().hash()),
 				Style::default().fg(Color::Yellow),
 			))])
 		})
@@ -212,30 +215,27 @@ where
 				.title(format!("Latest {} Blocks", BLOCKS_MAX_LIMIT)),
 		)
 		.style(Style::default().fg(Color::Yellow))
-		.highlight_style(Style::default().add_modifier(Modifier::BOLD))
+		.highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
 		.highlight_symbol("> ");
-	f.render_stateful_widget(l, chunks[0], &mut app.block_headers.state);
-
-	let selected_header = if let Some(header) = &app.selected_block {
-		Some(header)
-	} else {
-		app.block_headers.items.front()
-	};
+	f.render_stateful_widget(l, chunks[0], &mut app.blocks.state);
 
 	let block = Block::default()
 		.borders(Borders::ALL)
 		.title("Block Details")
 		.style(Style::default().fg(Color::Yellow));
-	if let Some(header) = selected_header {
+	let selected_block = app.selected_block.clone().or(app.blocks.items.back().cloned());
+	if let Some(b) = selected_block {
+		// Fixed items
 		let mut items = vec![
-			ListItem::new(format!("ParentHash     => {:?}", header.parent_hash())),
-			ListItem::new(format!("Number         => {:?}", header.number())),
-			ListItem::new(format!("StateRoot      => {:?}", header.state_root())),
-			ListItem::new(format!("ExtrinsicRoot  => {:?}", header.extrinsics_root())),
-			ListItem::new("Digest         => ".to_string()),
+			ListItem::new(format!("ParentHash     => {:?}", b.header().parent_hash())),
+			ListItem::new(format!("Number         => {:?}", b.header().number())),
+			ListItem::new(format!("StateRoot      => {:?}", b.header().state_root())),
+			ListItem::new(format!("ExtrinsicRoot  => {:?}", b.header().extrinsics_root())),
 		];
 
-		for (index, item) in header.digest().logs().iter().enumerate() {
+		// Logs
+		items.push(ListItem::new("Digest         => ".to_string()));
+		for (index, item) in b.header().digest().logs().iter().enumerate() {
 			let message = match item {
 				DigestItem::PreRuntime(id, data) => {
 					let id = String::from_utf8_lossy(id);
@@ -260,6 +260,15 @@ where
 			};
 
 			items.push(ListItem::new(format!("          log{index} => {}", message)));
+		}
+
+		// Extrinsics
+		items.push(ListItem::new("Extrinsic      => ".to_string()));
+		for (i, e) in b.extrinsics().iter().enumerate() {
+			items.push(ListItem::new(format!(
+				"          ext{i} => {:?}",
+				CI::Hashing::hash(&e.encode())
+			)));
 		}
 
 		let l = List::new(items).block(block);

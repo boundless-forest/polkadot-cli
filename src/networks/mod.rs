@@ -13,8 +13,8 @@ use clap::{Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode, H256};
 use sp_runtime::{
-	traits::{Hash as HashT, Header as HeaderT},
-	DeserializeOwned,
+	traits::{Block as BlockT, Hash as HashT, Header as HeaderT},
+	DeserializeOwned, OpaqueExtrinsic,
 };
 
 /// The ChainInfo API
@@ -29,7 +29,7 @@ pub trait ChainInfo: Sync + Send {
 	/// The balance type of the chain
 	type Balance: Serialize + DeserializeOwned + Decode + Debug;
 	/// The block type of the chain
-	type Block: Serialize + DeserializeOwned;
+	type Block: Serialize + DeserializeOwned + BlockT<Extrinsic = OpaqueExtrinsic>;
 	/// The block number type of the chain
 	type BlockNumber: Serialize + DeserializeOwned + Send + From<u32>;
 	/// The hash type of the chain
