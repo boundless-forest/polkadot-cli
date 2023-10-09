@@ -120,6 +120,5 @@ pub trait SubscribeApi {
 			"chain_unsubscribeFinalizedHeads",
 		)
 		.await
-		.map_err(|e| e.into())
 	}
 }

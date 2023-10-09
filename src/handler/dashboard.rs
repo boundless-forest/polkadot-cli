@@ -18,7 +18,7 @@ use crate::{
 	rpc::{HeaderForChain, RpcClient, SystemPaneInfo},
 };
 
-const BLOCKS_MAX_LIMIT: usize = 5;
+const BLOCKS_MAX_LIMIT: usize = 20;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
 	#[allow(dead_code)]
@@ -43,11 +43,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			blocks_rev,
 			selected_block: None,
 			block_headers: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
-			tab_titles: vec![
-				String::from("Blocks"),
-				String::from("Transactions"),
-				String::from("Events"),
-			],
+			tab_titles: vec![String::from("Blocks"), String::from("Events")],
 			index: 0,
 		}
 	}
@@ -223,10 +219,8 @@ where
 
 	let selected_header = if let Some(header) = &app.selected_block {
 		Some(header)
-	} else if let Some(latest_block) = app.block_headers.items.front() {
-		Some(latest_block)
 	} else {
-		None
+		app.block_headers.items.front()
 	};
 
 	let block = Block::default()
@@ -239,28 +233,28 @@ where
 			ListItem::new(format!("Number         => {:?}", header.number())),
 			ListItem::new(format!("StateRoot      => {:?}", header.state_root())),
 			ListItem::new(format!("ExtrinsicRoot  => {:?}", header.extrinsics_root())),
-			ListItem::new(format!("Digest         => ")),
+			ListItem::new("Digest         => ".to_string()),
 		];
 
 		for (index, item) in header.digest().logs().iter().enumerate() {
 			let message = match item {
 				DigestItem::PreRuntime(id, data) => {
 					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", &data);
+					let data = array_bytes::bytes2hex("0x", data);
 					format!("PreRuntime[{}]: {}", id, data)
 				},
 				DigestItem::Consensus(id, data) => {
 					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", &data);
+					let data = array_bytes::bytes2hex("0x", data);
 					format!("Consensus[{}]: {}", id, data)
 				},
 				DigestItem::Seal(id, data) => {
 					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", &data);
+					let data = array_bytes::bytes2hex("0x", data);
 					format!("Seal[{}]: {}", id, data)
 				},
 				DigestItem::Other(data) => {
-					let data = array_bytes::bytes2hex("0x", &data);
+					let data = array_bytes::bytes2hex("0x", data);
 					format!("Other: {}", data)
 				},
 				DigestItem::RuntimeEnvironmentUpdated => "RuntimeEnvironmentUpdated".to_string(),
