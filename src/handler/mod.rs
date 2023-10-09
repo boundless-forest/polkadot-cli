@@ -109,18 +109,19 @@ impl<CI: ChainInfo> Handler<CI> {
 					let system_pane_info = self.client.system_pane_info().await?;
 					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
 
-					// TODO: Deal with the returned handler?
 					tokio::spawn(async move {
 						while let Some(header) = headers_subs.next().await {
 							if let Ok(header) = header {
-								blocks_tx.send(header).unwrap();
+								if let Err(_) = blocks_tx.send(header) {
+									break;
+								}
 							}
 						}
 					});
 
 					let dashboard =
 						DashBoard::new(self.client.clone(), system_pane_info, blocks_rx);
-					run_dashboard(&mut terminal, dashboard).await?;
+					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal
 					disable_raw_mode()?;
