@@ -311,7 +311,6 @@ impl<T> StatefulList<T> {
 				},
 			None => 0,
 		};
-		log::debug!(target: "cli", "detect down key, select, {:?}", i);
 		self.state.select(Some(i));
 	}
 
@@ -325,7 +324,6 @@ impl<T> StatefulList<T> {
 				},
 			None => 0,
 		};
-		log::debug!(target: "cli", "detect up key, select, {:?}", i);
 		self.state.select(Some(i));
 	}
 }

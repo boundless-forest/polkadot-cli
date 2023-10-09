@@ -96,6 +96,7 @@ pub trait StateApi {
 	) -> RpcResult<Option<R>>;
 }
 
+/// The Subscribe API
 #[async_trait]
 pub trait SubscribeApi {
 	/// The chain info type
