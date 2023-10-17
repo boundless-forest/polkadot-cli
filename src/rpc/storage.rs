@@ -1,5 +1,5 @@
 // crates.io
-use sp_core::Encode;
+use sp_core::{twox_128, Encode};
 use sp_storage::StorageKey;
 use subxt_metadata::{Metadata, StorageEntryType, StorageHasher};
 
@@ -46,4 +46,10 @@ fn key_hash<K: Encode>(key: &K, hasher: &StorageHasher) -> Vec<u8> {
 		StorageHasher::Twox64Concat =>
 			sp_core::twox_64(&encoded_key).iter().chain(&encoded_key).cloned().collect(),
 	}
+}
+
+pub fn events_storage_key() -> StorageKey {
+	let mut key = twox_128("System".as_bytes()).to_vec();
+	key.extend(twox_128("Events".as_bytes()));
+	StorageKey(key)
 }
