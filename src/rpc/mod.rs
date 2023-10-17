@@ -1,6 +1,7 @@
 mod api;
 mod client;
 mod errors;
+mod events;
 mod storage;
 mod types;
 

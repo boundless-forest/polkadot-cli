@@ -37,6 +37,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
+		// events_rev: UnboundedReceiver<Vec<EventRecord>>,
 	) -> DashBoard<CI> {
 		DashBoard {
 			system_pane_info,

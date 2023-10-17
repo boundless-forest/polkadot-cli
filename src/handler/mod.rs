@@ -106,15 +106,30 @@ impl<CI: ChainInfo> Handler<CI> {
 					let mut terminal = Terminal::new(backend)?;
 
 					let (blocks_tx, blocks_rx) = mpsc::unbounded_channel();
+					// let (events_tx, events_rx) = mpsc::unbounded_channel();
 					let system_pane_info = self.client.system_pane_info().await?;
-					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
 
+					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
 					tokio::spawn(async move {
 						while let Some(header) = headers_subs.next().await {
 							if let Ok(header) = header {
 								if blocks_tx.send(header).is_err() {
 									break;
 								}
+							}
+						}
+					});
+
+					let mut events_subs = self.client.subscribe_events().await.unwrap();
+					tokio::spawn(async move {
+						while let Some(storage_set) = events_subs.next().await {
+							if let Ok(storage) = storage_set {
+								// let storage_data =
+								// 	storage.changes.iter().map(|(key, data)| data).collect();
+								// if events_tx.send(events).is_err() {
+								// 	break;
+								// }
+								todo!();
 							}
 						}
 					});
