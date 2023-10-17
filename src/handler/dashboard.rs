@@ -2,6 +2,7 @@
 use std::{collections::VecDeque, io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
+use frame_system::EventRecord;
 use ratatui::{
 	prelude::{
 		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
@@ -12,9 +13,10 @@ use ratatui::{
 };
 use sp_core::Encode;
 use sp_runtime::{
-	traits::{Block as BlockT, Hash, Header as HeaderT},
+	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT},
 	DigestItem,
 };
+use sp_storage::StorageData;
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -37,7 +39,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
-		// events_rev: UnboundedReceiver<Vec<EventRecord>>,
+		events_rev: UnboundedReceiver<Vec<StorageData>>,
 	) -> DashBoard<CI> {
 		DashBoard {
 			system_pane_info,

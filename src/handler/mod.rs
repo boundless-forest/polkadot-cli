@@ -17,7 +17,7 @@ use crossterm::{
 	execute,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use frame_system::AccountInfo;
+use frame_system::{AccountInfo, EventRecord};
 use pallet_balances::AccountData;
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use sp_core::{Decode, Encode};
@@ -106,7 +106,7 @@ impl<CI: ChainInfo> Handler<CI> {
 					let mut terminal = Terminal::new(backend)?;
 
 					let (blocks_tx, blocks_rx) = mpsc::unbounded_channel();
-					// let (events_tx, events_rx) = mpsc::unbounded_channel();
+					let (events_tx, events_rx) = mpsc::unbounded_channel();
 					let system_pane_info = self.client.system_pane_info().await?;
 
 					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
@@ -124,17 +124,19 @@ impl<CI: ChainInfo> Handler<CI> {
 					tokio::spawn(async move {
 						while let Some(storage_set) = events_subs.next().await {
 							if let Ok(storage) = storage_set {
-								// let storage_data =
-								// 	storage.changes.iter().map(|(key, data)| data).collect();
-								// if events_tx.send(events).is_err() {
-								// 	break;
-								// }
-								todo!();
+								let data = storage
+									.changes
+									.into_iter()
+									.filter_map(|(_k, data)| data)
+									.collect();
+								if events_tx.send(data).is_err() {
+									break;
+								}
 							}
 						}
 					});
 
-					let dashboard = DashBoard::new(system_pane_info, blocks_rx);
+					let dashboard = DashBoard::new(system_pane_info, blocks_rx, events_rx);
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal
