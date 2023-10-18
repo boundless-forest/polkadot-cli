@@ -10,8 +10,8 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
-use scale_info::{Path, TypeDefSequence};
-use scale_value::{Composite, Value, ValueDef};
+use scale_info::{Path, PortableType, Type, TypeDefSequence};
+use scale_value::{scale::decode_as_type, Composite, Value, ValueDef};
 use sp_core::Encode;
 use sp_runtime::{
 	traits::{Block as BlockT, Hash, Header as HeaderT},
@@ -97,8 +97,8 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	fn find_event_record_type_id(metadata: &mut Metadata) -> Option<u32> {
-		let event_record_type_id = metadata
+	fn vec_event_records_type_id(metadata: &mut Metadata) -> Option<u32> {
+		let event_records_type_id = metadata
 			.types()
 			.types
 			.iter()
@@ -112,24 +112,22 @@ where
 			.map(|ty| ty.id)
 			.unwrap();
 
-		use scale_info::Type;
-
 		let ty_mut = metadata.types_mut();
-		let vec_events_ty = Type::new(
+		let vec_event_records_ty = Type::new(
 			Path::default(),
 			vec![],
-			TypeDefSequence::new(event_record_type_id.into()),
+			TypeDefSequence::new(event_records_type_id.into()),
 			vec![],
 		);
-		let vec_events_type_id = ty_mut.types.len() as u32;
+		let vec_event_records_type_id = ty_mut.types.len() as u32;
 		ty_mut
 			.types
-			.push(scale_info::PortableType { id: vec_events_type_id, ty: vec_events_ty });
+			.push(PortableType { id: vec_event_records_type_id, ty: vec_event_records_ty });
 
-		Some(vec_events_type_id)
+		Some(vec_event_records_type_id)
 	}
 
-	let vec_events_type_id = find_event_record_type_id(&mut app.metadata).unwrap();
+	let vec_event_records_type_id = vec_event_records_type_id(&mut app.metadata).unwrap();
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
@@ -143,52 +141,45 @@ where
 		}
 
 		if let Ok(storage_data) = app.events_rev.try_recv() {
-			log::debug!(target: "cli", "storage_data length receive : {:?}", storage_data.len());
 			for data in storage_data {
-				// TODO: Handle the Error
-				let value = scale_value::scale::decode_as_type(
+				let value = decode_as_type(
 					&mut data.0.as_ref(),
-					vec_events_type_id,
+					vec_event_records_type_id,
 					app.metadata.types(),
 				);
 
-				if let Ok(value) = value {
-					match value.value {
-						ValueDef::Composite(composite) => match composite {
+				if let Ok(event_records) = value {
+					match event_records.value {
+						ValueDef::Composite(event_records) => match event_records {
 							Composite::Named(_) => continue,
-							Composite::Unnamed(vec_outer) =>
-								for value in vec_outer {
-									match value.value {
-										ValueDef::Composite(composite_inner) =>
-											match composite_inner {
-												Composite::Named(named_data) => {
-													let value: Vec<Value<u32>> = named_data
-														.into_iter()
-														.filter(|d| d.0 == "event")
-														.map(|d| d.1)
-														.collect();
+							Composite::Unnamed(event_records) =>
+								for record in event_records {
+									match record.value {
+										ValueDef::Composite(inner) => match inner {
+											Composite::Named(v) => {
+												let event_values: Vec<Value<u32>> = v
+													.into_iter()
+													.filter(|d| d.0 == "event")
+													.map(|d| d.1)
+													.collect();
 
-													log::debug!(target: "cli", "have extracted events {:?}", value);
-													for v in value {
-														if app.events.items.len()
-															== app.events.items.capacity()
-														{
-															app.events.items.pop_front();
-														} else {
-															app.events.items.push_back(v);
-														}
+												for event in event_values {
+													if app.events.items.len()
+														== app.events.items.capacity()
+													{
+														app.events.items.pop_front();
+													} else {
+														app.events.items.push_back(event);
 													}
-												},
-												Composite::Unnamed(_) => continue,
+												}
 											},
+											Composite::Unnamed(_) => continue,
+										},
 										_ => continue,
 									}
 								},
 						},
-						_ => {
-							log::debug!(target: "cli", "diverse branch 1");
-							continue;
-						},
+						_ => continue,
 					}
 				}
 			}
