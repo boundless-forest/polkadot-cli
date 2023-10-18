@@ -15,7 +15,7 @@ use scale_info::{
 	form::{MetaForm, PortableForm},
 	Path, TypeDefSequence,
 };
-use scale_value::Value;
+use scale_value::{Composite, Value, ValueDef};
 use sp_core::Encode;
 use sp_runtime::{
 	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT},
@@ -31,7 +31,7 @@ use crate::{
 };
 
 const BLOCKS_MAX_LIMIT: usize = 30;
-const EVENTS_MAX_LIMIT: usize = 20;
+const EVENTS_MAX_LIMIT: usize = 5;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
 	pub metadata: Metadata,
@@ -147,9 +147,8 @@ where
 		}
 
 		if let Ok(storage_data) = app.events_rev.try_recv() {
-			log::debug!("storage_data length receive : {:?}", storage_data.len());
+			log::debug!(target: "cli", "storage_data length receive : {:?}", storage_data.len());
 			for data in storage_data {
-				log::debug!(target: "cli", "type_id: {}", vec_events_type_id);
 				// TODO: Handle the Error
 				let value = scale_value::scale::decode_as_type(
 					&mut data.0.as_ref(),
@@ -157,15 +156,43 @@ where
 					app.metadata.types(),
 				);
 
-				if let Err(e) = value.clone() {
-					log::debug!(target: "cli", "error infomation: {:?}", e);
-				}
 				if let Ok(value) = value {
-					if app.events.items.len() == app.events.items.capacity() {
-						app.events.items.pop_front();
-					} else {
-						log::debug!(target: "cli", "pushed a : {:?}", value);
-						app.events.items.push_back(value);
+					match value.value {
+						ValueDef::Composite(composite) => match composite {
+							Composite::Named(_) => continue,
+							Composite::Unnamed(vec_outer) =>
+								for value in vec_outer {
+									match value.value {
+										ValueDef::Composite(composite_inner) =>
+											match composite_inner {
+												Composite::Named(named_data) => {
+													let value: Vec<Value<u32>> = named_data
+														.into_iter()
+														.filter(|d| d.0 == "event")
+														.map(|d| d.1)
+														.collect();
+
+													log::debug!(target: "cli", "have extracted events {:?}", value);
+													for v in value {
+														if app.events.items.len()
+															== app.events.items.capacity()
+														{
+															app.events.items.pop_front();
+														} else {
+															app.events.items.push_back(v);
+														}
+													}
+												},
+												Composite::Unnamed(_) => continue,
+											},
+										_ => continue,
+									}
+								},
+						},
+						_ => {
+							log::debug!(target: "cli", "diverse branch 1");
+							continue;
+						},
 					}
 				}
 			}
@@ -360,28 +387,22 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	use ratatui::text::Text;
-	let events: Vec<ListItem> = app
-		.events
-		.items
-		.iter()
-		.map(|e| {
-			ListItem::new(Text::from(format!(
-				"{}",
-				serde_json::to_string_pretty(&e).unwrap_or("Decode Error Occurred.".to_string())
-			)))
-		})
-		.collect();
-	let l = List::new(events)
+	let mut text = "".to_string();
+	for e in &app.events.items {
+		text.push_str(&format!(
+			"{}\n",
+			serde_json::to_string(e).unwrap_or("Decode Error Occurred.".to_string())
+		));
+	}
+	let l = Paragraph::new(text)
+		.wrap(Wrap { trim: true })
 		.block(
 			Block::default()
 				.borders(Borders::ALL)
 				.title(format!("Latest {} Events", EVENTS_MAX_LIMIT)),
 		)
-		.style(Style::default().fg(Color::Yellow))
-		.highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
-		.highlight_symbol("> ");
-	f.render_stateful_widget(l, area, &mut app.events.state);
+		.style(Style::default().fg(Color::Yellow));
+	f.render_widget(l, area);
 }
 
 pub struct StatefulList<T> {
