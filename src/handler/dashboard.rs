@@ -13,7 +13,7 @@ use ratatui::{
 };
 use scale_info::{
 	form::{MetaForm, PortableForm},
-	Path,
+	Path, TypeDefSequence,
 };
 use scale_value::Value;
 use sp_core::Encode;
@@ -31,7 +31,7 @@ use crate::{
 };
 
 const BLOCKS_MAX_LIMIT: usize = 30;
-const EVENTS_MAX_LIMIT: usize = 3;
+const EVENTS_MAX_LIMIT: usize = 20;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
 	pub metadata: Metadata,
@@ -40,7 +40,7 @@ pub(crate) struct DashBoard<CI: ChainInfo> {
 	pub blocks: StatefulList<BlockForChain<CI>>,
 	pub selected_block: Option<BlockForChain<CI>>,
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
-	pub events: VecDeque<Value<u32>>,
+	pub events: StatefulList<Value<u32>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -59,7 +59,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			events_rev,
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
-			events: VecDeque::with_capacity(EVENTS_MAX_LIMIT),
+			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
 			tab_titles: vec![String::from("Blocks"), String::from("Events")],
 			index: 0,
 		}
@@ -101,8 +101,8 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
-	fn find_event_record_type_id(metadata: Metadata) -> Option<u32> {
-		metadata
+	fn find_event_record_type_id(metadata: &mut Metadata) -> Option<u32> {
+		let event_record_type_id = metadata
 			.types()
 			.types
 			.iter()
@@ -114,8 +114,26 @@ where
 					])
 			})
 			.map(|ty| ty.id)
+			.unwrap();
+
+		use scale_info::Type;
+
+		let ty_mut = metadata.types_mut();
+		let vec_events_ty = Type::new(
+			Path::default(),
+			vec![],
+			TypeDefSequence::new(event_record_type_id.into()),
+			vec![],
+		);
+		let vec_events_type_id = ty_mut.types.len() as u32;
+		ty_mut
+			.types
+			.push(scale_info::PortableType { id: vec_events_type_id, ty: vec_events_ty });
+
+		Some(vec_events_type_id)
 	}
 
+	let vec_events_type_id = find_event_record_type_id(&mut app.metadata).unwrap();
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
@@ -129,21 +147,25 @@ where
 		}
 
 		if let Ok(storage_data) = app.events_rev.try_recv() {
+			log::debug!("storage_data length receive : {:?}", storage_data.len());
 			for data in storage_data {
-				let type_id = find_event_record_type_id(app.metadata.clone()).unwrap();
-				log::debug!(target: "cli", "type_id: {}", type_id);
+				log::debug!(target: "cli", "type_id: {}", vec_events_type_id);
 				// TODO: Handle the Error
 				let value = scale_value::scale::decode_as_type(
 					&mut data.0.as_ref(),
-					type_id,
+					vec_events_type_id,
 					app.metadata.types(),
 				);
-				log::debug!(target: "cli", "value: {:?}", value);
+
+				if let Err(e) = value.clone() {
+					log::debug!(target: "cli", "error infomation: {:?}", e);
+				}
 				if let Ok(value) = value {
-					if app.events.len() == app.events.capacity() {
-						app.events.pop_front();
+					if app.events.items.len() == app.events.items.capacity() {
+						app.events.items.pop_front();
 					} else {
-						app.events.push_back(value);
+						log::debug!(target: "cli", "pushed a : {:?}", value);
+						app.events.items.push_back(value);
 					}
 				}
 			}
@@ -338,10 +360,17 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
+	use ratatui::text::Text;
 	let events: Vec<ListItem> = app
 		.events
+		.items
 		.iter()
-		.map(|e| ListItem::new(format!("{}", serde_json::to_string_pretty(&e).unwrap())))
+		.map(|e| {
+			ListItem::new(Text::from(format!(
+				"{}",
+				serde_json::to_string_pretty(&e).unwrap_or("Decode Error Occurred.".to_string())
+			)))
+		})
 		.collect();
 	let l = List::new(events)
 		.block(
@@ -349,8 +378,10 @@ where
 				.borders(Borders::ALL)
 				.title(format!("Latest {} Events", EVENTS_MAX_LIMIT)),
 		)
-		.style(Style::default().fg(Color::Yellow));
-	f.render_widget(l, area);
+		.style(Style::default().fg(Color::Yellow))
+		.highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+		.highlight_symbol("> ");
+	f.render_stateful_widget(l, area, &mut app.events.state);
 }
 
 pub struct StatefulList<T> {
