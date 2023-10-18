@@ -106,9 +106,9 @@ impl<CI: ChainInfo> Handler<CI> {
 					let mut terminal = Terminal::new(backend)?;
 
 					let (blocks_tx, blocks_rx) = mpsc::unbounded_channel();
-					let system_pane_info = self.client.system_pane_info().await?;
-					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
+					let (events_tx, events_rx) = mpsc::unbounded_channel();
 
+					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
 					tokio::spawn(async move {
 						while let Some(header) = headers_subs.next().await {
 							if let Ok(header) = header {
@@ -119,7 +119,29 @@ impl<CI: ChainInfo> Handler<CI> {
 						}
 					});
 
-					let dashboard = DashBoard::new(system_pane_info, blocks_rx);
+					let mut events_subs = self.client.subscribe_events().await.unwrap();
+					tokio::spawn(async move {
+						while let Some(storage_set) = events_subs.next().await {
+							if let Ok(storage) = storage_set {
+								let data = storage
+									.changes
+									.into_iter()
+									.filter_map(|(_k, data)| data)
+									.collect();
+								if events_tx.send(data).is_err() {
+									break;
+								}
+							}
+						}
+					});
+
+					let system_pane_info = self.client.system_pane_info().await?;
+					let dashboard = DashBoard::new(
+						system_pane_info,
+						blocks_rx,
+						events_rx,
+						self.metadata.clone(),
+					);
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal

@@ -35,6 +35,7 @@ pub trait ChainInfo: Sync + Send {
 	/// The hash type of the chain
 	type Hash: Serialize
 		+ DeserializeOwned
+		+ 'static
 		+ Send
 		+ FromStr
 		+ From<H256>

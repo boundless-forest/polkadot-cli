@@ -10,11 +10,15 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
+use scale_info::{Path, PortableType, Type, TypeDefSequence};
+use scale_value::{scale::decode_as_type, Composite, Value, ValueDef};
 use sp_core::Encode;
 use sp_runtime::{
 	traits::{Block as BlockT, Hash, Header as HeaderT},
 	DigestItem,
 };
+use sp_storage::StorageData;
+use subxt_metadata::Metadata;
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -23,12 +27,16 @@ use crate::{
 };
 
 const BLOCKS_MAX_LIMIT: usize = 30;
+const EVENTS_MAX_LIMIT: usize = 5;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
+	pub metadata: Metadata,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub blocks: StatefulList<BlockForChain<CI>>,
 	pub selected_block: Option<BlockForChain<CI>>,
+	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
+	pub events: StatefulList<Value<u32>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -37,12 +45,17 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	pub(crate) fn new(
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
+		events_rev: UnboundedReceiver<Vec<StorageData>>,
+		metadata: Metadata,
 	) -> DashBoard<CI> {
 		DashBoard {
+			metadata,
 			system_pane_info,
 			blocks_rev,
+			events_rev,
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
+			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
 			tab_titles: vec![String::from("Blocks"), String::from("Events")],
 			index: 0,
 		}
@@ -84,6 +97,37 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
+	fn vec_event_records_type_id(metadata: &mut Metadata) -> Option<u32> {
+		let event_records_type_id = metadata
+			.types()
+			.types
+			.iter()
+			.find(|ty| {
+				ty.ty.path
+					== Path::from_segments_unchecked(vec![
+						"frame_system".to_string(),
+						"EventRecord".to_string(),
+					])
+			})
+			.map(|ty| ty.id)
+			.unwrap();
+
+		let ty_mut = metadata.types_mut();
+		let vec_event_records_ty = Type::new(
+			Path::default(),
+			vec![],
+			TypeDefSequence::new(event_records_type_id.into()),
+			vec![],
+		);
+		let vec_event_records_type_id = ty_mut.types.len() as u32;
+		ty_mut
+			.types
+			.push(PortableType { id: vec_event_records_type_id, ty: vec_event_records_ty });
+
+		Some(vec_event_records_type_id)
+	}
+
+	let vec_event_records_type_id = vec_event_records_type_id(&mut app.metadata).unwrap();
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
@@ -93,6 +137,51 @@ where
 			}
 			if let Ok(signed_block) = client.get_block(header.hash().into()).await {
 				app.blocks.items.push_back(signed_block.block);
+			}
+		}
+
+		if let Ok(storage_data) = app.events_rev.try_recv() {
+			for data in storage_data {
+				let value = decode_as_type(
+					&mut data.0.as_ref(),
+					vec_event_records_type_id,
+					app.metadata.types(),
+				);
+
+				if let Ok(event_records) = value {
+					match event_records.value {
+						ValueDef::Composite(event_records) => match event_records {
+							Composite::Named(_) => continue,
+							Composite::Unnamed(event_records) =>
+								for record in event_records {
+									match record.value {
+										ValueDef::Composite(inner) => match inner {
+											Composite::Named(v) => {
+												let event_values: Vec<Value<u32>> = v
+													.into_iter()
+													.filter(|d| d.0 == "event")
+													.map(|d| d.1)
+													.collect();
+
+												for event in event_values {
+													if app.events.items.len()
+														== app.events.items.capacity()
+													{
+														app.events.items.pop_front();
+													} else {
+														app.events.items.push_back(event);
+													}
+												}
+											},
+											Composite::Unnamed(_) => continue,
+										},
+										_ => continue,
+									}
+								},
+						},
+						_ => continue,
+					}
+				}
 			}
 		}
 
@@ -280,14 +369,27 @@ where
 	}
 }
 
-fn draw_events_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
+fn draw_events_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![Line::from("Event Page")];
-	let paragraph = Paragraph::new(text);
-	f.render_widget(paragraph, area);
+	let mut text = "".to_string();
+	for e in &app.events.items {
+		text.push_str(&format!(
+			"{}\n",
+			serde_json::to_string(e).unwrap_or("Decode Error Occurred.".to_string())
+		));
+	}
+	let l = Paragraph::new(text)
+		.wrap(Wrap { trim: true })
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title(format!("Latest {} Events", EVENTS_MAX_LIMIT)),
+		)
+		.style(Style::default().fg(Color::Yellow));
+	f.render_widget(l, area);
 }
 
 pub struct StatefulList<T> {
