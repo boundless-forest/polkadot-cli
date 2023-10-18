@@ -11,12 +11,14 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
+use scale_value::Value;
 use sp_core::Encode;
 use sp_runtime::{
 	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT},
 	DigestItem,
 };
 use sp_storage::StorageData;
+use subxt_metadata::Metadata;
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -25,12 +27,16 @@ use crate::{
 };
 
 const BLOCKS_MAX_LIMIT: usize = 30;
+const EVENTS_MAX_LIMIT: usize = 3;
 
 pub(crate) struct DashBoard<CI: ChainInfo> {
+	pub metadata: Metadata,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub blocks: StatefulList<BlockForChain<CI>>,
 	pub selected_block: Option<BlockForChain<CI>>,
+	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
+	pub events: VecDeque<Value<u32>>,
 	pub tab_titles: Vec<String>,
 	pub index: usize,
 }
@@ -40,12 +46,16 @@ impl<CI: ChainInfo> DashBoard<CI> {
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 		events_rev: UnboundedReceiver<Vec<StorageData>>,
+		metadata: Metadata,
 	) -> DashBoard<CI> {
 		DashBoard {
+			metadata,
 			system_pane_info,
 			blocks_rev,
+			events_rev,
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
+			events: VecDeque::with_capacity(EVENTS_MAX_LIMIT),
 			tab_titles: vec![String::from("Blocks"), String::from("Events")],
 			index: 0,
 		}
@@ -96,6 +106,25 @@ where
 			}
 			if let Ok(signed_block) = client.get_block(header.hash().into()).await {
 				app.blocks.items.push_back(signed_block.block);
+			}
+		}
+
+		if let Ok(storage_data) = app.events_rev.try_recv() {
+			for data in storage_data {
+				let type_id = 3u32;
+				// TODO: Handle the Error
+				let value = scale_value::scale::decode_as_type(
+					&mut data.0.as_ref(),
+					type_id,
+					app.metadata.types(),
+				);
+				if let Ok(value) = value {
+					if app.events.len() == app.events.capacity() {
+						app.events.pop_front();
+					} else {
+						app.events.push_back(value);
+					}
+				}
 			}
 		}
 

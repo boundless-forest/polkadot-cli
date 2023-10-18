@@ -136,7 +136,12 @@ impl<CI: ChainInfo> Handler<CI> {
 						}
 					});
 
-					let dashboard = DashBoard::new(system_pane_info, blocks_rx, events_rx);
+					let dashboard = DashBoard::new(
+						system_pane_info,
+						blocks_rx,
+						events_rx,
+						self.metadata.clone(),
+					);
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal
