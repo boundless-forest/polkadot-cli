@@ -107,7 +107,6 @@ impl<CI: ChainInfo> Handler<CI> {
 
 					let (blocks_tx, blocks_rx) = mpsc::unbounded_channel();
 					let (events_tx, events_rx) = mpsc::unbounded_channel();
-					let system_pane_info = self.client.system_pane_info().await?;
 
 					let mut headers_subs = self.client.subscribe_finalized_heads().await.unwrap();
 					tokio::spawn(async move {
@@ -136,6 +135,7 @@ impl<CI: ChainInfo> Handler<CI> {
 						}
 					});
 
+					let system_pane_info = self.client.system_pane_info().await?;
 					let dashboard = DashBoard::new(
 						system_pane_info,
 						blocks_rx,

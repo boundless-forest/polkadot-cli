@@ -128,8 +128,12 @@ pub trait SubscribeApi {
 	) -> RpcResult<Subscription<StorageChangeSet<HashForChain<Self::ChainInfo>>>> {
 		let mut key = twox_128("System".as_bytes()).to_vec();
 		key.extend(twox_128("Events".as_bytes()));
-		let key = StorageKey(key);
-		self.subscribe("state_subscribeStorage", rpc_params![vec![key]], "state_unsubscribeStorage")
-			.await
+
+		self.subscribe(
+			"state_subscribeStorage",
+			rpc_params![vec![StorageKey(key)]],
+			"state_unsubscribeStorage",
+		)
+		.await
 	}
 }

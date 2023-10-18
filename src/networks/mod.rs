@@ -35,9 +35,9 @@ pub trait ChainInfo: Sync + Send {
 	/// The hash type of the chain
 	type Hash: Serialize
 		+ DeserializeOwned
+		+ 'static
 		+ Send
 		+ FromStr
-		+ 'static
 		+ From<H256>
 		+ From<<Self::Header as HeaderT>::Hash>;
 	type Hashing: HashT;
