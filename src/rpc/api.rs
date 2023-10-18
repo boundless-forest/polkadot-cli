@@ -5,7 +5,7 @@ use jsonrpsee::{
 	rpc_params,
 };
 use serde::de::DeserializeOwned;
-use sp_core::Decode;
+use sp_core::{twox_128, Decode};
 use sp_runtime::generic::SignedBlock;
 use sp_storage::{StorageChangeSet, StorageKey};
 use sp_version::RuntimeVersion;
@@ -13,7 +13,6 @@ use subxt_metadata::Metadata;
 // this crate
 use super::{
 	client::RpcResult,
-	storage::events_storage_key,
 	types::{ChainType, Health, Properties},
 };
 use crate::networks::ChainInfo;
@@ -127,7 +126,9 @@ pub trait SubscribeApi {
 	async fn subscribe_events(
 		&self,
 	) -> RpcResult<Subscription<StorageChangeSet<HashForChain<Self::ChainInfo>>>> {
-		let key = events_storage_key();
+		let mut key = twox_128("System".as_bytes()).to_vec();
+		key.extend(twox_128("Events".as_bytes()));
+		let key = StorageKey(key);
 		self.subscribe("state_subscribeStorage", rpc_params![vec![key]], "state_unsubscribeStorage")
 			.await
 	}

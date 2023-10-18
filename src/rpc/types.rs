@@ -1,6 +1,5 @@
 // crates.io
 use serde::{Deserialize, Serialize};
-use sp_core::{Decode, Encode};
 use sp_version::RuntimeVersion;
 
 /// Arbitrary properties defined in chain spec as a JSON object

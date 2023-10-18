@@ -17,7 +17,7 @@ use crossterm::{
 	execute,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use frame_system::{AccountInfo, EventRecord};
+use frame_system::AccountInfo;
 use pallet_balances::AccountData;
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use sp_core::{Decode, Encode};

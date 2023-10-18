@@ -2,7 +2,6 @@
 use std::{collections::VecDeque, io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
-use frame_system::EventRecord;
 use ratatui::{
 	prelude::{
 		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
@@ -11,14 +10,11 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
-use scale_info::{
-	form::{MetaForm, PortableForm},
-	Path, TypeDefSequence,
-};
+use scale_info::{Path, TypeDefSequence};
 use scale_value::{Composite, Value, ValueDef};
 use sp_core::Encode;
 use sp_runtime::{
-	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT},
+	traits::{Block as BlockT, Hash, Header as HeaderT},
 	DigestItem,
 };
 use sp_storage::StorageData;
