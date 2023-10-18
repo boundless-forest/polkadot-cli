@@ -11,6 +11,10 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
+use scale_info::{
+	form::{MetaForm, PortableForm},
+	Path,
+};
 use scale_value::Value;
 use sp_core::Encode;
 use sp_runtime::{
@@ -97,6 +101,21 @@ where
 	B: Backend,
 	CI: ChainInfo,
 {
+	fn find_event_record_type_id(metadata: Metadata) -> Option<u32> {
+		metadata
+			.types()
+			.types
+			.iter()
+			.find(|ty| {
+				ty.ty.path
+					== Path::from_segments_unchecked(vec![
+						"frame_system".to_string(),
+						"EventRecord".to_string(),
+					])
+			})
+			.map(|ty| ty.id)
+	}
+
 	loop {
 		terminal.draw(|f| ui(f, &mut app))?;
 
@@ -111,13 +130,15 @@ where
 
 		if let Ok(storage_data) = app.events_rev.try_recv() {
 			for data in storage_data {
-				let type_id = 3u32;
+				let type_id = find_event_record_type_id(app.metadata.clone()).unwrap();
+				log::debug!(target: "cli", "type_id: {}", type_id);
 				// TODO: Handle the Error
 				let value = scale_value::scale::decode_as_type(
 					&mut data.0.as_ref(),
 					type_id,
 					app.metadata.types(),
 				);
+				log::debug!(target: "cli", "value: {:?}", value);
 				if let Ok(value) = value {
 					if app.events.len() == app.events.capacity() {
 						app.events.pop_front();
@@ -312,14 +333,24 @@ where
 	}
 }
 
-fn draw_events_tab<B, CI>(f: &mut Frame<B>, _app: &mut DashBoard<CI>, area: Rect)
+fn draw_events_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
 	CI: ChainInfo,
 {
-	let text = vec![Line::from("Event Page")];
-	let paragraph = Paragraph::new(text);
-	f.render_widget(paragraph, area);
+	let events: Vec<ListItem> = app
+		.events
+		.iter()
+		.map(|e| ListItem::new(format!("{}", serde_json::to_string_pretty(&e).unwrap())))
+		.collect();
+	let l = List::new(events)
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title(format!("Latest {} Events", EVENTS_MAX_LIMIT)),
+		)
+		.style(Style::default().fg(Color::Yellow));
+	f.render_widget(l, area);
 }
 
 pub struct StatefulList<T> {
