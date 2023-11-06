@@ -323,7 +323,7 @@ where
 		];
 
 		// Logs
-		items.push(ListItem::new("Digest         => ".to_string()));
+		items.push(ListItem::new("Digest => ".to_string()));
 		for (index, item) in b.header().digest().logs().iter().enumerate() {
 			let message = match item {
 				DigestItem::PreRuntime(id, data) => {
@@ -348,14 +348,14 @@ where
 				DigestItem::RuntimeEnvironmentUpdated => "RuntimeEnvironmentUpdated".to_string(),
 			};
 
-			items.push(ListItem::new(format!("          log{index} => {}", message)));
+			items.push(ListItem::new(format!("          log[{index}] => {}", message)));
 		}
 
 		// Extrinsics
-		items.push(ListItem::new("Extrinsic      => ".to_string()));
+		items.push(ListItem::new("Extrinsics => ".to_string()));
 		for (i, e) in b.extrinsics().iter().enumerate() {
 			items.push(ListItem::new(format!(
-				"          ext{i} => {:?}",
+				"          ext[{i}] => {:?}",
 				CI::Hashing::hash(&e.encode())
 			)));
 		}
