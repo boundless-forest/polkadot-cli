@@ -2,7 +2,7 @@
 use sp_runtime::{
 	generic::{Block, Header},
 	traits::{BlakeTwo256, Hash as HashT},
-	OpaqueExtrinsic as UncheckedExtrinsic,
+	OpaqueExtrinsic,
 };
 // this crate
 use super::{ChainInfo, Network};
@@ -17,7 +17,7 @@ pub struct PangolinChain;
 impl ChainInfo for PangolinChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;
@@ -34,7 +34,7 @@ pub struct PangoroChain;
 impl ChainInfo for PangoroChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;
@@ -51,7 +51,7 @@ pub struct CrabChain;
 impl ChainInfo for CrabChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;
@@ -68,7 +68,7 @@ pub struct DarwiniaChain;
 impl ChainInfo for DarwiniaChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;

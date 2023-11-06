@@ -2,7 +2,7 @@
 use sp_runtime::{
 	generic::{Block, Header},
 	traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
+	MultiSignature, OpaqueExtrinsic,
 };
 // this crate
 use super::{ChainInfo, Network};
@@ -16,7 +16,7 @@ pub struct NoteTemplate;
 impl ChainInfo for NoteTemplate {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;

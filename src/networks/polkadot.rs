@@ -2,7 +2,7 @@
 use sp_runtime::{
 	generic::{Block, Header},
 	traits::{BlakeTwo256, Hash as HashT, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
+	MultiSignature, OpaqueExtrinsic,
 };
 // this crate
 use super::{ChainInfo, Network};
@@ -17,7 +17,7 @@ pub struct PolkadotChain;
 impl ChainInfo for PolkadotChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;
@@ -34,7 +34,7 @@ pub struct KusamaChain;
 impl ChainInfo for KusamaChain {
 	type AccountId = AccountId;
 	type Balance = u128;
-	type Block = Block<Self::Header, UncheckedExtrinsic>;
+	type Block = Block<Self::Header, OpaqueExtrinsic>;
 	type BlockNumber = u32;
 	type Hash = <Self::Hashing as HashT>::Output;
 	type Hashing = BlakeTwo256;
