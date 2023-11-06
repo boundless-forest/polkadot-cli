@@ -354,10 +354,31 @@ where
 		// Extrinsics
 		items.push(ListItem::new("Extrinsics => ".to_string()));
 		for (i, e) in b.extrinsics().iter().enumerate() {
-			items.push(ListItem::new(format!(
-				"          ext[{i}] => {:?}",
-				CI::Hashing::hash(&e.encode())
-			)));
+			let ty_id = app.metadata.types().types.iter().find(|t| {
+				t.ty.path
+					== scale_info::Path::from_segments_unchecked([
+						"sp_runtime".to_string(),
+						"generic".to_string(),
+						"unchecked_extrinsic".to_string(),
+						"UncheckedExtrinsic".to_string(),
+					])
+			});
+
+			log::debug!(target: "cli", "the extrinsic type id: {:?}", ty_id);
+
+			if let Some(ty_id) = ty_id {
+				if let Ok(value) =
+					decode_as_type(&mut e.encode().as_ref(), ty_id.id, app.metadata.types())
+				{
+					log::debug!(target: "cli", "the extrinsic type id: {}", value);
+					items.push(ListItem::new(format!("          ext[{i}] => {}", serde_json::to_string(&value).unwrap_or("Decode Error Occurred.".to_string()))));
+				}
+			} else {
+				items.push(ListItem::new(format!(
+					"          ext[{i}] => {:?}",
+					CI::Hashing::hash(&e.encode())
+				)));
+			}
 		}
 
 		let l = List::new(items).block(block);
