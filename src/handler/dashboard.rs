@@ -348,37 +348,17 @@ where
 				DigestItem::RuntimeEnvironmentUpdated => "RuntimeEnvironmentUpdated".to_string(),
 			};
 
-			items.push(ListItem::new(format!("          log[{index}] => {}", message)));
+			items.push(ListItem::new(format!("log[{index}] => {}", message)));
 		}
 
 		// Extrinsics
 		items.push(ListItem::new("Extrinsics => ".to_string()));
 		for (i, e) in b.extrinsics().iter().enumerate() {
-			let ty_id = app.metadata.types().types.iter().find(|t| {
-				t.ty.path
-					== scale_info::Path::from_segments_unchecked([
-						"sp_runtime".to_string(),
-						"generic".to_string(),
-						"unchecked_extrinsic".to_string(),
-						"UncheckedExtrinsic".to_string(),
-					])
-			});
-
-			log::debug!(target: "cli", "the extrinsic type id: {:?}", ty_id);
-
-			if let Some(ty_id) = ty_id {
-				if let Ok(value) =
-					decode_as_type(&mut e.encode().as_ref(), ty_id.id, app.metadata.types())
-				{
-					log::debug!(target: "cli", "the extrinsic type id: {}", value);
-					items.push(ListItem::new(format!("          ext[{i}] => {}", serde_json::to_string(&value).unwrap_or("Decode Error Occurred.".to_string()))));
-				}
-			} else {
-				items.push(ListItem::new(format!(
-					"          ext[{i}] => {:?}",
-					CI::Hashing::hash(&e.encode())
-				)));
-			}
+			let h = CI::Hashing::hash(&e.encode());
+			items.push(ListItem::new(Span::styled(
+				format!("extrinsic[{i}] => https://crab.subscan.io/extrinsic/{:?}", h),
+				Style::default().add_modifier(Modifier::UNDERLINED),
+			)));
 		}
 
 		let l = List::new(items).block(block);
