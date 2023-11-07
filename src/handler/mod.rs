@@ -26,16 +26,13 @@ use tokio::sync::mpsc;
 // this crate
 use crate::{
 	app::{
-		metadata_path, run_dashboard, AccountInfoCommand, AppCommand, ApplicationCommand,
-		ChainCommand, DashBoard, RpcCommand, RuntimeCommand, POLKADOT_CLI,
+		metadata_path, run_dashboard, AccountInfoCommand, AppCommand, ApplicationCommand, ChainCommand, DashBoard, RpcCommand,
+		RuntimeCommand, POLKADOT_CLI,
 	},
 	errors::AppError,
 	handler::printer::{print_result, print_storage_type, print_usage},
 	networks::{ChainInfo, Network},
-	rpc::{
-		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,
-		StateApi, SubscribeApi, SystemApi,
-	},
+	rpc::{single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError, StateApi, SubscribeApi, SystemApi},
 };
 
 pub struct Handler<CI> {
@@ -48,22 +45,18 @@ impl<CI: ChainInfo> Handler<CI> {
 	pub async fn new(client: Arc<RpcClient<CI>>) -> Result<Handler<CI>, AppError> {
 		let metadata_path = metadata_path().expect("Failed to get metadata path");
 		let runtime_version = client
-			.runtime_version(
-				client.get_finalized_head().await?.expect("Failed to get finalized head"),
-			)
+			.runtime_version(client.get_finalized_head().await?.expect("Failed to get finalized head"))
 			.await
 			.expect("Failed to get runtime version");
-		let file_name =
-			format!("{}-runtime-{}.meta", runtime_version.spec_name, runtime_version.spec_version);
+		let file_name = format!("{}-runtime-{}.meta", runtime_version.spec_name, runtime_version.spec_version);
 		let runtime_file = metadata_path.join(file_name);
 		log::debug!(target: "cli", "Runtime metadata file path: {:?}", runtime_file);
 
 		if !runtime_file.is_file() {
 			// New network or new runtime version detected.
 			let metadata = client.runtime_metadata().await?;
-			let mut metadata_file = File::create(runtime_file).map_err(|e| {
-				AppError::Custom(format!("Failed to create metadata file: {:?}", e))
-			})?;
+			let mut metadata_file =
+				File::create(runtime_file).map_err(|e| AppError::Custom(format!("Failed to create metadata file: {:?}", e)))?;
 			metadata_file
 				.write_all(&metadata.encode())
 				.map_err(|e| AppError::Custom(format!("Failed to write metadata file: {:?}", e)))?;
@@ -71,16 +64,12 @@ impl<CI: ChainInfo> Handler<CI> {
 			Ok(Self { client, metadata })
 		} else {
 			// Reload from the existed runtime metadata file.
-			let mut f = File::open(runtime_file).map_err(|e| {
-				AppError::Custom(format!("Failed to open runtime metadata file: {:?}", e))
-			})?;
+			let mut f = File::open(runtime_file).map_err(|e| AppError::Custom(format!("Failed to open runtime metadata file: {:?}", e)))?;
 			let mut bytes = Vec::new();
-			f.read_to_end(&mut bytes).map_err(|e| {
-				AppError::Custom(format!("Failed to read runtime metadata file: {:?}", e))
-			})?;
-			let metadata = Metadata::decode(&mut bytes.as_slice()).map_err(|e| {
-				AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e))
-			})?;
+			f.read_to_end(&mut bytes)
+				.map_err(|e| AppError::Custom(format!("Failed to read runtime metadata file: {:?}", e)))?;
+			let metadata = Metadata::decode(&mut bytes.as_slice())
+				.map_err(|e| AppError::Custom(format!("Failed to decode runtime metadata file: {:?}", e)))?;
 			log::debug!(target: "cli", "Reload runtime metadata file successfully");
 			Ok(Self { client, metadata })
 		}
@@ -119,11 +108,7 @@ impl<CI: ChainInfo> Handler<CI> {
 					tokio::spawn(async move {
 						while let Some(storage_set) = events_subs.next().await {
 							if let Ok(storage) = storage_set {
-								let data = storage
-									.changes
-									.into_iter()
-									.filter_map(|(_k, data)| data)
-									.collect();
+								let data = storage.changes.into_iter().filter_map(|(_k, data)| data).collect();
 								if events_tx.send(data).is_err() {
 									break;
 								}
@@ -132,18 +117,36 @@ impl<CI: ChainInfo> Handler<CI> {
 					});
 
 					let system_pane_info = self.client.system_pane_info().await?;
-					let dashboard = DashBoard::new(
-						system_pane_info,
-						blocks_rx,
-						events_rx,
-						self.metadata.clone(),
-					);
+					let dashboard = DashBoard::new(system_pane_info, blocks_rx, events_rx, self.metadata.clone());
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal
 					disable_raw_mode()?;
 					execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
 					terminal.show_cursor()?;
+				},
+				ApplicationCommand::OpenWithBrowser { block_hash, extrinsic_hash } => {
+					let maybe_url = match (block_hash, extrinsic_hash) {
+						(Some(block_hash), None) if <CI as ChainInfo>::Hash::from_str(&block_hash).is_ok() =>
+							Some(format!("https://{:?}.subscan.io/block/{}", <CI as ChainInfo>::NET_WORK, block_hash)),
+						(None, Some(extrinsic_hash)) if <CI as ChainInfo>::Hash::from_str(&extrinsic_hash).is_ok() =>
+							Some(format!("https://{:?}.subscan.io/extrinsic/{}", <CI as ChainInfo>::NET_WORK, extrinsic_hash)),
+						_ => None,
+					};
+
+					if let Some(url) = maybe_url {
+						match open::that(url.clone()) {
+							Ok(_) => {
+								println!("Opened {} with browser successfully", Colorize::green(url.as_str()));
+							},
+							Err(e) => {
+								println!("Opened {} with browser failed, error: {}", url, Colorize::red(e.to_string().as_str()));
+							},
+						}
+					} else {
+						println!("{}", Colorize::red("Please specify valid input either block hash or extrinsic hash"));
+						return Err(AppError::Custom("Please specify valid input either block hash or extrinsic hash".to_string()));
+					}
 				},
 				ApplicationCommand::CleanHistory => {
 					todo!();
@@ -188,8 +191,7 @@ impl<CI: ChainInfo> Handler<CI> {
 			},
 			AppCommand::Chain(sub_command) => match sub_command {
 				ChainCommand::GetBlock { hash } => {
-					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidParams)?;
+					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str()).map_err(|_| RpcError::InvalidParams)?;
 					let res = self.client.get_block(hash).await;
 					print_result(res);
 				},
@@ -211,8 +213,7 @@ impl<CI: ChainInfo> Handler<CI> {
 					}
 				},
 				ChainCommand::GetHeader { hash } => {
-					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str())
-						.map_err(|_| RpcError::InvalidParams)?;
+					let hash = <CI as ChainInfo>::Hash::from_str(hash.as_str()).map_err(|_| RpcError::InvalidParams)?;
 					let res = self.client.get_header(hash).await;
 					print_result(res);
 				},
@@ -225,30 +226,22 @@ impl<CI: ChainInfo> Handler<CI> {
 				AccountInfoCommand::Balances { account_id, at_block } => {
 					let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
-					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-						.map_err(|_| RpcError::InvalidParams)?;
+					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str()).map_err(|_| RpcError::InvalidParams)?;
 					let storage_key =
-						single_map_storage_key(&self.metadata, "System", "Account", key)
-							.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
+						single_map_storage_key(&self.metadata, "System", "Account", key).map_err(|_| RpcError::GenerateStorageKeyFailed)?;
 
 					let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 						self.client.get_storage(storage_key, hash).await?;
 					if let Some(a) = account {
-						print_result(Ok(AccountBalances {
-							free: a.data.free,
-							reserved: a.data.reserved,
-							frozen: a.data.frozen,
-						}));
+						print_result(Ok(AccountBalances { free: a.data.free, reserved: a.data.reserved, frozen: a.data.frozen }));
 					}
 				},
 				AccountInfoCommand::Nonce { account_id, at_block } => {
 					let hash = at_block.and_then(|s| <CI as ChainInfo>::Hash::from_str(&s).ok());
 
-					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str())
-						.map_err(|_| RpcError::InvalidParams)?;
+					let key = <CI as ChainInfo>::AccountId::from_str(account_id.as_str()).map_err(|_| RpcError::InvalidParams)?;
 					let storage_key =
-						single_map_storage_key(&self.metadata, "System", "Account", key)
-							.map_err(|_| RpcError::GenerateStorageKeyFailed)?;
+						single_map_storage_key(&self.metadata, "System", "Account", key).map_err(|_| RpcError::GenerateStorageKeyFailed)?;
 
 					let account: Option<AccountInfo<CI::Nonce, AccountData<CI::Balance>>> =
 						self.client.get_storage(storage_key, hash).await?;
@@ -276,8 +269,7 @@ impl<CI: ChainInfo> Handler<CI> {
 				},
 				RuntimeCommand::StoragesOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
-						(Some(name), Some(id)) =>
-							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), Some(id)) => self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
 						(Some(name), None) => self.metadata.pallet_by_name(&name),
 						(None, Some(id)) => self.metadata.pallet_by_index(id),
 						_ => None,
@@ -313,8 +305,7 @@ impl<CI: ChainInfo> Handler<CI> {
 				},
 				RuntimeCommand::ConstantsOfPallet { pallet_name, pallet_id } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
-						(Some(name), Some(id)) =>
-							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), Some(id)) => self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
 						(Some(name), None) => self.metadata.pallet_by_name(&name),
 						(None, Some(id)) => self.metadata.pallet_by_index(id),
 						_ => None,
@@ -329,8 +320,7 @@ impl<CI: ChainInfo> Handler<CI> {
 							.apply_modifier(UTF8_ROUND_CORNERS)
 							.set_content_arrangement(ContentArrangement::Dynamic);
 						p.constants().for_each(|c| {
-							table
-								.add_row(vec![c.name(), c.docs().get(0).unwrap_or(&"".to_owned())]);
+							table.add_row(vec![c.name(), c.docs().get(0).unwrap_or(&"".to_owned())]);
 						});
 
 						println!(
@@ -345,8 +335,7 @@ impl<CI: ChainInfo> Handler<CI> {
 				},
 				RuntimeCommand::GetConstantByName { pallet_name, pallet_id, constant_name } => {
 					let pallet: Option<PalletMetadata> = match (pallet_name, pallet_id) {
-						(Some(name), Some(id)) =>
-							self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
+						(Some(name), Some(id)) => self.metadata.pallets().find(|p| p.name() == name && p.index() == id),
 						(Some(name), None) => self.metadata.pallet_by_name(&name),
 						(None, Some(id)) => self.metadata.pallet_by_index(id),
 						_ => None,
@@ -357,22 +346,9 @@ impl<CI: ChainInfo> Handler<CI> {
 						if let Some(c) = p.constants().find(|c| c.name() == constant_name) {
 							let ty_id = c.ty();
 							let mut bytes = c.value();
-							let value = scale_value::scale::decode_as_type(
-								&mut bytes,
-								ty_id,
-								self.metadata.types(),
-							)
-							.map_err(|e| {
-								AppError::Custom(format!(
-									"Failed to decode constant value: {:?}",
-									e
-								))
-							})?;
-							println!(
-								"{} => {}",
-								c.name(),
-								serde_json::to_string_pretty(&value).unwrap()
-							);
+							let value = scale_value::scale::decode_as_type(&mut bytes, ty_id, self.metadata.types())
+								.map_err(|e| AppError::Custom(format!("Failed to decode constant value: {:?}", e)))?;
+							println!("{} => {}", c.name(), serde_json::to_string_pretty(&value).unwrap());
 						} else {
 							println!("Did not find the constant.");
 						}
@@ -382,13 +358,9 @@ impl<CI: ChainInfo> Handler<CI> {
 				},
 				RuntimeCommand::GetRuntimeVersion { hash } => {
 					let hash = if let Some(hash) = hash {
-						<CI as ChainInfo>::Hash::from_str(hash.as_str())
-							.map_err(|_| RpcError::InvalidParams)?
+						<CI as ChainInfo>::Hash::from_str(hash.as_str()).map_err(|_| RpcError::InvalidParams)?
 					} else {
-						self.client
-							.get_finalized_head()
-							.await?
-							.expect("Failed to get finalized head")
+						self.client.get_finalized_head().await?.expect("Failed to get finalized head")
 					};
 
 					let res = self.client.runtime_version(hash).await;

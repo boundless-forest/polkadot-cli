@@ -34,6 +34,12 @@ pub enum ApplicationCommand {
 		#[arg(name = "network", long)]
 		network: Network,
 	},
+	OpenWithBrowser {
+		#[arg(name = "block-hash", long)]
+		block_hash: Option<String>,
+		#[arg(name = "extrinsic-hash", long)]
+		extrinsic_hash: Option<String>,
+	},
 	/// Display dashboard information.
 	DashBoard,
 	/// Clean the history.

@@ -52,25 +52,17 @@ pub trait ChainApi {
 	type ChainInfo: ChainInfo;
 
 	/// Get the chain block
-	async fn get_block(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<SignedBlock<<Self::ChainInfo as ChainInfo>::Block>>;
+	async fn get_block(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<SignedBlock<<Self::ChainInfo as ChainInfo>::Block>>;
 
 	/// Get the block hash for a specific block
-	async fn get_block_hash(
-		&self,
-		number: BlockNumberForChain<Self::ChainInfo>,
-	) -> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>>;
+	async fn get_block_hash(&self, number: BlockNumberForChain<Self::ChainInfo>)
+		-> RpcResult<Option<<Self::ChainInfo as ChainInfo>::Hash>>;
 
 	/// Get the hash of the last finalized block in the canon chain
 	async fn get_finalized_head(&self) -> RpcResult<Option<HashForChain<Self::ChainInfo>>>;
 
 	/// Retrieves the header for a specific block
-	async fn get_header(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<HeaderForChain<Self::ChainInfo>>;
+	async fn get_header(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<HeaderForChain<Self::ChainInfo>>;
 }
 
 /// The State API provides access to chain state and storage.
@@ -80,10 +72,7 @@ pub trait StateApi {
 	type ChainInfo: ChainInfo;
 
 	/// Get the runtime version
-	async fn runtime_version(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<RuntimeVersion>;
+	async fn runtime_version(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<RuntimeVersion>;
 
 	/// Get the runtime metadata
 	async fn runtime_metadata(&self) -> RpcResult<Metadata>;
@@ -112,28 +101,16 @@ pub trait SubscribeApi {
 		Params: ToRpcParams + Send,
 		Notif: DeserializeOwned;
 
-	async fn subscribe_finalized_heads(
-		&self,
-	) -> RpcResult<Subscription<HeaderForChain<Self::ChainInfo>>> {
-		self.subscribe(
-			"chain_subscribeFinalizedHeads",
-			rpc_params![],
-			"chain_unsubscribeFinalizedHeads",
-		)
-		.await
+	async fn subscribe_finalized_heads(&self) -> RpcResult<Subscription<HeaderForChain<Self::ChainInfo>>> {
+		self.subscribe("chain_subscribeFinalizedHeads", rpc_params![], "chain_unsubscribeFinalizedHeads")
+			.await
 	}
 
-	async fn subscribe_events(
-		&self,
-	) -> RpcResult<Subscription<StorageChangeSet<HashForChain<Self::ChainInfo>>>> {
+	async fn subscribe_events(&self) -> RpcResult<Subscription<StorageChangeSet<HashForChain<Self::ChainInfo>>>> {
 		let mut key = twox_128("System".as_bytes()).to_vec();
 		key.extend(twox_128("Events".as_bytes()));
 
-		self.subscribe(
-			"state_subscribeStorage",
-			rpc_params![vec![StorageKey(key)]],
-			"state_unsubscribeStorage",
-		)
-		.await
+		self.subscribe("state_subscribeStorage", rpc_params![vec![StorageKey(key)]], "state_unsubscribeStorage")
+			.await
 	}
 }

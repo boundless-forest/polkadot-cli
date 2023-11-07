@@ -32,6 +32,7 @@ comfy-table           = { version = "7.0.1" }
 ratatui               = { version = "0.23.0", features = ["all-widgets"] }
 crossterm             = { version = "0.27.0" }
 array-bytes           = { version = "6.1.0" }
+open                  = { version = "5.0.0" }
 # polkadot
 sp-core          = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 sp-runtime       = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }

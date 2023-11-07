@@ -19,8 +19,7 @@ pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> 
 					log::debug!(target: "cli", "ident: {:?}", i);
 
 					if VEC_WRAPPER.contains(&i.as_str()) {
-						let inner_ty =
-							ty.type_params[0].ty.expect("This type missed generic type T");
+						let inner_ty = ty.type_params[0].ty.expect("This type missed generic type T");
 						format!("{}<{}>", i, ty_name(inner_ty, metadata))
 					} else {
 						format!("{}", i)
@@ -69,11 +68,8 @@ pub fn print_storage_type(entry_type: StorageEntryType, metadata: &Metadata) -> 
 
 	match entry_type {
 		StorageEntryType::Plain(t) => ty_name(t.into(), metadata),
-		StorageEntryType::Map { hashers: _, key_ty, value_ty } => format!(
-			"{} -> {}",
-			ty_name(key_ty.into(), metadata),
-			ty_name(value_ty.into(), metadata)
-		),
+		StorageEntryType::Map { hashers: _, key_ty, value_ty } =>
+			format!("{} -> {}", ty_name(key_ty.into(), metadata), ty_name(value_ty.into(), metadata)),
 	}
 }
 
