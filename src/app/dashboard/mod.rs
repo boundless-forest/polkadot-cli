@@ -1,22 +1,22 @@
+mod tab_blocks;
+mod tab_events;
+mod tab_system;
+
 // std
 use std::{collections::VecDeque, io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
 	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
-		Style, Terminal,
+		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Rect, Span, Style,
+		Terminal,
 	},
 	style::Stylize,
 	widgets::*,
 };
 use scale_info::{Path, PortableType, Type, TypeDefSequence};
 use scale_value::{scale::decode_as_type, Composite, Value, ValueDef};
-use sp_core::Encode;
-use sp_runtime::{
-	traits::{Block as BlockT, Hash, Header as HeaderT},
-	DigestItem,
-};
+use sp_runtime::traits::Header as HeaderT;
 use sp_storage::StorageData;
 use subxt_metadata::Metadata;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -25,9 +25,12 @@ use crate::{
 	networks::ChainInfo,
 	rpc::{BlockForChain, ChainApi, HeaderForChain, RpcClient, SystemPaneInfo},
 };
+use tab_blocks::draw_blocks_tab;
+use tab_events::draw_events_tab;
+use tab_system::draw_system;
 
-const BLOCKS_MAX_LIMIT: usize = 30;
-const EVENTS_MAX_LIMIT: usize = 5;
+pub(crate) const BLOCKS_MAX_LIMIT: usize = 30;
+pub(crate) const EVENTS_MAX_LIMIT: usize = 5;
 
 pub struct DashBoard<CI: ChainInfo> {
 	pub metadata: Metadata,
@@ -215,38 +218,6 @@ where
 	draw_tabs(f, app, chunks[1]);
 }
 
-fn draw_system<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
-	let chunks = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(vec![Constraint::Percentage(100)])
-		.split(area);
-
-	let spec_version = app.system_pane_info.runtime_version.spec_version.to_string();
-	let rows = vec![
-		Row::new(vec!["SystemName    =>", app.system_pane_info.system_name.as_str()]),
-		Row::new(vec!["SystemVersion =>", app.system_pane_info.system_version.as_str()]),
-		Row::new(vec!["ChainName     =>", app.system_pane_info.chain_name.as_str()]),
-		Row::new(vec!["ChainType     =>", app.system_pane_info.chain_type.as_str()]),
-		Row::new(vec!["TokenSymbol   =>", app.system_pane_info.token_symbol.as_str()]),
-		Row::new(vec!["TokenDecimal  =>", app.system_pane_info.token_decimal.as_str()]),
-		Row::new(vec!["SpecName      =>", &app.system_pane_info.runtime_version.spec_name]),
-		Row::new(vec!["ImplName      =>", &app.system_pane_info.runtime_version.impl_name]),
-		Row::new(vec!["SpecVersion   =>", spec_version.as_str()]),
-	];
-
-	let table = Table::new(rows)
-		.block(Block::default().title("System Information").borders(Borders::ALL))
-		.header(Row::new(vec!["ITEM", "VALUE"]).style(Style::default().fg(Color::Cyan)).bold())
-		.style(Style::default().fg(Color::Yellow))
-		.column_spacing(1)
-		.widths(&[Constraint::Length(20), Constraint::Length(20)]);
-	f.render_widget(table, chunks[0]);
-}
-
 fn draw_tabs<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
 where
 	B: Backend,
@@ -273,123 +244,6 @@ where
 		1 => draw_events_tab(f, app, chunks[1]),
 		_ => {},
 	};
-}
-
-fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
-	let chunks = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(vec![Constraint::Percentage(30), Constraint::Percentage(70)])
-		.split(area);
-
-	let blocks: Vec<ListItem> = app
-		.blocks
-		.items
-		.iter()
-		.map(|b| {
-			ListItem::new(vec![Line::from(Span::styled(
-				format!("{:?} > {:?}", b.header().number(), b.header().hash()),
-				Style::default().fg(Color::Yellow),
-			))])
-		})
-		.collect();
-
-	let l = List::new(blocks)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title(format!("Latest {} Blocks", BLOCKS_MAX_LIMIT)),
-		)
-		.style(Style::default().fg(Color::Yellow))
-		.highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
-		.highlight_symbol("> ");
-	f.render_stateful_widget(l, chunks[0], &mut app.blocks.state);
-
-	let block = Block::default()
-		.borders(Borders::ALL)
-		.title("Block Details")
-		.style(Style::default().fg(Color::Yellow));
-	let selected_block = app.selected_block.clone().or(app.blocks.items.back().cloned());
-	if let Some(b) = selected_block {
-		// Fixed items
-		let mut items = vec![
-			ListItem::new(format!("ParentHash     => {:?}", b.header().parent_hash())),
-			ListItem::new(format!("Number         => {:?}", b.header().number())),
-			ListItem::new(format!("StateRoot      => {:?}", b.header().state_root())),
-			ListItem::new(format!("ExtrinsicRoot  => {:?}", b.header().extrinsics_root())),
-		];
-
-		// Logs
-		items.push(ListItem::new("Digest         => ".to_string()));
-		for (index, item) in b.header().digest().logs().iter().enumerate() {
-			let message = match item {
-				DigestItem::PreRuntime(id, data) => {
-					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", data);
-					format!("PreRuntime[{}]: {}", id, data)
-				},
-				DigestItem::Consensus(id, data) => {
-					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", data);
-					format!("Consensus[{}]: {}", id, data)
-				},
-				DigestItem::Seal(id, data) => {
-					let id = String::from_utf8_lossy(id);
-					let data = array_bytes::bytes2hex("0x", data);
-					format!("Seal[{}]: {}", id, data)
-				},
-				DigestItem::Other(data) => {
-					let data = array_bytes::bytes2hex("0x", data);
-					format!("Other: {}", data)
-				},
-				DigestItem::RuntimeEnvironmentUpdated => "RuntimeEnvironmentUpdated".to_string(),
-			};
-
-			items.push(ListItem::new(format!("          log{index} => {}", message)));
-		}
-
-		// Extrinsics
-		items.push(ListItem::new("Extrinsic      => ".to_string()));
-		for (i, e) in b.extrinsics().iter().enumerate() {
-			items.push(ListItem::new(format!(
-				"          ext{i} => {:?}",
-				CI::Hashing::hash(&e.encode())
-			)));
-		}
-
-		let l = List::new(items).block(block);
-		f.render_widget(l, chunks[1]);
-	} else {
-		let text = "Block Details Page".to_string();
-		let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-		f.render_widget(paragraph, chunks[1]);
-	}
-}
-
-fn draw_events_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
-	let mut text = "".to_string();
-	for e in &app.events.items {
-		text.push_str(&format!(
-			"{}\n",
-			serde_json::to_string(e).unwrap_or("Decode Error Occurred.".to_string())
-		));
-	}
-	let l = Paragraph::new(text)
-		.wrap(Wrap { trim: true })
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title(format!("Latest {} Events", EVENTS_MAX_LIMIT)),
-		)
-		.style(Style::default().fg(Color::Yellow));
-	f.render_widget(l, area);
 }
 
 pub struct StatefulList<T> {
