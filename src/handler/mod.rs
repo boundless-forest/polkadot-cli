@@ -1,4 +1,3 @@
-mod dashboard;
 mod printer;
 
 // std
@@ -27,14 +26,11 @@ use tokio::sync::mpsc;
 // this crate
 use crate::{
 	app::{
-		metadata_path, AccountInfoCommand, AppCommand, ApplicationCommand, ChainCommand,
-		RpcCommand, RuntimeCommand, POLKADOT_CLI,
+		metadata_path, run_dashboard, AccountInfoCommand, AppCommand, ApplicationCommand,
+		ChainCommand, DashBoard, RpcCommand, RuntimeCommand, POLKADOT_CLI,
 	},
 	errors::AppError,
-	handler::{
-		dashboard::{run_dashboard, DashBoard},
-		printer::{print_result, print_storage_type, print_usage},
-	},
+	handler::printer::{print_result, print_storage_type, print_usage},
 	networks::{ChainInfo, Network},
 	rpc::{
 		single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError,

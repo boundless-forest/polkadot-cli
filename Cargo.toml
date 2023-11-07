@@ -32,11 +32,11 @@ comfy-table           = { version = "7.0.1" }
 ratatui               = { version = "0.23.0", features = ["all-widgets"] }
 crossterm             = { version = "0.27.0" }
 array-bytes           = { version = "6.1.0" }
-# substrate
-sp-core          = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sp-runtime       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sp-storage       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-sp-version       = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-pallet-balances  = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-frame-system     = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0" }
-fp-account       = { git = "https://github.com/boundless-forest/frontier", branch = "bear-polkadot-v1.0.0" }
+# polkadot
+sp-core          = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+sp-runtime       = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+sp-storage       = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+sp-version       = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+pallet-balances  = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+frame-system     = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+fp-account       = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v1.1.0" }
