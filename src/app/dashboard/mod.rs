@@ -29,7 +29,7 @@ use crate::{
 const BLOCKS_MAX_LIMIT: usize = 30;
 const EVENTS_MAX_LIMIT: usize = 5;
 
-pub(crate) struct DashBoard<CI: ChainInfo> {
+pub struct DashBoard<CI: ChainInfo> {
 	pub metadata: Metadata,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
@@ -88,7 +88,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	}
 }
 
-pub(crate) async fn run_dashboard<B, CI>(
+pub async fn run_dashboard<B, CI>(
 	client: Arc<RpcClient<CI>>,
 	terminal: &mut Terminal<B>,
 	mut app: DashBoard<CI>,
