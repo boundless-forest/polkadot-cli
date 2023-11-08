@@ -38,7 +38,7 @@ pub struct DashBoard<CI: ChainInfo> {
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
 	pub events: StatefulList<Value<u32>>,
 	pub tab_titles: Vec<String>,
-	pub index: usize,
+	pub tabs_index: usize,
 }
 
 impl<CI: ChainInfo> DashBoard<CI> {
@@ -56,8 +56,8 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
-			tab_titles: vec![String::from("Blocks"), String::from("Events")],
-			index: 0,
+			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
+			tabs_index: 0,
 		}
 	}
 
@@ -130,18 +130,6 @@ impl<CI: ChainInfo> DashBoard<CI> {
 		}
 	}
 
-	fn next_tab(&mut self) {
-		self.index = (self.index + 1) % self.tab_titles.len();
-	}
-
-	fn previous_tab(&mut self) {
-		if self.index > 0 {
-			self.index -= 1;
-		} else {
-			self.index = self.tab_titles.len() - 1;
-		}
-	}
-
 	fn previous_block(&mut self) {
 		self.blocks.previous();
 		if let Some(i) = self.blocks.state.selected() {
@@ -171,9 +159,10 @@ where
 		if let Event::Key(key) = read()? {
 			if key.kind == KeyEventKind::Press {
 				match key.code {
-					KeyCode::Char('q') => return Ok(()),
-					KeyCode::Right => dash_board.next_tab(),
-					KeyCode::Left => dash_board.previous_tab(),
+					KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+					KeyCode::Tab => {
+						dash_board.tabs_index = (dash_board.tabs_index + 1) % dash_board.tab_titles.len();
+					},
 					KeyCode::Up => dash_board.previous_block(),
 					KeyCode::Down => dash_board.next_block(),
 					_ => {},
@@ -214,12 +203,12 @@ where
 		.collect();
 	let tabs = Tabs::new(titles)
 		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
-		.select(dash_board.index)
+		.select(dash_board.tabs_index)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().fg(Color::Cyan));
 	f.render_widget(tabs, chunks[0]);
 
-	match dash_board.index {
+	match dash_board.tabs_index {
 		0 => draw_blocks_tab(f, dash_board, chunks[1]),
 		1 => draw_events_tab(f, dash_board, chunks[1]),
 		_ => {},
