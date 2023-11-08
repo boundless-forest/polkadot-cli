@@ -11,9 +11,7 @@ use std::sync::Arc;
 use clap::Parser;
 use colored::Colorize;
 use handler::ExecutionResult;
-use networks::{
-	ChainInfo, CrabChain, DarwiniaChain, KusamaChain, Network, PangoroChain, PolkadotChain,
-};
+use networks::{ChainInfo, CrabChain, DarwiniaChain, KusamaChain, Network, PangoroChain, PolkadotChain};
 use rpc::RpcClient;
 use rustyline::{hint::HistoryHinter, history::FileHistory, Editor};
 // this crate
@@ -107,18 +105,13 @@ pub async fn run<CI: ChainInfo>(
 			Ok(prompt) => match AppCommand::try_parse_from(prompt.split_whitespace()) {
 				Ok(command) => {
 					log::debug!(target: "cli", "command: {:?}", command);
-					if let Ok(ExecutionResult::SwitchNetworkTo(network)) =
-						handler.handle_command(command).await
-					{
+					if let Ok(ExecutionResult::SwitchNetworkTo(network)) = handler.handle_command(command).await {
 						return Ok(ExecutionResult::SwitchNetworkTo(network));
 					}
 				},
 				Err(e) => {
 					log::debug!(target: "cli", "failed to parse the command, err: {:?}", e);
-					println!(
-						"{}",
-						"invalid input, TAB to complete.".to_string().italic().bright_red()
-					);
+					println!("{}", "invalid input, TAB to complete.".to_string().italic().bright_red());
 					continue;
 				},
 			},

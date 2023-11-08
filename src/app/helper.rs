@@ -35,16 +35,7 @@ pub struct Config {
 
 const ESCAPE_CHAR: Option<char> = Some('\\');
 const fn default_break_chars(c: char) -> bool {
-	matches!(
-		c,
-		' ' | '\t'
-			| '\n' | '"' | '\\'
-			| '\'' | '`' | '@'
-			| '$' | '>' | '<'
-			| '=' | ';' | '|'
-			| '&' | '{' | '('
-			| '\0'
-	)
+	matches!(c, ' ' | '\t' | '\n' | '"' | '\\' | '\'' | '`' | '@' | '$' | '>' | '<' | '=' | ';' | '|' | '&' | '{' | '(' | '\0')
 }
 
 /// Create a line editor.
@@ -133,11 +124,7 @@ impl<H: Hinter> Highlighter for EditorHelper<H> {
 		Owned(format!("\x1b[1m{hint}\x1b[m"))
 	}
 
-	fn highlight_candidate<'c>(
-		&self,
-		candidate: &'c str,
-		_completion: CompletionType,
-	) -> Cow<'c, str> {
+	fn highlight_candidate<'c>(&self, candidate: &'c str, _completion: CompletionType) -> Cow<'c, str> {
 		Owned(candidate.to_string())
 	}
 }
@@ -154,27 +141,17 @@ impl<H: Hinter> Hinter for EditorHelper<H> {
 impl<H: Hinter> Completer for EditorHelper<H> {
 	type Candidate = Pair;
 
-	fn complete(
-		&self,
-		line: &str,
-		pos: usize,
-		_ctx: &Context<'_>,
-	) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
+	fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
 		println!();
 		let (start, mut word) = extract_word(line, pos, ESCAPE_CHAR, default_break_chars);
 		let prefixes = shell_words::split(&line[..pos]).unwrap();
 
 		let mut candidates = Vec::new();
-		if let Some(command) =
-			prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable())
-		{
+		if let Some(command) = prefix_command(&self.command, prefixes.iter().map(String::as_str).peekable()) {
 			candidates = command
 				.get_subcommands()
 				.cloned()
-				.map(|i| Pair {
-					display: i.get_name().to_owned(),
-					replacement: i.get_name().to_owned(),
-				})
+				.map(|i| Pair { display: i.get_name().to_owned(), replacement: i.get_name().to_owned() })
 				.filter(|c| c.display.starts_with(word) && word != command.get_name())
 				.collect();
 
@@ -199,21 +176,14 @@ impl<H: Hinter> Completer for EditorHelper<H> {
 	}
 }
 
-fn prefix_command<'s, I: Iterator<Item = &'s str>>(
-	command: &Command,
-	mut prefixes: iter::Peekable<I>,
-) -> Option<Command> {
+fn prefix_command<'s, I: Iterator<Item = &'s str>>(command: &Command, mut prefixes: iter::Peekable<I>) -> Option<Command> {
 	if let Some(prefix) = prefixes.next() {
 		for subcommand in command.get_subcommands() {
 			if subcommand.get_name() == prefix
 				|| subcommand.get_display_name().unwrap_or_default() == prefix
 				|| subcommand.get_all_aliases().any(|s| s == prefix)
 			{
-				return if prefixes.peek().is_none() {
-					Some(subcommand.clone())
-				} else {
-					prefix_command(subcommand, prefixes)
-				};
+				return if prefixes.peek().is_none() { Some(subcommand.clone()) } else { prefix_command(subcommand, prefixes) };
 			}
 		}
 	}
@@ -245,8 +215,7 @@ pub fn metadata_path() -> Result<PathBuf, AppError> {
 
 /// Print the app welcome message.
 pub fn print_welcome_message() {
-	const INTRODUCTION: &str =
-		"This is the all-in-one substrate command assistant, the Polkadot Apps CLI edition.";
+	const INTRODUCTION: &str = "This is the all-in-one substrate command assistant, the Polkadot Apps CLI edition.";
 	const USAGE: &str = "
 Tips:
 - `usage` to ask help.

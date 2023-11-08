@@ -19,10 +19,7 @@ use sp_version::RuntimeVersion;
 use subxt_metadata::Metadata;
 // this crate
 use super::{
-	api::{
-		BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi,
-		SubscribeApi, SystemApi,
-	},
+	api::{BlockForChain, BlockNumberForChain, ChainApi, HashForChain, HeaderForChain, StateApi, SubscribeApi, SystemApi},
 	errors::RpcError,
 	types::{this_crate_types::SystemPaneInfo, ChainType, Health, Properties},
 };
@@ -67,15 +64,7 @@ impl<CI: ChainInfo> RpcClient<CI> {
 
 		let hash = self.get_finalized_head().await?.expect("Failed to get finalized head");
 		let runtime_version = self.runtime_version(hash).await?;
-		Ok(SystemPaneInfo {
-			system_name,
-			system_version,
-			chain_type,
-			chain_name,
-			token_symbol,
-			token_decimal,
-			runtime_version,
-		})
+		Ok(SystemPaneInfo { system_name, system_version, chain_type, chain_name, token_symbol, token_decimal, runtime_version })
 	}
 }
 
@@ -157,10 +146,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	type ChainInfo = CI;
 
 	/// Get the chain block
-	async fn get_block(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<SignedBlock<BlockForChain<Self::ChainInfo>>> {
+	async fn get_block(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<SignedBlock<BlockForChain<Self::ChainInfo>>> {
 		let res = self
 			.client
 			.request("chain_getBlock", rpc_params![hash])
@@ -170,10 +156,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	}
 
 	/// Get the block hash for a specific block
-	async fn get_block_hash(
-		&self,
-		number: BlockNumberForChain<Self::ChainInfo>,
-	) -> RpcResult<Option<HashForChain<Self::ChainInfo>>> {
+	async fn get_block_hash(&self, number: BlockNumberForChain<Self::ChainInfo>) -> RpcResult<Option<HashForChain<Self::ChainInfo>>> {
 		let res = self
 			.client
 			.request("chain_getBlockHash", rpc_params![number])
@@ -193,10 +176,7 @@ impl<CI: ChainInfo> ChainApi for RpcClient<CI> {
 	}
 
 	/// Retrieves the header for a specific block
-	async fn get_header(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<HeaderForChain<Self::ChainInfo>> {
+	async fn get_header(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<HeaderForChain<Self::ChainInfo>> {
 		let res = self
 			.client
 			.request("chain_getHeader", rpc_params![hash])
@@ -211,10 +191,7 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 	type ChainInfo = CI;
 
 	/// Get the runtime version
-	async fn runtime_version(
-		&self,
-		hash: HashForChain<Self::ChainInfo>,
-	) -> RpcResult<RuntimeVersion> {
+	async fn runtime_version(&self, hash: HashForChain<Self::ChainInfo>) -> RpcResult<RuntimeVersion> {
 		let res = self
 			.client
 			.request("state_getRuntimeVersion", rpc_params![hash])
@@ -230,8 +207,7 @@ impl<CI: ChainInfo> StateApi for RpcClient<CI> {
 			.request("state_getMetadata", rpc_params![])
 			.await
 			.map_err(RpcError::from)?;
-		let metadata_prefix = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice())
-			.map_err(|_| RpcError::DecodeError)?;
+		let metadata_prefix = RuntimeMetadataPrefixed::decode(&mut metadata_bytes.0.as_slice()).map_err(|_| RpcError::DecodeError)?;
 		let metadata = metadata_prefix.try_into().map_err(|_| RpcError::DecodeError)?;
 
 		Ok(metadata)

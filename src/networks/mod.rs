@@ -17,6 +17,20 @@ use sp_runtime::{
 	DeserializeOwned, OpaqueExtrinsic,
 };
 
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default, ValueEnum)]
+pub enum Network {
+	Local,
+	// Polkadot
+	Polkadot,
+	Kusama,
+	// Darwinia
+	Pangolin,
+	Pangoro,
+	#[default]
+	Darwinia,
+	Crab,
+}
+
 /// The ChainInfo API
 pub trait ChainInfo: Sync + Send {
 	/// The ws endpoint of the chain
@@ -33,30 +47,10 @@ pub trait ChainInfo: Sync + Send {
 	/// The block number type of the chain
 	type BlockNumber: Serialize + DeserializeOwned + Send + From<u32>;
 	/// The hash type of the chain
-	type Hash: Serialize
-		+ DeserializeOwned
-		+ 'static
-		+ Send
-		+ FromStr
-		+ From<H256>
-		+ From<<Self::Header as HeaderT>::Hash>;
+	type Hash: Serialize + DeserializeOwned + 'static + Send + FromStr + From<H256> + From<<Self::Header as HeaderT>::Hash>;
 	type Hashing: HashT;
 	/// The header type of the chain
 	type Header: Serialize + DeserializeOwned + HeaderT;
 	///  The nonce type of the chain
 	type Nonce: Serialize + DeserializeOwned + Decode + Debug;
-}
-
-#[derive(Subcommand, Clone, Debug, Serialize, Deserialize, Default, ValueEnum)]
-pub enum Network {
-	Local,
-	// parity
-	Polkadot,
-	Kusama,
-	// Darwinia
-	Pangolin,
-	Pangoro,
-	#[default]
-	Darwinia,
-	Crab,
 }

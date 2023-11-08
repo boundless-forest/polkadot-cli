@@ -14,10 +14,7 @@ where
 {
 	let mut text = "".to_string();
 	for e in &app.events.items {
-		text.push_str(&format!(
-			"{}\n",
-			serde_json::to_string(e).unwrap_or("Decode Error Occurred.".to_string())
-		));
+		text.push_str(&format!("{}\n", serde_json::to_string(e).unwrap_or("Decode Error Occurred.".to_string())));
 	}
 	let l = Paragraph::new(text)
 		.wrap(Wrap { trim: true })

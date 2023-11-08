@@ -1,9 +1,6 @@
 // crates.io
 use ratatui::{
-	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span,
-		Style,
-	},
+	prelude::{text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style},
 	widgets::*,
 };
 use sp_core::Encode;
@@ -94,10 +91,7 @@ where
 		// Extrinsics
 		items.push(ListItem::new("Extrinsic      => ".to_string()));
 		for (i, e) in b.extrinsics().iter().enumerate() {
-			items.push(ListItem::new(format!(
-				"          ext{i} => {:?}",
-				CI::Hashing::hash(&e.encode())
-			)));
+			items.push(ListItem::new(format!("          ext{i} => {:?}", CI::Hashing::hash(&e.encode()))));
 		}
 
 		let l = List::new(items).block(block);

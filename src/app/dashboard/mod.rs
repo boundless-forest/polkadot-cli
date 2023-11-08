@@ -7,10 +7,7 @@ use std::{collections::VecDeque, io, sync::Arc};
 // crates.io
 use crossterm::event::{read, Event, KeyCode, KeyEventKind};
 use ratatui::{
-	prelude::{
-		text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Rect, Span, Style,
-		Terminal,
-	},
+	prelude::{text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Rect, Span, Style, Terminal},
 	style::Stylize,
 	widgets::*,
 };
@@ -81,23 +78,12 @@ impl<CI: ChainInfo> DashBoard<CI> {
 				.types()
 				.types
 				.iter()
-				.find(|ty| {
-					ty.ty.path
-						== Path::from_segments_unchecked(vec![
-							"frame_system".to_string(),
-							"EventRecord".to_string(),
-						])
-				})
+				.find(|ty| ty.ty.path == Path::from_segments_unchecked(vec!["frame_system".to_string(), "EventRecord".to_string()]))
 				.map(|ty| ty.id)
 				.unwrap();
 
 			let ty_mut = metadata.types_mut();
-			let vec_event_records_ty = Type::new(
-				Path::default(),
-				vec![],
-				TypeDefSequence::new(event_records_type_id.into()),
-				vec![],
-			);
+			let vec_event_records_ty = Type::new(Path::default(), vec![], TypeDefSequence::new(event_records_type_id.into()), vec![]);
 			let vec_event_records_type_id = ty_mut.types.len() as u32;
 			ty_mut
 				.types
@@ -109,11 +95,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 
 		if let Ok(storage_data) = self.events_rev.try_recv() {
 			for data in storage_data {
-				let value = decode_as_type(
-					&mut data.0.as_ref(),
-					vec_event_records_type_id,
-					self.metadata.types(),
-				);
+				let value = decode_as_type(&mut data.0.as_ref(), vec_event_records_type_id, self.metadata.types());
 
 				if let Ok(event_records) = value {
 					match event_records.value {
@@ -124,16 +106,11 @@ impl<CI: ChainInfo> DashBoard<CI> {
 									match record.value {
 										ValueDef::Composite(inner) => match inner {
 											Composite::Named(v) => {
-												let event_values: Vec<Value<u32>> = v
-													.into_iter()
-													.filter(|d| d.0 == "event")
-													.map(|d| d.1)
-													.collect();
+												let event_values: Vec<Value<u32>> =
+													v.into_iter().filter(|d| d.0 == "event").map(|d| d.1).collect();
 
 												for event in event_values {
-													if self.events.items.len()
-														== self.events.items.capacity()
-													{
+													if self.events.items.len() == self.events.items.capacity() {
 														self.events.items.pop_front();
 													} else {
 														self.events.items.push_back(event);
@@ -180,11 +157,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	}
 }
 
-pub async fn run_dashboard<B, CI>(
-	client: Arc<RpcClient<CI>>,
-	terminal: &mut Terminal<B>,
-	mut dash_board: DashBoard<CI>,
-) -> io::Result<()>
+pub async fn run_dashboard<B, CI>(client: Arc<RpcClient<CI>>, terminal: &mut Terminal<B>, mut dash_board: DashBoard<CI>) -> io::Result<()>
 where
 	B: Backend,
 	CI: ChainInfo,
