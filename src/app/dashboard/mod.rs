@@ -1,5 +1,6 @@
 mod tab_blocks;
 mod tab_events;
+mod tab_pallets;
 mod tab_system;
 
 // std
@@ -22,9 +23,6 @@ use crate::{
 	networks::ChainInfo,
 	rpc::{BlockForChain, ChainApi, HeaderForChain, RpcClient, SystemPaneInfo},
 };
-use tab_blocks::draw_blocks_tab;
-use tab_events::draw_events_tab;
-use tab_system::draw_system;
 
 pub(crate) const BLOCKS_MAX_LIMIT: usize = 30;
 pub(crate) const EVENTS_MAX_LIMIT: usize = 5;
@@ -38,7 +36,7 @@ pub struct DashBoard<CI: ChainInfo> {
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
 	pub events: StatefulList<Value<u32>>,
 	pub tab_titles: Vec<String>,
-	pub tabs_index: usize,
+	pub selected_tab: usize,
 }
 
 impl<CI: ChainInfo> DashBoard<CI> {
@@ -57,7 +55,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
 			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
-			tabs_index: 0,
+			selected_tab: 0,
 		}
 	}
 
@@ -161,7 +159,7 @@ where
 				match key.code {
 					KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
 					KeyCode::Tab => {
-						dash_board.tabs_index = (dash_board.tabs_index + 1) % dash_board.tab_titles.len();
+						dash_board.selected_tab = (dash_board.selected_tab + 1) % dash_board.tab_titles.len();
 					},
 					KeyCode::Up => dash_board.previous_block(),
 					KeyCode::Down => dash_board.next_block(),
@@ -179,7 +177,7 @@ fn ui<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>) {
 		.constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
 		.split(size);
 
-	draw_system(f, dash_board, chunks[0]);
+	tab_system::draw_system(f, dash_board, chunks[0]);
 	draw_tabs(f, dash_board, chunks[1]);
 }
 
@@ -194,15 +192,22 @@ fn draw_tabs<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area:
 		.map(|t| Line::from(Span::styled(t, Style::default().fg(Color::Yellow).bold())))
 		.collect();
 	let tabs = Tabs::new(titles)
-		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
-		.select(dash_board.tabs_index)
+		.block(
+			Block::default()
+				.title("Chain Information")
+				.title_style(Style::default().bold().italic())
+				.border_type(BorderType::Double)
+				.borders(Borders::ALL),
+		)
+		.select(dash_board.selected_tab)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().fg(Color::Cyan));
 	f.render_widget(tabs, chunks[0]);
 
-	match dash_board.tabs_index {
-		0 => draw_blocks_tab(f, dash_board, chunks[1]),
-		1 => draw_events_tab(f, dash_board, chunks[1]),
+	match dash_board.selected_tab {
+		0 => tab_blocks::draw_blocks_tab(f, dash_board, chunks[1]),
+		1 => tab_events::draw_events_tab(f, dash_board, chunks[1]),
+		2 => tab_pallets::draw_pallets_tab(f, dash_board, chunks[1]),
 		_ => {},
 	};
 }
