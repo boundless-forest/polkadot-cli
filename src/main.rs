@@ -94,7 +94,7 @@ pub async fn run<CI: ChainInfo>(
 	editor: &mut Editor<EditorHelper<HistoryHinter>, FileHistory>,
 	rpc_client: Arc<RpcClient<CI>>,
 ) -> Result<ExecutionResult, AppError> {
-	let handler = Handler::new(rpc_client).await?;
+	let mut handler = Handler::new(rpc_client).await?;
 
 	loop {
 		let command_tip = format!("{} ({:?}) >> ", POLKADOT_CLI, <CI as ChainInfo>::NET_WORK)

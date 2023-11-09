@@ -1,5 +1,6 @@
 mod tab_blocks;
 mod tab_events;
+mod tab_pallets;
 mod tab_system;
 
 // std
@@ -22,32 +23,32 @@ use crate::{
 	networks::ChainInfo,
 	rpc::{BlockForChain, ChainApi, HeaderForChain, RpcClient, SystemPaneInfo},
 };
-use tab_blocks::draw_blocks_tab;
-use tab_events::draw_events_tab;
-use tab_system::draw_system;
 
 pub(crate) const BLOCKS_MAX_LIMIT: usize = 30;
 pub(crate) const EVENTS_MAX_LIMIT: usize = 5;
 
-pub struct DashBoard<CI: ChainInfo> {
-	pub metadata: Metadata,
+pub struct DashBoard<'a, CI: ChainInfo> {
+	pub metadata: &'a mut Metadata,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub blocks: StatefulList<BlockForChain<CI>>,
 	pub selected_block: Option<BlockForChain<CI>>,
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
 	pub events: StatefulList<Value<u32>>,
+	pub pallets: StatefulList<(u8, String)>,
+	pub selected_pallet: Option<(u8, String)>,
 	pub tab_titles: Vec<String>,
-	pub index: usize,
+	pub selected_tab: usize,
 }
 
-impl<CI: ChainInfo> DashBoard<CI> {
+impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 	pub(crate) fn new(
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 		events_rev: UnboundedReceiver<Vec<StorageData>>,
-		metadata: Metadata,
-	) -> DashBoard<CI> {
+		metadata: &'a mut Metadata,
+	) -> DashBoard<'a, CI> {
+		let pallets: VecDeque<(u8, String)> = metadata.pallets().map(|p| (p.index(), p.name().to_string())).collect();
 		DashBoard {
 			metadata,
 			system_pane_info,
@@ -56,8 +57,10 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
-			tab_titles: vec![String::from("Blocks"), String::from("Events")],
-			index: 0,
+			pallets: StatefulList::with_items(pallets),
+			selected_pallet: None,
+			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
+			selected_tab: 0,
 		}
 	}
 
@@ -91,7 +94,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 
 			Some(vec_event_records_type_id)
 		}
-		let vec_event_records_type_id = vec_event_records_type_id(&mut self.metadata).unwrap();
+		let vec_event_records_type_id = vec_event_records_type_id(self.metadata).unwrap();
 
 		if let Ok(storage_data) = self.events_rev.try_recv() {
 			for data in storage_data {
@@ -129,35 +132,13 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			}
 		}
 	}
-
-	fn next_tab(&mut self) {
-		self.index = (self.index + 1) % self.tab_titles.len();
-	}
-
-	fn previous_tab(&mut self) {
-		if self.index > 0 {
-			self.index -= 1;
-		} else {
-			self.index = self.tab_titles.len() - 1;
-		}
-	}
-
-	fn previous_block(&mut self) {
-		self.blocks.previous();
-		if let Some(i) = self.blocks.state.selected() {
-			self.selected_block = self.blocks.items.get(i).cloned();
-		}
-	}
-
-	fn next_block(&mut self) {
-		self.blocks.next();
-		if let Some(i) = self.blocks.state.selected() {
-			self.selected_block = self.blocks.items.get(i).cloned();
-		}
-	}
 }
 
-pub async fn run_dashboard<B, CI>(client: Arc<RpcClient<CI>>, terminal: &mut Terminal<B>, mut dash_board: DashBoard<CI>) -> io::Result<()>
+pub async fn run_dashboard<'a, B, CI>(
+	client: Arc<RpcClient<CI>>,
+	terminal: &mut Terminal<B>,
+	mut dash_board: DashBoard<'a, CI>,
+) -> io::Result<()>
 where
 	B: Backend,
 	CI: ChainInfo,
@@ -171,11 +152,40 @@ where
 		if let Event::Key(key) = read()? {
 			if key.kind == KeyEventKind::Press {
 				match key.code {
-					KeyCode::Char('q') => return Ok(()),
-					KeyCode::Right => dash_board.next_tab(),
-					KeyCode::Left => dash_board.previous_tab(),
-					KeyCode::Up => dash_board.previous_block(),
-					KeyCode::Down => dash_board.next_block(),
+					KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+					KeyCode::Tab => {
+						dash_board.selected_tab = (dash_board.selected_tab + 1) % dash_board.tab_titles.len();
+					},
+					KeyCode::Up => match dash_board.selected_tab {
+						0 => {
+							dash_board.blocks.previous();
+							if let Some(i) = dash_board.blocks.state.selected() {
+								dash_board.selected_block = dash_board.blocks.items.get(i).cloned();
+							}
+						},
+						2 => {
+							dash_board.pallets.previous();
+							if let Some(i) = dash_board.pallets.state.selected() {
+								dash_board.selected_pallet = dash_board.pallets.items.get(i).cloned();
+							}
+						},
+						_ => {},
+					},
+					KeyCode::Down => match dash_board.selected_tab {
+						0 => {
+							dash_board.blocks.next();
+							if let Some(i) = dash_board.blocks.state.selected() {
+								dash_board.selected_block = dash_board.blocks.items.get(i).cloned();
+							}
+						},
+						2 => {
+							dash_board.pallets.next();
+							if let Some(i) = dash_board.pallets.state.selected() {
+								dash_board.selected_pallet = dash_board.pallets.items.get(i).cloned();
+							}
+						},
+						_ => {},
+					},
 					_ => {},
 				}
 			}
@@ -183,26 +193,18 @@ where
 	}
 }
 
-fn ui<B, CI>(f: &mut Frame<B>, dash_board: &mut DashBoard<CI>)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+fn ui<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>) {
 	let size = f.size();
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
 		.split(size);
 
-	draw_system(f, dash_board, chunks[0]);
+	tab_system::draw_system(f, dash_board, chunks[0]);
 	draw_tabs(f, dash_board, chunks[1]);
 }
 
-fn draw_tabs<B, CI>(f: &mut Frame<B>, dash_board: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+fn draw_tabs<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
@@ -213,15 +215,22 @@ where
 		.map(|t| Line::from(Span::styled(t, Style::default().fg(Color::Yellow).bold())))
 		.collect();
 	let tabs = Tabs::new(titles)
-		.block(Block::default().borders(Borders::ALL).title("Chain Data"))
-		.select(dash_board.index)
+		.block(
+			Block::default()
+				.title(" Chain Information ")
+				.title_style(Style::default().bold().italic())
+				.border_type(BorderType::Double)
+				.borders(Borders::ALL),
+		)
+		.select(dash_board.selected_tab)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().fg(Color::Cyan));
 	f.render_widget(tabs, chunks[0]);
 
-	match dash_board.index {
-		0 => draw_blocks_tab(f, dash_board, chunks[1]),
-		1 => draw_events_tab(f, dash_board, chunks[1]),
+	match dash_board.selected_tab {
+		0 => tab_blocks::draw_blocks_tab(f, dash_board, chunks[1]),
+		1 => tab_events::draw_events_tab(f, dash_board, chunks[1]),
+		2 => tab_pallets::draw_pallets_tab(f, dash_board, chunks[1]),
 		_ => {},
 	};
 }

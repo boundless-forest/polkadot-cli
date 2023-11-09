@@ -1,6 +1,7 @@
 // crates.io
 use ratatui::{
-	prelude::{text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style},
+	prelude::{text::Line, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style},
+	style::Stylize,
 	widgets::*,
 };
 use sp_core::Encode;
@@ -12,16 +13,17 @@ use sp_runtime::{
 use super::{DashBoard, BLOCKS_MAX_LIMIT};
 use crate::networks::ChainInfo;
 
-pub fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+pub fn draw_blocks_tab<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![Constraint::Percentage(30), Constraint::Percentage(70)])
 		.split(area);
 
+	render_block_list(f, app, chunks[0]);
+	render_block_details(f, app, chunks[1]);
+}
+
+fn render_block_list<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let blocks: Vec<ListItem> = app
 		.blocks
 		.items
@@ -37,21 +39,27 @@ where
 	let l = List::new(blocks)
 		.block(
 			Block::default()
-				.borders(Borders::ALL)
-				.title(format!("Latest {} Blocks", BLOCKS_MAX_LIMIT)),
+				.title(format!(" Latest {} Blocks ", BLOCKS_MAX_LIMIT))
+				.title_style(Style::default().bold().italic())
+				.border_type(BorderType::Double)
+				.borders(Borders::ALL),
 		)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
 		.highlight_symbol("> ");
-	f.render_stateful_widget(l, chunks[0], &mut app.blocks.state);
+	f.render_stateful_widget(l, area, &mut app.blocks.state);
+}
 
-	let block = Block::default()
+fn render_block_details<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title(" Block Details ")
+		.title_style(Style::default().bold().italic())
 		.borders(Borders::ALL)
-		.title("Block Details")
+		.border_type(BorderType::Double)
 		.style(Style::default().fg(Color::Yellow));
+
 	let selected_block = app.selected_block.clone().or(app.blocks.items.back().cloned());
 	if let Some(b) = selected_block {
-		// Fixed items
 		let mut items = vec![
 			ListItem::new(format!("ParentHash     => {:?}", b.header().parent_hash())),
 			ListItem::new(format!("Number         => {:?}", b.header().number())),
@@ -94,11 +102,11 @@ where
 			items.push(ListItem::new(format!("          ext{i} => {:?}", CI::Hashing::hash(&e.encode()))));
 		}
 
-		let l = List::new(items).block(block);
-		f.render_widget(l, chunks[1]);
+		let l = List::new(items).block(block_style);
+		f.render_widget(l, area);
 	} else {
 		let text = "Block Details Page".to_string();
-		let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-		f.render_widget(paragraph, chunks[1]);
+		let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+		f.render_widget(paragraph, area);
 	}
 }

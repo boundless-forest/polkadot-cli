@@ -1,6 +1,6 @@
 // crates.io
 use ratatui::{
-	prelude::{Backend, Color, Constraint, Direction, Frame, Layout, Rect, Style},
+	prelude::{Color, Constraint, Direction, Frame, Layout, Rect, Style},
 	style::Stylize,
 	widgets::*,
 };
@@ -8,11 +8,7 @@ use ratatui::{
 use super::DashBoard;
 use crate::networks::ChainInfo;
 
-pub fn draw_system<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+pub fn draw_system<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![Constraint::Percentage(100)])
@@ -32,10 +28,16 @@ where
 	];
 
 	let table = Table::new(rows)
-		.block(Block::default().title("System Information").borders(Borders::ALL))
+		.block(
+			Block::default()
+				.title(" System Overview ")
+				.title_style(Style::default().bold().italic())
+				.borders(Borders::ALL)
+				.border_type(BorderType::Double)
+				.padding(Padding::horizontal(2)),
+		)
 		.header(Row::new(vec!["ITEM", "VALUE"]).style(Style::default().fg(Color::Cyan)).bold())
 		.style(Style::default().fg(Color::Yellow))
-		.column_spacing(1)
 		.widths(&[Constraint::Length(20), Constraint::Length(20)]);
 	f.render_widget(table, chunks[0]);
 }
