@@ -1,6 +1,6 @@
 // crates.io
 use ratatui::{
-	prelude::{text::Line, Backend, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style},
+	prelude::{text::Line, Color, Constraint, Direction, Frame, Layout, Modifier, Rect, Span, Style},
 	widgets::*,
 };
 use sp_core::Encode;
@@ -12,11 +12,7 @@ use sp_runtime::{
 use super::{DashBoard, BLOCKS_MAX_LIMIT};
 use crate::networks::ChainInfo;
 
-pub fn draw_blocks_tab<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+pub fn draw_blocks_tab<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![Constraint::Percentage(30), Constraint::Percentage(70)])

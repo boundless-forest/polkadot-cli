@@ -1,6 +1,6 @@
 // crates.io
 use ratatui::{
-	prelude::{Backend, Color, Constraint, Direction, Frame, Layout, Rect, Style},
+	prelude::{Color, Constraint, Direction, Frame, Layout, Rect, Style},
 	style::Stylize,
 	widgets::*,
 };
@@ -8,11 +8,7 @@ use ratatui::{
 use super::DashBoard;
 use crate::networks::ChainInfo;
 
-pub fn draw_system<B, CI>(f: &mut Frame<B>, app: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+pub fn draw_system<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![Constraint::Percentage(100)])

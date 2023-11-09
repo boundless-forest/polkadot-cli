@@ -172,11 +172,7 @@ where
 	}
 }
 
-fn ui<B, CI>(f: &mut Frame<B>, dash_board: &mut DashBoard<CI>)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+fn ui<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>) {
 	let size = f.size();
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
@@ -187,11 +183,7 @@ where
 	draw_tabs(f, dash_board, chunks[1]);
 }
 
-fn draw_tabs<B, CI>(f: &mut Frame<B>, dash_board: &mut DashBoard<CI>, area: Rect)
-where
-	B: Backend,
-	CI: ChainInfo,
-{
+fn draw_tabs<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
