@@ -16,7 +16,7 @@ use scale_info::{Path, PortableType, Type, TypeDefSequence};
 use scale_value::{scale::decode_as_type, Composite, Value, ValueDef};
 use sp_runtime::traits::Header as HeaderT;
 use sp_storage::StorageData;
-use subxt_metadata::{Metadata, PalletMetadata};
+use subxt_metadata::Metadata;
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -36,6 +36,7 @@ pub struct DashBoard<'a, CI: ChainInfo> {
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
 	pub events: StatefulList<Value<u32>>,
 	pub pallets: StatefulList<(u8, String)>,
+	pub selected_pallet: Option<(u8, String)>,
 	pub tab_titles: Vec<String>,
 	pub selected_tab: usize,
 }
@@ -57,6 +58,7 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
 			pallets: StatefulList::with_items(pallets),
+			selected_pallet: None,
 			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
 			selected_tab: 0,
 		}
@@ -130,20 +132,6 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 			}
 		}
 	}
-
-	fn previous_block(&mut self) {
-		self.blocks.previous();
-		if let Some(i) = self.blocks.state.selected() {
-			self.selected_block = self.blocks.items.get(i).cloned();
-		}
-	}
-
-	fn next_block(&mut self) {
-		self.blocks.next();
-		if let Some(i) = self.blocks.state.selected() {
-			self.selected_block = self.blocks.items.get(i).cloned();
-		}
-	}
 }
 
 pub async fn run_dashboard<'a, B, CI>(
@@ -168,8 +156,36 @@ where
 					KeyCode::Tab => {
 						dash_board.selected_tab = (dash_board.selected_tab + 1) % dash_board.tab_titles.len();
 					},
-					KeyCode::Up => dash_board.previous_block(),
-					KeyCode::Down => dash_board.next_block(),
+					KeyCode::Up => match dash_board.selected_tab {
+						0 => {
+							dash_board.blocks.previous();
+							if let Some(i) = dash_board.blocks.state.selected() {
+								dash_board.selected_block = dash_board.blocks.items.get(i).cloned();
+							}
+						},
+						2 => {
+							dash_board.pallets.previous();
+							if let Some(i) = dash_board.pallets.state.selected() {
+								dash_board.selected_pallet = dash_board.pallets.items.get(i).cloned();
+							}
+						},
+						_ => {},
+					},
+					KeyCode::Down => match dash_board.selected_tab {
+						0 => {
+							dash_board.blocks.next();
+							if let Some(i) = dash_board.blocks.state.selected() {
+								dash_board.selected_block = dash_board.blocks.items.get(i).cloned();
+							}
+						},
+						2 => {
+							dash_board.pallets.next();
+							if let Some(i) = dash_board.pallets.state.selected() {
+								dash_board.selected_pallet = dash_board.pallets.items.get(i).cloned();
+							}
+						},
+						_ => {},
+					},
 					_ => {},
 				}
 			}

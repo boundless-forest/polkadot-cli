@@ -40,7 +40,7 @@ fn render_pallet_list<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, are
 		.highlight_symbol("> ");
 	f.render_stateful_widget(l, area, &mut app.pallets.state);
 }
-fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
+fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, _app: &mut DashBoard<CI>, area: Rect) {
 	let block_style = Block::default()
 		.title(" Pallet Details ")
 		.title_style(Style::default().bold().italic())
