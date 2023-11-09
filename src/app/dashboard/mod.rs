@@ -194,7 +194,7 @@ fn draw_tabs<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area:
 	let tabs = Tabs::new(titles)
 		.block(
 			Block::default()
-				.title("Chain Information")
+				.title(" Chain Information ")
 				.title_style(Style::default().bold().italic())
 				.border_type(BorderType::Double)
 				.borders(Borders::ALL),

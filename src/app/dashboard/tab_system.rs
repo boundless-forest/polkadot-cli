@@ -30,7 +30,7 @@ pub fn draw_system<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: 
 	let table = Table::new(rows)
 		.block(
 			Block::default()
-				.title("System Overview")
+				.title(" System Overview ")
 				.title_style(Style::default().bold().italic())
 				.borders(Borders::ALL)
 				.border_type(BorderType::Double)
