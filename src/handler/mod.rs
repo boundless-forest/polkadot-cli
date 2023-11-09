@@ -76,7 +76,7 @@ impl<CI: ChainInfo> Handler<CI> {
 	}
 
 	/// Execute the captured command
-	pub async fn handle_command(&self, command: AppCommand) -> Result<ExecutionResult, AppError> {
+	pub async fn handle_command(&mut self, command: AppCommand) -> Result<ExecutionResult, AppError> {
 		match command {
 			AppCommand::App(sub_commands) => match sub_commands {
 				ApplicationCommand::SwitchNetwork { network } => {
@@ -117,7 +117,7 @@ impl<CI: ChainInfo> Handler<CI> {
 					});
 
 					let system_pane_info = self.client.system_pane_info().await?;
-					let dashboard = DashBoard::new(system_pane_info, blocks_rx, events_rx, self.metadata.clone());
+					let dashboard = DashBoard::new(system_pane_info, blocks_rx, events_rx, &mut self.metadata);
 					run_dashboard(self.client.clone(), &mut terminal, dashboard).await?;
 
 					// restore terminal

@@ -16,7 +16,7 @@ use scale_info::{Path, PortableType, Type, TypeDefSequence};
 use scale_value::{scale::decode_as_type, Composite, Value, ValueDef};
 use sp_runtime::traits::Header as HeaderT;
 use sp_storage::StorageData;
-use subxt_metadata::Metadata;
+use subxt_metadata::{Metadata, PalletMetadata};
 use tokio::sync::mpsc::UnboundedReceiver;
 // this crate
 use crate::{
@@ -27,25 +27,27 @@ use crate::{
 pub(crate) const BLOCKS_MAX_LIMIT: usize = 30;
 pub(crate) const EVENTS_MAX_LIMIT: usize = 5;
 
-pub struct DashBoard<CI: ChainInfo> {
-	pub metadata: Metadata,
+pub struct DashBoard<'a, CI: ChainInfo> {
+	pub metadata: &'a mut Metadata,
 	pub system_pane_info: SystemPaneInfo,
 	pub blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 	pub blocks: StatefulList<BlockForChain<CI>>,
 	pub selected_block: Option<BlockForChain<CI>>,
 	pub events_rev: UnboundedReceiver<Vec<StorageData>>,
 	pub events: StatefulList<Value<u32>>,
+	pub pallets: StatefulList<(u8, String)>,
 	pub tab_titles: Vec<String>,
 	pub selected_tab: usize,
 }
 
-impl<CI: ChainInfo> DashBoard<CI> {
+impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 	pub(crate) fn new(
 		system_pane_info: SystemPaneInfo,
 		blocks_rev: UnboundedReceiver<HeaderForChain<CI>>,
 		events_rev: UnboundedReceiver<Vec<StorageData>>,
-		metadata: Metadata,
-	) -> DashBoard<CI> {
+		metadata: &'a mut Metadata,
+	) -> DashBoard<'a, CI> {
+		let pallets: VecDeque<(u8, String)> = metadata.pallets().map(|p| (p.index(), p.name().to_string())).collect();
 		DashBoard {
 			metadata,
 			system_pane_info,
@@ -54,6 +56,7 @@ impl<CI: ChainInfo> DashBoard<CI> {
 			selected_block: None,
 			blocks: StatefulList::with_items(VecDeque::with_capacity(BLOCKS_MAX_LIMIT)),
 			events: StatefulList::with_items(VecDeque::with_capacity(EVENTS_MAX_LIMIT)),
+			pallets: StatefulList::with_items(pallets),
 			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
 			selected_tab: 0,
 		}
@@ -143,7 +146,11 @@ impl<CI: ChainInfo> DashBoard<CI> {
 	}
 }
 
-pub async fn run_dashboard<B, CI>(client: Arc<RpcClient<CI>>, terminal: &mut Terminal<B>, mut dash_board: DashBoard<CI>) -> io::Result<()>
+pub async fn run_dashboard<'a, B, CI>(
+	client: Arc<RpcClient<CI>>,
+	terminal: &mut Terminal<B>,
+	mut dash_board: DashBoard<'a, CI>,
+) -> io::Result<()>
 where
 	B: Backend,
 	CI: ChainInfo,
