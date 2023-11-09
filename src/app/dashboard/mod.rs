@@ -94,7 +94,7 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 
 			Some(vec_event_records_type_id)
 		}
-		let vec_event_records_type_id = vec_event_records_type_id(&mut self.metadata).unwrap();
+		let vec_event_records_type_id = vec_event_records_type_id(self.metadata).unwrap();
 
 		if let Ok(storage_data) = self.events_rev.try_recv() {
 			for data in storage_data {

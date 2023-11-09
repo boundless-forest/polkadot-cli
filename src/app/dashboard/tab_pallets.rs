@@ -29,7 +29,7 @@ fn render_pallet_list<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, are
 	let l = List::new(pallets)
 		.block(
 			Block::default()
-				.title(format!(" Pallets "))
+				.title(" Pallets ")
 				.title_style(Style::default().bold().italic())
 				.borders(Borders::ALL)
 				.border_type(BorderType::Double)
