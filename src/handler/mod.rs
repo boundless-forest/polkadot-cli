@@ -1,5 +1,7 @@
 mod printer;
 
+pub use crate::handler::printer::print_storage_type;
+
 // std
 use std::{
 	fs::File,
@@ -30,7 +32,7 @@ use crate::{
 		RuntimeCommand, POLKADOT_CLI,
 	},
 	errors::AppError,
-	handler::printer::{print_result, print_storage_type, print_usage},
+	handler::printer::{print_result, print_usage},
 	networks::{ChainInfo, Network},
 	rpc::{single_map_storage_key, AccountBalances, AccountNonce, ChainApi, RpcClient, RpcError, StateApi, SubscribeApi, SystemApi},
 };

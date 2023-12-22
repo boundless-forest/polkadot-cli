@@ -39,6 +39,8 @@ pub struct DashBoard<'a, CI: ChainInfo> {
 	pub selected_pallet: Option<(u8, String)>,
 	pub tab_titles: Vec<String>,
 	pub selected_tab: usize,
+	pub pallet_info_titles: Vec<String>,
+	pub selected_pallet_info_tab: usize,
 }
 
 impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
@@ -61,6 +63,14 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 			selected_pallet: None,
 			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
 			selected_tab: 0,
+			pallet_info_titles: vec![
+				String::from("Constants"),
+				String::from("Events"),
+				String::from("Errors"),
+				String::from("Storages"),
+				String::from("Calls"),
+			],
+			selected_pallet_info_tab: 0,
 		}
 	}
 
@@ -186,6 +196,15 @@ where
 						},
 						_ => {},
 					},
+					KeyCode::Right =>
+						if dash_board.selected_tab == 2 {
+							dash_board.selected_pallet_info_tab =
+								(dash_board.selected_pallet_info_tab + 1) % dash_board.pallet_info_titles.len();
+						},
+					KeyCode::Left =>
+						if dash_board.selected_tab == 2 && dash_board.selected_pallet_info_tab > 0 {
+							dash_board.selected_pallet_info_tab -= 1;
+						},
 					_ => {},
 				}
 			}
