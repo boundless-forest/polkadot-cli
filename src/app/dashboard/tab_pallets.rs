@@ -73,13 +73,7 @@ fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<C
 	};
 }
 fn render_pallet_constants_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.padding(Padding::horizontal(2))
-		.style(Style::default().fg(Color::Yellow));
-
+	let block_style = default_block_style();
 	if let Some((id, name)) = dash_board.selected_pallet.clone() {
 		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
 		if let Some(pallet) = pallet {
@@ -106,13 +100,7 @@ fn render_pallet_constants_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut D
 	}
 }
 fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.padding(Padding::horizontal(2))
-		.style(Style::default().fg(Color::Yellow));
-
+	let block_style = default_block_style();
 	if let Some((id, name)) = dash_board.selected_pallet.clone() {
 		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
 		if let Some(pallet) = pallet {
@@ -126,7 +114,7 @@ fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 							.iter()
 							.map(|v| {
 								ListItem::new(vec![Line::from(Span::styled(
-									format!("> {}{}", t.path, v.name.to_string()),
+									format!("> {}", v.name.to_string()),
 									Style::default().fg(Color::Yellow),
 								))])
 							})
@@ -154,13 +142,7 @@ fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 	}
 }
 fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.padding(Padding::horizontal(2))
-		.style(Style::default().fg(Color::Yellow));
-
+	let block_style = default_block_style();
 	if let Some((id, name)) = dash_board.selected_pallet.clone() {
 		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
 		if let Some(pallet) = pallet {
@@ -174,7 +156,7 @@ fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 							.iter()
 							.map(|v| {
 								ListItem::new(vec![Line::from(Span::styled(
-									format!("> {}{}", t.path, v.name.to_string()),
+									format!("> {}", v.name.to_string()),
 									Style::default().fg(Color::Yellow),
 								))])
 							})
@@ -202,13 +184,7 @@ fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 	}
 }
 fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.padding(Padding::horizontal(2))
-		.style(Style::default().fg(Color::Yellow));
-
+	let block_style = default_block_style();
 	if let Some((id, name)) = dash_board.selected_pallet.clone() {
 		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
 		if let Some(pallet) = pallet {
@@ -241,13 +217,7 @@ fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Da
 	}
 }
 fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.padding(Padding::horizontal(2))
-		.style(Style::default().fg(Color::Yellow));
-
+	let block_style = default_block_style();
 	if let Some((id, name)) = dash_board.selected_pallet.clone() {
 		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
 		if let Some(pallet) = pallet {
@@ -261,7 +231,7 @@ fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashB
 							.iter()
 							.map(|v| {
 								ListItem::new(vec![Line::from(Span::styled(
-									format!("> {}{}", c.path, v.name.to_string()),
+									format!("> {}", v.name.to_string()),
 									Style::default().fg(Color::Yellow),
 								))])
 							})
@@ -287,4 +257,13 @@ fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashB
 			}
 		}
 	}
+}
+
+fn default_block_style<'a>() -> Block<'a> {
+	Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.padding(Padding::horizontal(2))
+		.style(Style::default().fg(Color::Yellow))
 }
