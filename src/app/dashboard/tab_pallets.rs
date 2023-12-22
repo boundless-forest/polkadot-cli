@@ -4,10 +4,9 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
-use scale_value::Value;
 // this crate
 use super::DashBoard;
-use crate::networks::ChainInfo;
+use crate::{handler::print_storage_type, networks::ChainInfo};
 
 pub fn draw_pallets_tab<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
@@ -132,11 +131,39 @@ fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Da
 		.title_style(Style::default().bold().italic())
 		.borders(Borders::ALL)
 		.border_type(BorderType::Double)
+		.padding(Padding::horizontal(2))
 		.style(Style::default().fg(Color::Yellow));
 
-	let text = "Storages Page".to_string();
-	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
-	f.render_widget(paragraph, area);
+	if let Some((id, name)) = dash_board.selected_pallet.clone() {
+		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
+		if let Some(pallet) = pallet {
+			if let Some(s) = pallet.storage() {
+				let storages: Vec<ListItem> = s
+					.entries()
+					.into_iter()
+					.map(|e| {
+						ListItem::new(vec![Line::from(Span::styled(
+							format!("> {} : {}", e.name(), &print_storage_type(e.entry_type().clone(), &dash_board.metadata)),
+							Style::default().fg(Color::Yellow),
+						))])
+					})
+					.collect();
+
+				if storages.len() != 0 {
+					let l = List::new(storages).block(block_style);
+					f.render_widget(l, area);
+				} else {
+					let text = "None".to_string();
+					let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+					f.render_widget(paragraph, area);
+				}
+			} else {
+				let text = "None".to_string();
+				let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+				f.render_widget(paragraph, area);
+			}
+		}
+	}
 }
 fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
 	let block_style = Block::default()
