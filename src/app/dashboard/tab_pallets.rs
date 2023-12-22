@@ -11,7 +11,7 @@ use crate::networks::ChainInfo;
 pub fn draw_pallets_tab<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, area: Rect) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints(vec![Constraint::Percentage(30), Constraint::Percentage(70)])
+		.constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
 		.split(area);
 
 	render_pallet_list(f, app, chunks[0]);
@@ -40,15 +40,26 @@ fn render_pallet_list<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, are
 		.highlight_symbol("> ");
 	f.render_stateful_widget(l, area, &mut app.pallets.state);
 }
-fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, _app: &mut DashBoard<CI>, area: Rect) {
-	let block_style = Block::default()
-		.title(" Pallet Details ")
-		.title_style(Style::default().bold().italic())
-		.borders(Borders::ALL)
-		.border_type(BorderType::Double)
-		.style(Style::default().fg(Color::Yellow));
-
-	let text = "Pallets Details Page".to_string();
-	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
-	f.render_widget(paragraph, area);
+fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let chunks = Layout::default()
+		.direction(Direction::Vertical)
+		.constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+		.split(area);
+	let titles = dash_board
+		.pallet_info_titles
+		.iter()
+		.map(|t| Line::from(Span::styled(t, Style::default().fg(Color::Yellow).bold())))
+		.collect();
+	let tabs = Tabs::new(titles)
+		.block(
+			Block::default()
+				.title(" Pallet Information ")
+				.title_style(Style::default().bold().italic())
+				.border_type(BorderType::Double)
+				.borders(Borders::ALL),
+		)
+		.select(dash_board.selected_tab)
+		.style(Style::default().fg(Color::Yellow))
+		.highlight_style(Style::default().fg(Color::Cyan));
+	f.render_widget(tabs, chunks[0]);
 }
