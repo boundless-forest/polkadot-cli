@@ -4,6 +4,7 @@ use ratatui::{
 	style::Stylize,
 	widgets::*,
 };
+use scale_value::Value;
 // this crate
 use super::DashBoard;
 use crate::networks::ChainInfo;
@@ -63,14 +64,47 @@ fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<C
 	f.render_widget(tabs, chunks[0]);
 
 	match dash_board.selected_pallet_info_tab {
-		0 => render_pallet_events_page(f, dash_board, chunks[1]),
-		1 => render_pallet_errors_page(f, dash_board, chunks[1]),
-		2 => render_pallet_storages_page(f, dash_board, chunks[1]),
-		3 => render_pallet_calls_page(f, dash_board, chunks[1]),
+		0 => render_pallet_constants_page(f, dash_board, chunks[1]),
+		1 => render_pallet_events_page(f, dash_board, chunks[1]),
+		2 => render_pallet_errors_page(f, dash_board, chunks[1]),
+		3 => render_pallet_storages_page(f, dash_board, chunks[1]),
+		4 => render_pallet_calls_page(f, dash_board, chunks[1]),
 		_ => {},
 	};
 }
+fn render_pallet_constants_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.padding(Padding::horizontal(2))
+		.style(Style::default().fg(Color::Yellow));
 
+	if let Some((id, name)) = dash_board.selected_pallet.clone() {
+		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
+		if let Some(pallet) = pallet {
+			let constants: Vec<ListItem> = pallet
+				.constants()
+				.into_iter()
+				.map(|c| {
+					let ty_id = c.ty();
+					let mut bytes = c.value();
+					let value = scale_value::scale::decode_as_type(&mut bytes, ty_id, dash_board.metadata.types()).unwrap();
+					ListItem::new(vec![Line::from(Span::styled(format!("> {} : {}", c.name(), value), Style::default().fg(Color::Yellow)))])
+				})
+				.collect();
+
+			if constants.len() != 0 {
+				let l = List::new(constants).block(block_style);
+				f.render_widget(l, area);
+			} else {
+				let text = "None".to_string();
+				let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+				f.render_widget(paragraph, area);
+			}
+		}
+	}
+}
 fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
 	let block_style = Block::default()
 		.title_style(Style::default().bold().italic())

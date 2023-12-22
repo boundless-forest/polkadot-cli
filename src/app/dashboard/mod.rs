@@ -63,7 +63,13 @@ impl<'a, CI: ChainInfo> DashBoard<'a, CI> {
 			selected_pallet: None,
 			tab_titles: vec![String::from("Blocks"), String::from("Events"), String::from("Pallets")],
 			selected_tab: 0,
-			pallet_info_titles: vec![String::from("Events"), String::from("Errors"), String::from("Storages"), String::from("Calls")],
+			pallet_info_titles: vec![
+				String::from("Constants"),
+				String::from("Events"),
+				String::from("Errors"),
+				String::from("Storages"),
+				String::from("Calls"),
+			],
 			selected_pallet_info_tab: 0,
 		}
 	}
