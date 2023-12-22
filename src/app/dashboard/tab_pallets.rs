@@ -29,7 +29,6 @@ fn render_pallet_list<CI: ChainInfo>(f: &mut Frame, app: &mut DashBoard<CI>, are
 	let l = List::new(pallets)
 		.block(
 			Block::default()
-				.title(" Pallets ")
 				.title_style(Style::default().bold().italic())
 				.borders(Borders::ALL)
 				.border_type(BorderType::Double)
@@ -58,8 +57,61 @@ fn render_pallet_info<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<C
 				.border_type(BorderType::Double)
 				.borders(Borders::ALL),
 		)
-		.select(dash_board.selected_tab)
+		.select(dash_board.selected_pallet_info_tab)
 		.style(Style::default().fg(Color::Yellow))
 		.highlight_style(Style::default().fg(Color::Cyan));
 	f.render_widget(tabs, chunks[0]);
+
+	match dash_board.selected_pallet_info_tab {
+		0 => render_pallet_events_page(f, dash_board, chunks[1]),
+		1 => render_pallet_errors_page(f, dash_board, chunks[1]),
+		2 => render_pallet_storages_page(f, dash_board, chunks[1]),
+		3 => render_pallet_calls_page(f, dash_board, chunks[1]),
+		_ => {},
+	};
+}
+
+fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.style(Style::default().fg(Color::Yellow));
+
+	let text = "Events Page".to_string();
+	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+	f.render_widget(paragraph, area);
+}
+fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.style(Style::default().fg(Color::Yellow));
+
+	let text = "Errors Page".to_string();
+	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+	f.render_widget(paragraph, area);
+}
+fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.style(Style::default().fg(Color::Yellow));
+
+	let text = "Storages Page".to_string();
+	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+	f.render_widget(paragraph, area);
+}
+fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
+	let block_style = Block::default()
+		.title_style(Style::default().bold().italic())
+		.borders(Borders::ALL)
+		.border_type(BorderType::Double)
+		.style(Style::default().fg(Color::Yellow));
+
+	let text = "Calls Page".to_string();
+	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+	f.render_widget(paragraph, area);
 }
