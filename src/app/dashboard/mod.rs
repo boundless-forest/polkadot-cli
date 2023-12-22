@@ -203,7 +203,7 @@ where
 						},
 					KeyCode::Left =>
 						if dash_board.selected_tab == 2 && dash_board.selected_pallet_info_tab > 0 {
-							dash_board.selected_pallet_info_tab = dash_board.selected_pallet_info_tab - 1;
+							dash_board.selected_pallet_info_tab -= 1;
 						},
 					_ => {},
 				}

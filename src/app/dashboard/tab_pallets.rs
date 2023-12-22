@@ -79,7 +79,6 @@ fn render_pallet_constants_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut D
 		if let Some(pallet) = pallet {
 			let constants: Vec<ListItem> = pallet
 				.constants()
-				.into_iter()
 				.map(|c| {
 					let ty_id = c.ty();
 					let mut bytes = c.value();
@@ -88,7 +87,7 @@ fn render_pallet_constants_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut D
 				})
 				.collect();
 
-			if constants.len() != 0 {
+			if !constants.is_empty() {
 				let l = List::new(constants).block(block_style);
 				f.render_widget(l, area);
 			} else {
@@ -124,7 +123,7 @@ fn render_pallet_events_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 						},
 					};
 
-					if enums.len() != 0 {
+					if !enums.is_empty() {
 						let l = List::new(enums).block(block_style);
 						f.render_widget(l, area);
 					} else {
@@ -166,7 +165,7 @@ fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 						},
 					};
 
-					if enums.len() != 0 {
+					if !enums.is_empty() {
 						let l = List::new(enums).block(block_style);
 						f.render_widget(l, area);
 					} else {
@@ -191,16 +190,16 @@ fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Da
 			if let Some(s) = pallet.storage() {
 				let storages: Vec<ListItem> = s
 					.entries()
-					.into_iter()
+					.iter()
 					.map(|e| {
 						ListItem::new(vec![Line::from(Span::styled(
-							format!("> {} : {}", e.name(), &print_storage_type(e.entry_type().clone(), &dash_board.metadata)),
+							format!("> {} : {}", e.name(), &print_storage_type(e.entry_type().clone(), dash_board.metadata)),
 							Style::default().fg(Color::Yellow),
 						))])
 					})
 					.collect();
 
-				if storages.len() != 0 {
+				if !storages.is_empty() {
 					let l = List::new(storages).block(block_style);
 					f.render_widget(l, area);
 				} else {
@@ -241,7 +240,7 @@ fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashB
 						},
 					};
 
-					if enums.len() != 0 {
+					if !enums.is_empty() {
 						let l = List::new(enums).block(block_style);
 						f.render_widget(l, area);
 					} else {
