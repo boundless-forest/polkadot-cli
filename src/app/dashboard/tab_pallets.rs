@@ -158,11 +158,48 @@ fn render_pallet_errors_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut Dash
 		.title_style(Style::default().bold().italic())
 		.borders(Borders::ALL)
 		.border_type(BorderType::Double)
+		.padding(Padding::horizontal(2))
 		.style(Style::default().fg(Color::Yellow));
 
-	let text = "Errors Page".to_string();
-	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
-	f.render_widget(paragraph, area);
+	if let Some((id, name)) = dash_board.selected_pallet.clone() {
+		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
+		if let Some(pallet) = pallet {
+			let error_type = pallet.error_ty_id();
+			if let Some(error_type) = error_type {
+				let errors = dash_board.metadata.types().resolve(error_type);
+				if let Some(t) = errors {
+					let enums: Vec<ListItem> = match &t.type_def {
+						TypeDef::Variant(def_variant) => def_variant
+							.variants
+							.iter()
+							.map(|v| {
+								ListItem::new(vec![Line::from(Span::styled(
+									format!("> {}{}", t.path, v.name.to_string()),
+									Style::default().fg(Color::Yellow),
+								))])
+							})
+							.collect(),
+						_ => {
+							vec![]
+						},
+					};
+
+					if enums.len() != 0 {
+						let l = List::new(enums).block(block_style);
+						f.render_widget(l, area);
+					} else {
+						let text = "None".to_string();
+						let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+						f.render_widget(paragraph, area);
+					}
+				}
+			} else {
+				let text = "None".to_string();
+				let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+				f.render_widget(paragraph, area)
+			}
+		}
+	}
 }
 fn render_pallet_storages_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashBoard<CI>, area: Rect) {
 	let block_style = Block::default()
@@ -208,9 +245,46 @@ fn render_pallet_calls_page<CI: ChainInfo>(f: &mut Frame, dash_board: &mut DashB
 		.title_style(Style::default().bold().italic())
 		.borders(Borders::ALL)
 		.border_type(BorderType::Double)
+		.padding(Padding::horizontal(2))
 		.style(Style::default().fg(Color::Yellow));
 
-	let text = "Calls Page".to_string();
-	let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
-	f.render_widget(paragraph, area);
+	if let Some((id, name)) = dash_board.selected_pallet.clone() {
+		let pallet = dash_board.metadata.pallets().find(|p| p.name() == name && p.index() == id);
+		if let Some(pallet) = pallet {
+			let call_type = pallet.call_ty_id();
+			if let Some(call_type) = call_type {
+				let calls = dash_board.metadata.types().resolve(call_type);
+				if let Some(c) = calls {
+					let enums: Vec<ListItem> = match &c.type_def {
+						TypeDef::Variant(def_variant) => def_variant
+							.variants
+							.iter()
+							.map(|v| {
+								ListItem::new(vec![Line::from(Span::styled(
+									format!("> {}{}", c.path, v.name.to_string()),
+									Style::default().fg(Color::Yellow),
+								))])
+							})
+							.collect(),
+						_ => {
+							vec![]
+						},
+					};
+
+					if enums.len() != 0 {
+						let l = List::new(enums).block(block_style);
+						f.render_widget(l, area);
+					} else {
+						let text = "None".to_string();
+						let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+						f.render_widget(paragraph, area);
+					}
+				}
+			} else {
+				let text = "None".to_string();
+				let paragraph = Paragraph::new(text).block(block_style).wrap(Wrap { trim: true });
+				f.render_widget(paragraph, area)
+			}
+		}
+	}
 }
