@@ -8,5 +8,15 @@ $ polkadot-cli
 
 ![polkadot-cli](./resource/polkadot-cli.png)
 
+# Features
 
-# Usage
+1. Switch Networks
+
+```
+$ app switch-network --network polkadot
+```
+
+2. App Dashboard
+
+![app dashboard](./resource/dashboard.png)
+
