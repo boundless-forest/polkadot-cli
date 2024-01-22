@@ -223,7 +223,8 @@ Tips:
 - `Ctrl + c` to quit.
 ";
 
-	let font = FIGfont::from_file("src/resources/univers.flf").unwrap();
+	const UNIVERS_FONT: &[u8] = include_bytes!("../resources/univers.flf");
+	let font = FIGfont::from_content(&String::from_utf8_lossy(UNIVERS_FONT)).unwrap();
 	let figure = font.convert(POLKADOT_CLI);
 	if let Some(figure) = figure {
 		println!("{}", figure);
